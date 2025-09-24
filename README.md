@@ -46,9 +46,6 @@ Implement these based on your application's needs:
 | MIP | Description | Status |
 |-----|-------------|--------|
 | [MIP-04](04.md) | Encrypted Media | 🚧 Draft |
-| MIP-05 | Read Receipts & Online Indicators | 📋 Planned |
-| MIP-06 | Multi-device Support | 📋 Planned |
-| MIP-07 | Multi-device Encrypted Backups | 📋 Planned |
 
 ### Legacy Documentation
 
