@@ -1,22 +1,21 @@
-# What needs to be standardized
-
-1. Base protocol NIP-EE
-1. Nostr Group Data Extension
-1. E2EE media
-1. Read receipts and online indicators
-1. Multi device/client syncing
-1. multi device/client encrypted backup
-1. Audio and video calls
-1. Notifications??
-
+# Random things to consider
 
 - Describe all the variations of Proposals and Commits and who can do it?
 - Describe other extensions and how to use them?
 - Describe checks that must be performed? Look at how MLS talks about required validations
 
-# Required Validations
+## MIPs
 
-- Validate new groups use the required extensions
-- Validate that no proposal attempts to change the identity on any credentials in the group
-- Validate that the Application Message unsigned events have the same pubkey as the leaf node credential that sent the message.
+### Required
+1. Credentials & Key Packages (kind: 443)
+1. Group Construction (incl nostr data extension)
+1. Welcomes (kind: 444)
+1. Group Messages (kind: 445)
 
+### Optional
+1. Encrypted media
+1. Read recipts & online indicators (not sure this belongs here)
+1. Multi-device support
+1. Muti-device encrypted backup
+1. Audio & video calls
+1. Notifications
