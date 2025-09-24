@@ -21,6 +21,15 @@ Marmot addresses critical limitations in existing messaging systems:
 
 By combining MLS's proven cryptography with Nostr's decentralized architecture, Marmot provides the security of Signal with the censorship resistance of decentralized protocols.
 
+## Security Overview
+
+Marmot maintains strong security guarantees through MLS:
+
+- **Forward Secrecy**: Past messages remain secure even if current keys are compromised
+- **Post-Compromise Security**: Key rotation limits impact of future compromises
+- **Identity Separation**: MLS signing keys are distinct from Nostr identity keys
+- **Regular Key Rotation**: Automatic key updates enhance security over time
+
 ## Protocol Specifications
 
 Before implementing Marmot, you should have:
