@@ -19,3 +19,7 @@
 1. Multi-device encrypted backup
 1. Audio & video calls
 1. Notifications
+
+
+# Security
+Create a security concerns/guidelines doc to explain concepts like how many epochs of secrets to keep, when to delete key package keys locally, etc.
