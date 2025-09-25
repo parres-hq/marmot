@@ -44,7 +44,7 @@ These specifications **must** be implemented for Marmot compatibility:
 | MIP | Description | Status |
 |-----|-------------|--------|
 | [MIP-00](00.md) | Credentials & Key Packages | ✅ Stable |
-| [MIP-01](01.md) | Group Construction & Nostr Group Data Extension | ✅ Stable |
+| [MIP-01](01.md) | Group Construction & Marmot Group Data Extension | ✅ Stable |
 | [MIP-02](02.md) | Welcome Events | ✅ Stable |
 | [MIP-03](03.md) | Group Messages | ✅ Stable |
 
@@ -56,9 +56,15 @@ Implement these based on your application's needs:
 |-----|-------------|--------|
 | [MIP-04](04.md) | Encrypted Media | 🚧 Draft |
 
-### Legacy Documentation
 
-- [NIP-EE](EE.md) - Original Nostr NIP (now superseded by [MIP-00](00.md) and [MIP-01](01.md))
+## Protocol Implementations
+
+- [MDK - Marmot Development Kit](https://github.com/parres-hq/mdk): Official implementation in Rust
+
+## Projects using Marmot
+
+- [whitenoise](https://github.com/parres-hq/whitenoise): Rust crate using MDK to build a fully featured messenger client
+- [whitenoise_flutter](https://github.com/parres-hq/whitenoise_flutter): Flutter app, using the `whitenoise` crate.
 
 ## Contributing
 
@@ -69,4 +75,13 @@ This protocol is actively developed and welcomes contributions:
 - 🔧 **Implementation**: Build clients and libraries
 - 🧪 **Testing**: Help verify interoperability
 
+## References
 
+- [RFC 9420: Messaging Layer Security](https://datatracker.ietf.org/doc/rfc9420/)
+- [MLS Architecture Overview](https://www.rfc-editor.org/rfc/rfc9750.html)
+- [MLS Extensions](https://www.ietf.org/archive/id/draft-ietf-mls-extensions-08.txt)
+- [Nostr NIPs](https://github.com/nostr-protocol/nips)
+
+### Legacy Documentation
+
+- [NIP-EE](EE.md) - Original Nostr NIP (now superseded by [MIP-00](00.md) and [MIP-01](01.md))
