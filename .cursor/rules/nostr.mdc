@@ -1,0 +1,29 @@
+---
+description: Information about the Nostr Protocol
+globs:
+alwaysApply: true
+---
+
+# Nostr Protocol References
+
+## NIP repo
+
+The nostr [NIPs repo](https://github.com/nostr-protocol/nips) is the official home of all nostr specs.
+
+## Nostrbook MCP
+
+You should have access to the Nostrbook MCP server that you can use to query the NIPs repo in a more structured way. If you don't have access to this you should prompt the user to install it with the following snippet:
+
+```json
+{
+  "mcpServers": {
+    "nostr": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@nostrbook/mcp@latest"
+      ]
+    }
+}
+```

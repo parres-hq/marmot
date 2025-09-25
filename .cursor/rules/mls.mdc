@@ -1,0 +1,31 @@
+---
+description: MLS (Messaging Layer Security) Protocol Documentation and Resources
+globs:
+alwaysApply: true
+---
+
+# MLS Protocol Documentation and Resources
+
+This project implements the MLS (Messaging Layer Security) protocol on top of Nostr. Below are key resources and documentation that LLMs should reference when working on MLS-related code.
+
+## Official MLS Specifications
+
+- **RFC 9420**: The Messaging Layer Security (MLS) Protocol
+  - Official IETF specification: https://www.rfc-editor.org/rfc/rfc9420.html
+  - Local copy: [docs/mls/rfc9420.txt](mdc:docs/mls/rfc9420.txt)
+
+- **RFC 9750**: MLS Architecture
+  - MLS Architecture Overview: https://www.rfc-editor.org/rfc/rfc9750.html
+  - Local copy: [docs/mls/rfc9750.txt](mdc:docs/mls/rfc9750.txt)
+
+- **MLS Extensions**:
+    - https://www.ietf.org/archive/id/draft-ietf-mls-extensions-08.txt
+    - Local copy: [docs/mls/draft-ietf-mls-extentions-08.txt]
+
+## Marmot Protocol (MLS integration with Nostr protocol)
+
+- This repo
+
+## MDK (Marmot Development Kit)
+
+- Our implementation of the Marmot protocol is [MDK](https://github.com/parres-hq/mdk). This can be a helpful reference to see how aspects of the protocol are implemented.
