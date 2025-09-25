@@ -84,4 +84,4 @@ This protocol is actively developed and welcomes contributions:
 
 ### Legacy Documentation
 
-- [NIP-EE](EE.md) - Original Nostr NIP (now superseded by [MIP-00](00.md) and [MIP-01](01.md))
+- [NIP-EE](EE.md) - Original Nostr NIP (now superseded by this protocol specification)

@@ -14,8 +14,8 @@
 
 ### Optional
 1. Encrypted media
-1. Read recipts & online indicators (not sure this belongs here)
+1. Read receipts & online indicators (not sure this belongs here)
 1. Multi-device support
-1. Muti-device encrypted backup
+1. Multi-device encrypted backup
 1. Audio & video calls
 1. Notifications
