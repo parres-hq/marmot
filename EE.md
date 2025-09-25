@@ -8,13 +8,13 @@ This NIP standardizes how to use the [MLS Protocol](https://www.rfc-editor.org/r
 
 ## Context
 
-Originally, one-to-one direct messages (DMs) in Nostr happened via the scheme defined in [NIP-04](04.md). This NIP is not recommended because, while it encrypts the content of the message (provides decent confidentiality), it leaks significant amounts of metadata about the parties involved in the conversation (completely lacks privacy).
+Originally, one-to-one direct messages (DMs) in Nostr happened via the scheme defined in [NIP-04](https://github.com/nostr-protocol/nips/blob/master/04.md). This NIP is not recommended because, while it encrypts the content of the message (provides decent confidentiality), it leaks significant amounts of metadata about the parties involved in the conversation (completely lacks privacy).
 
-With the addition of [NIP-44](44.md), we have an updated encryption scheme that improves confidentiality guarantees but stops short of defining a new scheme for doing direct messages using this encryption scheme. Hence, makes little to no difference to privacy.
+With the addition of [NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md), we have an updated encryption scheme that improves confidentiality guarantees but stops short of defining a new scheme for doing direct messages using this encryption scheme. Hence, makes little to no difference to privacy.
 
-Most recently, [NIP-17](17.md) combines [NIP-44](44.md) encryption with [NIP-59](59.md) gift-wrapping to hide the encrypted direct message inside another set of events to ensure that it's impossible to see who is talking to who and when messages passed between the users. This largely solves the metadata leakage problem; while it's still possible to see that a user is receiving gift-wrapped events, you can't tell from whom and what kind of events are within the gift-wrap outer event. This gives some degree of deniability/repudiation but doesn't solve forward secrecy or post compromise security. That is to say, if a user's private key (or the calculated conversation key shared between two users used to encrypt messages) is compromised, the attacker will have full access to all past and future DMs sent between those users.
+Most recently, [NIP-17](https://github.com/nostr-protocol/nips/blob/master/17.md) combines [NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md) encryption with [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md) gift-wrapping to hide the encrypted direct message inside another set of events to ensure that it's impossible to see who is talking to who and when messages passed between the users. This largely solves the metadata leakage problem; while it's still possible to see that a user is receiving gift-wrapped events, you can't tell from whom and what kind of events are within the gift-wrap outer event. This gives some degree of deniability/repudiation but doesn't solve forward secrecy or post compromise security. That is to say, if a user's private key (or the calculated conversation key shared between two users used to encrypt messages) is compromised, the attacker will have full access to all past and future DMs sent between those users.
 
-In addition, neither [NIP-04](04.md) or [NIP-17](17.md) attempt to solve the problem of group messages.
+In addition, neither [NIP-04](https://github.com/nostr-protocol/nips/blob/master/04.md) or [NIP-17](https://github.com/nostr-protocol/nips/blob/master/17.md) attempt to solve the problem of group messages.
 
 ### Why is this important?
 
@@ -181,7 +181,7 @@ In most cases, it's assumed that clients implementing this NIP will manage the c
 - The `extensions` tag is an array of MLS extension IDs that this KeyPackage Event supports. [Read more about MLS extensions](https://www.rfc-editor.org/rfc/rfc9420.html#name-extensions).
 - (optional) The `client` tag helps other clients manage the user experience when they receive group invites but don't have access to the signing key.
 - The `relays` tag identifies each of the relays that the client will attempt to publish this KeyPackage event. This allows for deletion of KeyPackage Events at a later date.
-- (optional) The `-` tag can be used to ensure that KeyPackage Events are only published by their authenticated author. Read more in [NIP-70](70.md)
+- (optional) The `-` tag can be used to ensure that KeyPackage Events are only published by their authenticated author. Read more in [NIP-70](https://github.com/nostr-protocol/nips/blob/master/70.md)
 
 ### Deleting KeyPackage Events
 
@@ -211,7 +211,7 @@ A `kind: 10051` event indicates the relays that a user will publish their KeyPac
 
 ### Welcome Event
 
-When a new user is added to a group via an MLS `Commit` message. The member who sends the `Commit` message to the group is responsible for sending the user being added to the group a Welcome Event. This Welcome Event is sent to the user as a [NIP-59](59.md) gift-wrapped event. The Welcome Event gives the new member the context they need to join the group and start sending messages.
+When a new user is added to a group via an MLS `Commit` message. The member who sends the `Commit` message to the group is responsible for sending the user being added to the group a Welcome Event. This Welcome Event is sent to the user as a [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md) gift-wrapped event. The Welcome Event gives the new member the context they need to join the group and start sending messages.
 
 Clients creating the Welcome Event SHOULD wait until they have received acknowledgement from relays that their Group Event with the `Commit` has been received before publishing the Welcome Event.
 
@@ -234,7 +234,7 @@ Clients creating the Welcome Event SHOULD wait until they have received acknowle
 - The `e` tag is required and is the ID of the KeyPackage Event used to add the user to the group.
 - The `relays` tag is required and is a list of relays clients should query for Group Events.
 
-Welcome Events are then sealed and gift-wrapped as detailed in [NIP-59](59.md) before being published. Like all events that are sealed and gift-wrapped, `kind: 444` events MUST never be signed. This ensures that if they were ever leaked they would not be publishable to relays.
+Welcome Events are then sealed and gift-wrapped as detailed in [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md) before being published. Like all events that are sealed and gift-wrapped, `kind: 444` events MUST never be signed. This ensures that if they were ever leaked they would not be publishable to relays.
 
 #### Large Groups
 
@@ -259,7 +259,7 @@ Group Events are published using an ephemeral Nostr keypair to obfuscate the num
    "sig": <signed with ephemeral sender key>
 }
 ```
-- The `content` field is a [tls-style](https://www.rfc-editor.org/rfc/rfc9420.html#name-the-message-mls-media-type) serialized [`MLSMessage`](https://www.rfc-editor.org/rfc/rfc9420.html#section-6-4) object which is then encrypted according to [NIP-44](44.md). However, instead of using the sender and receivers keys to derive a `conversation_key`, the NIP-44 encryption is done using a Nostr keypair generated from the MLS [`exporter_secret`](https://www.rfc-editor.org/rfc/rfc9420.html#section-8.5) to calulate the `conversation_key` value. Essentially, you use the hex-encoded `exporter_secret` value as the private key (used as the sender key), calculate the public key for that private key (used as the receiver key), and then proceed with the standard NIP-44 scheme to encrypt and decrypt messages.
+- The `content` field is a [tls-style](https://www.rfc-editor.org/rfc/rfc9420.html#name-the-message-mls-media-type) serialized [`MLSMessage`](https://www.rfc-editor.org/rfc/rfc9420.html#section-6-4) object which is then encrypted according to [NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md). However, instead of using the sender and receivers keys to derive a `conversation_key`, the NIP-44 encryption is done using a Nostr keypair generated from the MLS [`exporter_secret`](https://www.rfc-editor.org/rfc/rfc9420.html#section-8.5) to calulate the `conversation_key` value. Essentially, you use the hex-encoded `exporter_secret` value as the private key (used as the sender key), calculate the public key for that private key (used as the receiver key), and then proceed with the standard NIP-44 scheme to encrypt and decrypt messages.
 - The `exporter_secret` value should be generated with a 32-byte length and labeled `nostr`. This `exporter_secret` value is rotated on each new epoch in the group. Clients should generate a new 32-byte value each time they process a valid `Commit` message.
 - The `pubkey` is the hex-encoded public key of the ephemeral sender.
 - The `h` tag is the nostr group ID value (from the Marmot Group Data Extension).

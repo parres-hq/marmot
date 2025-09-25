@@ -35,7 +35,7 @@ Marmot maintains strong security guarantees through MLS:
 Before implementing Marmot, you should have:
 
 - **Nostr Knowledge**: Understanding of keys, kinds, tags, and relays ([Learn Nostr](https://github.com/nostr-protocol/nostr))
-- **MLS Basics**: Familiarity with the MLS protocol concepts ([MLS Overview](https://www.ietf.org/archive/id/draft-ietf-mls-architecture-13.html), [ELI5 Video](https://www.youtube.com/watch?v=FESp2LHd42U))
+- **MLS Basics**: Familiarity with the MLS protocol concepts ([MLS Overview](https://www.rfc-editor.org/rfc/rfc9750.html), [ELI5 Video](https://www.youtube.com/watch?v=FESp2LHd42U))
 
 ### Core MIPs (Required)
 
