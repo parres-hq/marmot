@@ -37,16 +37,36 @@ Before implementing Marmot, you should have:
 - **Nostr Knowledge**: Understanding of keys, kinds, tags, and relays ([Learn Nostr](https://github.com/nostr-protocol/nostr))
 - **MLS Basics**: Familiarity with the MLS protocol concepts ([MLS Overview](https://www.rfc-editor.org/rfc/rfc9750.html), [ELI5 Video](https://www.youtube.com/watch?v=FESp2LHd42U))
 
+### Experimental
+
+**⚠️ Important: Marmot is currently experimental software.**
+
+While the protocol is based on proven cryptographic foundations (MLS and Nostr), the Marmot specification itself is still under active development. Key considerations:
+
+- **Breaking Changes**: The protocol may undergo breaking changes as we refine the specification
+- **Security Review**: The protocol has not yet undergone formal security auditing
+- **Implementation Maturity**: Reference implementations are functional but may contain bugs
+- **Interoperability**: Cross-client compatibility is a goal but not yet fully tested
+
+**Use in Production**: We recommend against using Marmot for production applications until the protocol reaches stable status. Current implementations are suitable for:
+- Research and development
+- Proof-of-concept applications
+- Contributing to protocol development
+- Educational purposes
+
+We welcome feedback, security analysis, and contributions to help mature the protocol toward production readiness.
+
+
 ### Marmot Implementation Proposals (MIPs)
 
 Required MIPs must be implemented for Marmot compatibility. Implementations may choose which optional MIPs to implement based on their application's needs.
 
 | MIP | Description | Status | Required? |
 |-----|-------------|--------|----------|
-| [MIP-00](00.md) | Credentials & Key Packages | ✅ Stable | ✅ Yes |
-| [MIP-01](01.md) | Group Construction & Marmot Group Data Extension | ✅ Stable | ✅ Yes |
-| [MIP-02](02.md) | Welcome Events | ✅ Stable | ✅ Yes |
-| [MIP-03](03.md) | Group Messages | ✅ Stable | ✅ Yes |
+| [MIP-00](00.md) | Credentials & Key Packages | 👀 Review | ✅ Yes |
+| [MIP-01](01.md) | Group Construction & Marmot Group Data Extension | 👀 Review | ✅ Yes |
+| [MIP-02](02.md) | Welcome Events | 👀 Review | ✅ Yes |
+| [MIP-03](03.md) | Group Messages | 👀 Review | ✅ Yes |
 | [MIP-04](04.md) | Encrypted Media | 🚧 Draft | ❌ No |
 
 
