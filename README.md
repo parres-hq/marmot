@@ -37,24 +37,17 @@ Before implementing Marmot, you should have:
 - **Nostr Knowledge**: Understanding of keys, kinds, tags, and relays ([Learn Nostr](https://github.com/nostr-protocol/nostr))
 - **MLS Basics**: Familiarity with the MLS protocol concepts ([MLS Overview](https://www.rfc-editor.org/rfc/rfc9750.html), [ELI5 Video](https://www.youtube.com/watch?v=FESp2LHd42U))
 
-### Core MIPs (Required)
+### Marmot Implementation Proposals (MIPs)
 
-These specifications **must** be implemented for Marmot compatibility:
+Required MIPs must be implemented for Marmot compatibility. Implementations may choose which optional MIPs to implement based on their application's needs.
 
-| MIP | Description | Status |
-|-----|-------------|--------|
-| [MIP-00](00.md) | Credentials & Key Packages | ✅ Stable |
-| [MIP-01](01.md) | Group Construction & Marmot Group Data Extension | ✅ Stable |
-| [MIP-02](02.md) | Welcome Events | ✅ Stable |
-| [MIP-03](03.md) | Group Messages | ✅ Stable |
-
-### Optional MIPs
-
-Implement these based on your application's needs:
-
-| MIP | Description | Status |
-|-----|-------------|--------|
-| [MIP-04](04.md) | Encrypted Media | 🚧 Draft |
+| MIP | Description | Status | Required? |
+|-----|-------------|--------|----------|
+| [MIP-00](00.md) | Credentials & Key Packages | ✅ Stable | ✅ Yes |
+| [MIP-01](01.md) | Group Construction & Marmot Group Data Extension | ✅ Stable | ✅ Yes |
+| [MIP-02](02.md) | Welcome Events | ✅ Stable | ✅ Yes |
+| [MIP-03](03.md) | Group Messages | ✅ Stable | ✅ Yes |
+| [MIP-04](04.md) | Encrypted Media | 🚧 Draft | ❌ No |
 
 
 ## Protocol Implementations
