@@ -52,7 +52,8 @@ Required MIPs must be implemented for Marmot compatibility. Implementations may 
 
 ## Protocol Implementations
 
-- [MDK - Marmot Development Kit](https://github.com/parres-hq/mdk): Official implementation in Rust
+- [MDK - Marmot Development Kit](https://github.com/parres-hq/mdk): Reference implementation in Rust
+- [marmot-ts](https://github.com/parres-hq/marmot-ts): TypeScript implementation (still very early, please contribute!)
 
 ## Projects using Marmot
 
