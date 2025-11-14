@@ -5,14 +5,12 @@ This document provides comprehensive data flow diagrams and architectural overvi
 ## Table of Contents
 
 1. [Actor Definitions](#actor-definitions)
-2. [Event Types and Message Structure](#event-types-and-message-structure)
-3. [Key Package Distribution Flow](#key-package-distribution-flow)
-4. [Group Creation Flow](#group-creation-flow)
-5. [Member Invitation Flow](#member-invitation-flow)
-6. [Group Messaging Flow](#group-messaging-flow)
-7. [Encrypted Media Sharing Flow](#encrypted-media-sharing-flow)
-8. [Group Administration Flow](#group-administration-flow)
-9. [Cryptographic Protection Layers](#cryptographic-protection-layers)
+2. [Key Package Distribution Flow](#key-package-distribution-flow)
+3. [Group Creation Flow](#group-creation-flow)
+4. [Member Invitation Flow](#member-invitation-flow)
+5. [Group Messaging Flow](#group-messaging-flow)
+6. [Group Administration Flow](#group-administration-flow)
+7. [Cryptographic Protection Layers](#cryptographic-protection-layers)
 
 ---
 
