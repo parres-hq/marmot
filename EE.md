@@ -166,8 +166,8 @@ In most cases, it's assumed that clients implementing this NIP will manage the c
     "tags": [
         ["mls_protocol_version", "1.0"],
         ["ciphersuite", <MLS CipherSuite ID value e.g. "0x0001">],
-        ["extensions", <An array of MLS Extension ID values e.g. "0x0001, 0x0002">],
-        ["client", <client name>, <handler event id>, <optional relay url>],
+        ["extensions", <An array of MLS Extension ID values e.g. "0xf2ee", "0x000a">],
+        ["client", <client name>],
         ["relays", <array of relay urls>],
         ["-"]
     ],
@@ -179,7 +179,7 @@ In most cases, it's assumed that clients implementing this NIP will manage the c
 - The `mls_protocol_version` tag is required and MUST be the version number of the MLS protocol version being used. For now, this is `1.0`.
 - The `ciphersuite` tag is the value of the MLS ciphersuite that this KeyPackage Event supports. [Read more about ciphersuites in MLS](https://www.rfc-editor.org/rfc/rfc9420.html#name-mls-cipher-suites).
 - The `extensions` tag is an array of MLS extension IDs that this KeyPackage Event supports. [Read more about MLS extensions](https://www.rfc-editor.org/rfc/rfc9420.html#name-extensions).
-- (optional) The `client` tag helps other clients manage the user experience when they receive group invites but don't have access to the signing key.
+- (optional) The `client` tag helps other clients manage the user experience when they receive group invites but don't have access to the signing key. Format: `["client", "<name>"]`
 - The `relays` tag identifies each of the relays that the client will attempt to publish this KeyPackage event. This allows for deletion of KeyPackage Events at a later date.
 - (optional) The `-` tag can be used to ensure that KeyPackage Events are only published by their authenticated author. Read more in [NIP-70](https://github.com/nostr-protocol/nips/blob/master/70.md)
 
