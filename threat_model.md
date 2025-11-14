@@ -1,15 +1,5 @@
 # Marmot Threat Model and Security Considerations
 
-**Version:** 1.0
-**Date:** November 11, 2025
-**Status:** Living Document
-
-## Document History
-
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | November 11, 2025 | Initial version covering all MIPs (00-04) |
-
 ## Abstract
 
 This document provides a comprehensive threat model and security considerations for the Marmot protocol, which implements the Messaging Layer Security (MLS) protocol on top of the Nostr decentralized relay and identity network. This document identifies potential threats, attack vectors, and security considerations based on the Marmot Implementation Proposals (MIPs) and MLS protocol specifications. The goal is to communicate security assurances and limitations to help users understand what protections Marmot provides and what risks remain.
@@ -41,7 +31,8 @@ This document provides a comprehensive threat model and security considerations 
    - 3.2 [Implementation Requirements](#32-implementation-requirements)
    - 3.3 [Best Practices](#33-best-practices)
    - 3.4 [User Recommendations](#34-user-recommendations)
-   - 3.5 [Security Properties Summary](#35-security-properties-summary)
+   - 3.5 [Testing Requirements](#35-testing-requirements)
+   - 3.6 [Security Properties Summary](#36-security-properties-summary)
 4. [References](#4-references)
 5. [Acknowledgments](#5-acknowledgments)
 
@@ -79,9 +70,9 @@ Marmot aims to provide:
 - **Message confidentiality**: Protection against unauthorized reading of messages through MLS symmetric encryption
 - **Message integrity**: Protection against unauthorized modification via cryptographic signatures
 - **Authentication**: Verification of message origin and group membership through MLS credentials and Nostr identities
-- **Forward secrecy**: Past messages remain secure after member removal and key deletion (See MIP-00 Signing Key Rotation)
+- **Forward secrecy**: Past messages remain secure after member removal and key deletion (See [MIP-00](00.md) Signing Key Rotation)
 - **Post-compromise security**: Recovery from compromise through key updates and epoch transitions
-- **Metadata privacy**: Minimization of observable information through ephemeral keypairs and double encryption (See MIP-03)
+- **Metadata privacy**: Minimization of observable information through ephemeral keypairs and double encryption (See [MIP-03](03.md))
 
 #### What Marmot Does NOT Provide
 
@@ -107,7 +98,7 @@ Understanding what entities users must trust is critical for evaluating Marmot's
    - Users must trust their device OS, hardware, and security features
 
 2. **Group administrators**:
-   - Admins control group membership, configuration, and can modify the Marmot Group Data Extension (See MIP-01)
+   - Admins control group membership, configuration, and can modify the Marmot Group Data Extension (See [MIP-01](01.md))
    - Malicious admins can add unauthorized members, remove legitimate members, or disrupt groups
    - Use multiple admins for checks and balances
 
@@ -132,10 +123,10 @@ Understanding what entities users must trust is critical for evaluating Marmot's
    - Relays CAN observe metadata, IP addresses, and timing patterns
 
 2. **Network observers**:
-   - Passive observers cannot decrypt traffic (TLS + MLS + NIP-44 encryption)
+   - Passive observers cannot decrypt traffic (TLS + MLS + [NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md) encryption)
    - Active attackers cannot forge or modify messages without detection
 
-3. **Storage providers** (for encrypted media, See MIP-04):
+3. **Storage providers** (for encrypted media, See [MIP-04](04.md)):
    - Content-addressed storage providers cannot decrypt media files
    - Storage addresses are hashes of encrypted content (effectively random)
    - Providers CAN observe access patterns and metadata
@@ -152,7 +143,7 @@ The primary trust boundaries in Marmot are:
 
 2. **Device boundary**: Each device has its own keys and must be explicitly added to groups. Device compromise affects only that device.
 
-3. **Admin privilege boundary**: Only users listed in the `admin_pubkeys` array can commit group state changes (See MIP-01 Marmot Group Data Extension).
+3. **Admin privilege boundary**: Only users listed in the `admin_pubkeys` array can commit group state changes (See [MIP-01](01.md) Marmot Group Data Extension).
 
 4. **Epoch boundary**: MLS epochs provide forward secrecy and post-compromise security boundaries. Key material rotates with epoch transitions.
 
@@ -177,12 +168,12 @@ Network observers include entities that can capture packets between clients and 
 **Observable Information**:
 - **Key Package events (kind: 443)**: Public signing keys, MLS credentials containing Nostr public keys, supported ciphersuites, and capabilities. This data is intentionally public and unencrypted.
 - **Key Package list events (kind: 10051)**: Relay URLs where users publish KeyPackages. This data is intentionally public.
-- **Welcome events (kind: 444)**: Gift-wrapped using NIP-59, appearing as kind: 1059 events. Observers cannot determine the payload is a Welcome message without the recipient's Nostr private key.
-- **Application Message events (kind: 445)**: Double-encrypted content (MLS symmetric encryption + NIP-44-derived encryption). Observers see encrypted content and ephemeral public keys but cannot decrypt without group secrets.
+- **Welcome events (kind: 444)**: Gift-wrapped using [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md), appearing as kind: 1059 events. Observers cannot determine the payload is a Welcome message without the recipient's Nostr private key.
+- **Application Message events (kind: 445)**: Double-encrypted content (MLS symmetric encryption + [NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md)-derived encryption). Observers see encrypted content and ephemeral public keys but cannot decrypt without group secrets.
 
 **Countermeasures**:
 - Use TLS for all WebSocket connections to relays
-- Gift-wrapping Welcome events (NIP-59) prevents identification of Welcome messages
+- Gift-wrapping Welcome events ([NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md)) prevents identification of Welcome messages
 - Ephemeral keypairs for kind: 445 events prevent sender correlation
 - Double encryption provides defense in depth
 
@@ -192,7 +183,8 @@ Network observers include entities that can capture packets between clients and 
 
 **Attack Scenarios**:
 
-**T.1.1 - Invalid Key Package Publication**
+#### T.1.1 - Invalid Key Package Publication
+
 - **Description**: Attackers publish many invalid KeyPackage events that clients must download and validate.
 - **Impact**: Resource exhaustion on clients attempting to process invalid KeyPackages.
 - **Countermeasures**:
@@ -200,32 +192,35 @@ Network observers include entities that can capture packets between clients and 
   - Relay filtering based on reputation
   - In practice, KeyPackage use is client-initiated, limiting exposure
 
-**T.1.2 - Key Package Credential Mismatch**
+#### T.1.2 - Key Package Credential Mismatch
+
 - **Description**: Attackers attempt to publish KeyPackages with mismatched credentials (Nostr pubkey in MLS credential doesn't match kind: 443 event pubkey).
 - **Prerequisites**: Attacker can publish events to relays.
 - **Impact**: Critical authentication bypass if clients don't validate credential matching. Attacker could impersonate other users in groups.
-- **Affected Components**: MIP-00 (KeyPackage Events), MLS Credentials
+- **Affected Components**: [MIP-00](00.md) (KeyPackage Events), MLS Credentials
 - **Countermeasures**:
-  - **CRITICAL**: Clients MUST validate that the Nostr public key in the MLS BasicCredential identity field matches the kind: 443 event's pubkey field (See MIP-00 Identity Requirements)
+  - **CRITICAL**: Clients MUST validate that the Nostr public key in the MLS BasicCredential identity field matches the kind: 443 event's pubkey field (See [MIP-00](00.md) Identity Requirements)
   - Cryptographic signatures prevent forgery on behalf of other users
-  - Event ID tamper-proofing (NIP-01) prevents content modification after publishing
+  - Event ID tamper-proofing ([NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md)) prevents content modification after publishing
 - **Residual Risk**: None if validation is properly implemented. This is a preventable vulnerability.
 
-**T.1.3 - Gift-Wrapped Event Spam (NIP-59)**
-- **Description**: Attackers publish large numbers of encrypted NIP-59 kind: 1059 events addressed to users, forcing decryption attempts.
+#### T.1.3 - Gift-Wrapped Event Spam (NIP-59)
+
+- **Description**: Attackers publish large numbers of encrypted [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md) kind: 1059 events addressed to users, forcing decryption attempts.
 - **Impact**: Resource exhaustion as users decrypt many events only to find invalid payloads. Affects Welcome messages (kind: 444).
 - **Countermeasures**:
-  - Relay-level spam protection (NIP-13 proof-of-work, NIP-42 authentication)
+  - Relay-level spam protection ([NIP-13](https://github.com/nostr-protocol/nips/blob/master/13.md) proof-of-work, [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md) authentication)
   - Client-side rate limiting
   - Note: Proof-of-work is asymmetric (mobile clients vs. server attackers) and not highly effective
-  - This is a fundamental limitation of NIP-59 beyond Marmot's scope
+  - This is a fundamental limitation of [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md) beyond Marmot's scope
 
-**T.1.4 - Application Message Spam**
+#### T.1.4 - Application Message Spam
+
 - **Description**: Attackers publish kind: 445 events with valid-looking `h` tags for known groups but invalid ciphertexts.
 - **Impact**: Clients must download and attempt decryption before detecting invalidity, wasting resources.
 - **Countermeasures**:
   - Client-side filtering based on event signatures
-  - Use multiple `nostr_group_id` values per group
+  - Use multiple `nostr_group_id` values per group to distribute attack surface
   - Rotate group IDs periodically to limit exposure
 
 ### 2.2 Relay Operators
@@ -238,7 +233,8 @@ Relay operators have similar capabilities to network observers but with addition
 
 **Attack Scenarios**:
 
-**T.2.1 - Group Membership Inference**
+#### T.2.1 - Group Membership Inference
+
 - **Description**: Relay operators correlate IP addresses that publish/subscribe to the same `nostr_group_id` values.
 - **Impact**: Potential inference of group membership based on IP address overlap.
 - **Countermeasures**:
@@ -247,7 +243,8 @@ Relay operators have similar capabilities to network observers but with addition
   - Rotate `nostr_group_id` values periodically
   - Use different relays for different groups
 
-**T.2.2 - Timing Correlation**
+#### T.2.2 - Timing Correlation
+
 - **Description**: Relay operators correlate event publication timing with subscription patterns.
 - **Impact**: Potential inference of message authorship or group activity patterns.
 - **Countermeasures**:
@@ -255,13 +252,16 @@ Relay operators have similar capabilities to network observers but with addition
   - Use cover traffic to obscure activity patterns
   - Distribute events across multiple relays with varying timing
 
-**T.2.3 - Relay Censorship**
-- **Description**: Malicious relay operators drop or censor Marmot events.
-- **Impact**: Message delivery failures, group state desynchronization.
+#### T.2.3 - Relay Censorship
+
+- **Description**: Malicious relay operators drop or censor Marmot events, either broadly or selectively targeting specific users or groups.
+- **Impact**: Message delivery failures, group state desynchronization. Selective censorship is particularly dangerous as it may appear as intermittent network issues.
 - **Countermeasures**:
   - Use multiple relays per group (redundancy)
   - Implement relay failover in clients
   - Monitor relay reliability and switch when necessary
+  - Clients SHOULD monitor message delivery rates per relay and automatically remove consistently failing relays
+  - Compare delivery success across relays to detect selective censorship
 
 ### 2.3 Group Members
 
@@ -273,7 +273,8 @@ Group members have access to all group state, including cryptographic secrets an
 
 **Attack Scenarios**:
 
-**T.3.1 - Message Spam**
+#### T.3.1 - Message Spam
+
 - **Description**: Malicious members send large volumes of valid encrypted messages.
 - **Impact**: Resource exhaustion, degraded user experience.
 - **Countermeasures**:
@@ -281,7 +282,8 @@ Group members have access to all group state, including cryptographic secrets an
   - Client-side rate limiting and message filtering
   - No cryptographic prevention without member removal
 
-**T.3.2 - Metadata Exposure**
+#### T.3.2 - Metadata Exposure
+
 - **Description**: Members share group metadata (`nostr_group_id`, relay list, admin list) with non-members.
 - **Impact**: Information leakage about group structure and configuration.
 - **Countermeasures**:
@@ -289,7 +291,8 @@ Group members have access to all group state, including cryptographic secrets an
   - Trust model assumes members won't leak metadata
   - Rotate `nostr_group_id` if compromise suspected
 
-**T.3.3 - Group State Disclosure**
+#### T.3.3 - Group State Disclosure
+
 - **Description**: Members share ratchet tree structure and public keys with non-members.
 - **Impact**: Correlation of group membership with public Nostr identities.
 - **Countermeasures**:
@@ -297,7 +300,8 @@ Group members have access to all group state, including cryptographic secrets an
   - Public keys are already public on Nostr network
   - Ephemeral keypairs for messages prevent sender correlation
 
-**T.3.4 - Historical Message Retention**
+#### T.3.4 - Historical Message Retention
+
 - **Description**: Removed members retain copies of all messages received while in the group.
 - **Impact**: Forward secrecy does not apply to historical messages for removed members.
 - **Countermeasures**:
@@ -305,7 +309,8 @@ Group members have access to all group state, including cryptographic secrets an
   - For sensitive conversations, rotate group membership periodically
   - Remove members who no longer need access promptly
 
-**T.3.5 - Fake Proposals**
+#### T.3.5 - Fake Proposals
+
 - **Description**: Members create proposals that waste bandwidth and processing time.
 - **Impact**: Resource exhaustion, though proposals require admin commitment to take effect.
 - **Countermeasures**:
@@ -323,7 +328,8 @@ Group admins have all member capabilities plus additional privileges to modify g
 
 **Attack Scenarios**:
 
-**T.4.1 - Unauthorized Member Addition**
+#### T.4.1 - Unauthorized Member Addition
+
 - **Description**: Admins add unauthorized users to private groups.
 - **Impact**: Privacy breach, potential information leakage.
 - **Countermeasures**:
@@ -332,7 +338,8 @@ Group admins have all member capabilities plus additional privileges to modify g
   - Users should carefully vet admin privileges
   - Members can leave and create new groups without malicious admin
 
-**T.4.2 - Legitimate Member Removal**
+#### T.4.2 - Legitimate Member Removal
+
 - **Description**: Admins remove legitimate members from groups.
 - **Impact**: Denial of service, group disruption.
 - **Countermeasures**:
@@ -340,7 +347,8 @@ Group admins have all member capabilities plus additional privileges to modify g
   - Admin action logging provides audit trail
   - Removed members can be re-invited by other admins
 
-**T.4.3 - Device Addition for Persistence**
+#### T.4.3 - Device Addition for Persistence
+
 - **Description**: Admins add their own additional devices to maintain access even if primary device is removed.
 - **Impact**: Persistent access despite device removal attempts.
 - **Countermeasures**:
@@ -348,7 +356,8 @@ Group admins have all member capabilities plus additional privileges to modify g
   - Monitor admin device additions
   - Rotate admin privileges if compromise suspected
 
-**T.4.4 - Marmot Group Data Extension Manipulation**
+#### T.4.4 - Marmot Group Data Extension Manipulation
+
 - **Description**: Admins modify extension fields to disrupt group operations.
   - Change `nostr_group_id` to cause message routing issues
   - Modify relay list to exclude relays or add malicious relays
@@ -362,7 +371,8 @@ Group admins have all member capabilities plus additional privileges to modify g
   - Multiple admins can reverse malicious changes
   - Version detection prevents unknown format attacks
 
-**T.4.5 - Group Destruction**
+#### T.4.5 - Group Destruction
+
 - **Description**: Admins remove all members or modify group state to be unusable.
 - **Impact**: Complete group destruction, data loss.
 - **Countermeasures**:
@@ -370,7 +380,8 @@ Group admins have all member capabilities plus additional privileges to modify g
   - Members can leave and create new groups
   - Client-side state validation prevents processing invalid states
 
-**T.4.6 - Commit Race Conditions**
+#### T.4.6 - Commit Race Conditions
+
 - **Description**: Multiple admins send competing Commits simultaneously, causing group state forks.
 - **Impact**: Group state desynchronization, message delivery failures.
 - **Countermeasures**:
@@ -379,7 +390,8 @@ Group admins have all member capabilities plus additional privileges to modify g
   - Clients SHOULD retain previous group states temporarily for recovery
   - Admin coordination reduces race conditions
 
-**T.4.7 - Rapid State Changes**
+#### T.4.7 - Rapid State Changes
+
 - **Description**: Admins commit updates at high frequency to overwhelm clients.
 - **Impact**: Resource exhaustion, client crashes.
 - **Countermeasures**:
@@ -387,7 +399,8 @@ Group admins have all member capabilities plus additional privileges to modify g
   - Admin removal if behavior detected
   - Client warnings for rapid admin actions
 
-**T.4.8 - Malformed Proposal Commits**
+#### T.4.8 - Malformed Proposal Commits
+
 - **Description**: Admins commit malformed proposals causing client errors.
 - **Impact**: Client crashes, group state corruption.
 - **Countermeasures**:
@@ -407,7 +420,8 @@ A compromised client device represents a severe threat with access to all stored
 
 **Attack Scenarios**:
 
-**T.5.1 - Key Material Exposure**
+#### T.5.1 - Key Material Exposure
+
 - **Description**: Attackers access all MLS private keys, Nostr private keys, and derived secrets stored on device.
 - **Impact**: Complete compromise of user's cryptographic identity and group access.
 - **Countermeasures**:
@@ -416,7 +430,8 @@ A compromised client device represents a severe threat with access to all stored
   - Secure enclaves or hardware security modules (HSM)
   - Key rotation and re-authentication mechanisms
 
-**T.5.2 - Message Decryption**
+#### T.5.2 - Message Decryption
+
 - **Description**: Attackers decrypt all messages sent to groups the compromised device is a member of.
 - **Impact**: Complete loss of message confidentiality for affected groups.
 - **Countermeasures**:
@@ -424,7 +439,8 @@ A compromised client device represents a severe threat with access to all stored
   - MLS post-compromise security: after removal and key updates, attacker cannot decrypt new messages
   - Forward secrecy: past messages remain secure if device was removed previously
 
-**T.5.3 - Message Forgery**
+#### T.5.3 - Message Forgery
+
 - **Description**: Attackers send messages as the compromised user to any groups they're a member of.
 - **Impact**: Impersonation, false information dissemination.
 - **Countermeasures**:
@@ -432,7 +448,8 @@ A compromised client device represents a severe threat with access to all stored
   - MLS authentication prevents forgery after device removal
   - Group members can detect anomalous behavior
 
-**T.5.4 - Identity Theft**
+#### T.5.4 - Identity Theft
+
 - **Description**: Attackers use the user's Nostr private key to impersonate them across the Nostr network.
 - **Impact**: Complete identity compromise beyond Marmot groups.
 - **Countermeasures**:
@@ -440,7 +457,8 @@ A compromised client device represents a severe threat with access to all stored
   - Rotate Nostr keys if compromise suspected (affects all Nostr usage)
   - Device security prevents initial compromise
 
-**T.5.5 - Device Addition**
+#### T.5.5 - Device Addition
+
 - **Description**: Attackers add additional devices to groups on behalf of the user.
 - **Impact**: Persistent access even if primary device is removed.
 - **Countermeasures**:
@@ -448,7 +466,8 @@ A compromised client device represents a severe threat with access to all stored
   - Remove unauthorized devices immediately
   - Use device management features to track authorized devices
 
-**T.5.6 - Historical Message Access**
+#### T.5.6 - Historical Message Access
+
 - **Description**: Attackers access historical messages stored on device (depending on retention policy).
 - **Impact**: Exposure of past conversations.
 - **Countermeasures**:
@@ -456,6 +475,28 @@ A compromised client device represents a severe threat with access to all stored
   - Encrypt message storage
   - Delete messages when no longer needed
   - Forward secrecy limits exposure if device was removed previously
+
+#### T.5.7 - Nostr Key Compromise Cross-Application Impact
+
+- **Description**: Unlike device-specific MLS keys, Nostr private keys control identity across ALL Nostr applications (social media, payments, lightning addresses, etc.), not just Marmot groups.
+- **Impact**: Compromise extends far beyond Marmot - attacker can impersonate user across entire Nostr ecosystem, post on behalf of user, access DMs, potentially access funds, and more. Key rotation on Nostr is more complex than MLS key rotation and affects all applications.
+- **Countermeasures**:
+  - Consider using dedicated Nostr identities specifically for Marmot if high security is required
+  - Use separate keys for financial vs. social applications when possible
+  - Document this risk clearly in user-facing materials
+  - Understand that Nostr key compromise has ecosystem-wide implications
+  - Hardware security modules (HSM) or secure enclaves strongly recommended for Nostr keys
+
+#### T.5.8 - Partial Device Compromise (Memory-only)
+
+- **Description**: Attacker gains temporary access to device memory (cold boot attack, memory dump, process inspection) without persistent access to storage.
+- **Impact**: Can extract keys currently in memory but not persistent storage. Shorter exposure window than full device compromise.
+- **Countermeasures**:
+  - Use memory protection features (iOS Data Protection, Android KeyStore, secure enclaves)
+  - Clear sensitive data from memory when not in use
+  - Use secure enclaves when available to minimize key exposure in application memory
+  - Short-lived key caching reduces exposure window
+  - Lock devices when not in use to prevent physical memory access
 
 ### 2.6 Forward Secrecy and Post-Compromise Security
 
@@ -467,22 +508,25 @@ MLS provides specific security guarantees related to key compromise, but with im
 
 **Attack Scenarios**:
 
-**T.6.1 - Forward Secrecy Window**
+#### T.6.1 - Forward Secrecy Window
+
 - **Description**: Forward secrecy only applies after a member is removed from the group and their local state is deleted. A compromised member can retain all messages they received while in the group.
 - **Impact**: Historical messages remain accessible to compromised members.
 - **Countermeasures**:
   - Members who leave groups voluntarily should delete local group state
   - For sensitive conversations, rotate group membership periodically
   - Remove members who no longer need access promptly
-  - Note: Forward secrecy for encrypted media (MIP-04) follows MLS epoch changes, meaning historical media becomes inaccessible after epoch transitions
+  - Note: Forward secrecy for encrypted media ([MIP-04](04.md)) follows MLS epoch changes, meaning historical media becomes inaccessible after epoch transitions
 
-**T.6.2 - Group Image Forward Secrecy**
-- **Description**: Group images (MIP-01) persist across MLS epochs, unlike chat media which rotates with epochs.
+#### T.6.2 - Group Image Forward Secrecy
+
+- **Description**: Group images ([MIP-01](01.md)) persist across MLS epochs, unlike chat media which rotates with epochs. This is by design to ensure consistency across epochs.
 - **Impact**: Historical group images remain accessible to removed members who had access when images were set.
 - **Countermeasures**:
-  - Group images are encrypted but keys persist in extension
+  - Group images are encrypted but keys persist in extension for consistency
   - Update group images when members are removed if needed
   - Understand that group images have different forward secrecy properties than messages
+  - This trade-off enables reliable group image display without re-fetching
 
 #### 2.6.2 Post-Compromise Security
 
@@ -490,33 +534,53 @@ MLS provides specific security guarantees related to key compromise, but with im
 
 **Attack Scenarios**:
 
-**T.6.3 - PCS Recovery Window**
+#### T.6.3 - PCS Recovery Window
+
 - **Description**: Post-Compromise Security (PCS) requires not just removing the compromised member, but also that remaining members process the Commit and update to the new epoch. Each member achieves PCS independently as soon as they apply the Commit. Offline members create a recovery window where they remain vulnerable.
 - **Prerequisites**: Compromised member has been removed via admin Commit, but some members haven't processed it yet.
 - **Impact**: Compromised keys remain useful for attacking members who haven't processed the Commit yet. Attacker can decrypt messages sent by offline members during the window.
-- **Affected Components**: MLS epoch transitions, MIP-03 (Commit Messages)
+- **Affected Components**: MLS epoch transitions, [MIP-03](03.md) (Commit Messages)
 - **Countermeasures**:
-  - Remove compromised members immediately upon detection through admin Commit (See MIP-03 Commit Messages)
+  - Remove compromised members immediately upon detection through admin Commit (See [MIP-03](03.md) Commit Messages)
   - **Recovery timing**: Each member achieves PCS as soon as they apply the Commit that advances the epoch - this happens immediately upon processing, not at a future time
+  - **Note**: PCS is achieved per-member, not per-group. Member Alice achieves PCS immediately upon processing the Commit, even if Member Bob is still offline. However, messages from Bob during his offline period remain vulnerable since Bob is still using compromised epoch secrets.
   - Offline members catch up when they reconnect and process pending Commits
   - Client implementations SHOULD prioritize processing Commits upon reconnection
   - For critical situations, wait for majority of members to confirm epoch update before resuming sensitive communications
 - **Residual Risk**: Offline members remain vulnerable until they process the Commit. No way to force immediate synchronization in asynchronous system.
 
-**T.6.4 - Key Update Requirements**
+#### T.6.4 - Key Update Requirements
+
 - **Description**: PCS requires key material updates through MLS Commits that advance the epoch. Each Commit that modifies group membership or updates keys generates fresh cryptographic secrets. Groups without regular updates have delayed PCS recovery because they remain in the same epoch longer.
 - **Prerequisites**: Group rarely updates keys or modifies membership.
 - **Impact**: Longer epochs mean extended windows between PCS opportunities. Compromised keys remain useful for longer periods.
-- **Affected Components**: MIP-00 (Signing Key Rotation), MLS epoch management
+- **Affected Components**: [MIP-00](00.md) (Signing Key Rotation), MLS epoch management
 - **Countermeasures**:
-  - **RECOMMENDED**: Rotate signing keys weekly in all active groups (See MIP-00 Signing Key Rotation)
+  - **RECOMMENDED**: Rotate signing keys weekly in all active groups (See [MIP-00](00.md) Signing Key Rotation)
   - Any admin Commit advances the epoch, providing PCS - member additions, removals, or updates all trigger epoch transitions
   - Prompt processing of Commits that remove compromised members takes priority
   - Client UI SHOULD make key rotation easy and visible to encourage regular updates
   - Consider implementing automatic periodic key rotation for high-security groups
 - **Residual Risk**: PCS window depends on update frequency. Weekly rotation provides reasonable balance between security and usability.
 
-### 2.7 Key Package Security (MIP-00)
+#### 2.6.3 Key Rotation Comparison
+
+Different types of keys in Marmot have different rotation characteristics:
+
+| Key Type | Rotation Mechanism | Rotation Frequency | Impact Scope |
+|----------|-------------------|-------------------|--------------|
+| **MLS Signing Keys** | Update proposals ([MIP-00](00.md)) | Recommended: Weekly | Single group |
+| **MLS Encryption Keys** | Automatic with epoch transitions | Every Commit | Single group |
+| **Nostr Private Keys** | Manual key migration | Rare/Never | All Nostr applications |
+| **Ephemeral Keypairs** | Fresh generation per message | Every message | Single message |
+
+**Important Notes**:
+- **MLS Signing Keys**: Rotated via Update proposals within each group independently. Weekly rotation recommended for security.
+- **MLS Encryption Keys**: Automatically rotated with every epoch transition (any Commit that modifies membership or updates keys).
+- **Nostr Keys**: Identity keys that control user identity across ALL Nostr applications. Rotation affects entire Nostr ecosystem and should be done carefully.
+- **Ephemeral Keypairs**: Used for kind: 445 event encryption. Must be unique per message to maintain privacy guarantees.
+
+### 2.7 Key Package Security ([MIP-00](00.md))
 
 Key packages enable asynchronous group invitations and have specific security considerations.
 
@@ -524,61 +588,69 @@ Key packages enable asynchronous group invitations and have specific security co
 
 **Attack Scenarios**:
 
-**T.7.1 - Last Resort KeyPackage Reuse**
+#### T.7.1 - Last Resort KeyPackage Reuse
+
 - **Description**: Last resort KeyPackages can be reused, creating a window where a compromised KeyPackage could be used multiple times for group invitations.
 - **Prerequisites**: KeyPackage marked with last_resort extension is used multiple times.
 - **Impact**: Persistent attack vector if KeyPackage is compromised. Multiple groups could be affected by single key compromise.
-- **Affected Components**: MIP-00 (KeyPackage Consumption and Reuse)
+- **Affected Components**: [MIP-00](00.md) (KeyPackage Consumption and Reuse)
 - **Countermeasures**:
-  - **CRITICAL**: Clients MUST rotate signing keys within one week after using last resort KeyPackages (See MIP-00 Signing Key Rotation)
+  - **CRITICAL**: Clients MUST rotate signing keys within one week after using last resort KeyPackages (See [MIP-00](00.md) Signing Key Rotation)
   - Best practice: Rotate signing keys within 24-48 hours of last resort KeyPackage use
+  - Last resort packages SHOULD NOT be deleted immediately (they're meant to be reused), but SHOULD be deleted after fresh packages are published
   - Retain private keys for all groups to enable rotation
   - Monitor for unexpected or excessive KeyPackage usage
   - Publish fresh KeyPackages regularly to avoid last resort usage
 - **Residual Risk**: Window of vulnerability exists between KeyPackage use and key rotation. Minimize by rotating quickly.
 
-**T.7.2 - Long-Lived Signing Keys**
+#### T.7.2 - Long-Lived Signing Keys
+
 - **Description**: Signing keys that aren't rotated regularly increase compromise impact and extend the window for post-compromise attacks.
 - **Prerequisites**: User doesn't rotate signing keys for extended periods.
 - **Impact**: Extended exposure window if keys are compromised. Compromised keys remain useful for longer periods.
-- **Affected Components**: MIP-00 (Signing Key Rotation), MLS Update Proposals
+- **Affected Components**: [MIP-00](00.md) (Signing Key Rotation), MLS Update Proposals
 - **Countermeasures**:
-  - **RECOMMENDED**: Rotate signing keys weekly in all active groups (See MIP-00 Signing Key Rotation)
+  - **RECOMMENDED**: Rotate signing keys weekly in all active groups (See [MIP-00](00.md) Signing Key Rotation)
   - Client implementations SHOULD prompt for rotation and make it user-friendly
   - Rotate keys immediately after suspected compromise
   - Consider automatic rotation for high-security use cases
 - **Residual Risk**: Some exposure window exists even with regular rotation. Weekly rotation balances security and usability.
 
-**T.7.3 - KeyPackage Deletion Failures**
-- **Description**: KeyPackages might not be properly deleted from relays, leaving stale invitation vectors.
+#### T.7.3 - KeyPackage Deletion Failures
+
+- **Description**: KeyPackages might not be properly deleted from relays, leaving stale invitation vectors. Deletion timing differs for last resort vs. non-last-resort packages.
 - **Impact**: Old KeyPackages could be used if not properly deleted.
 - **Countermeasures**:
-  - Clients SHOULD delete KeyPackages after successful group join
+  - Clients SHOULD delete non-last-resort KeyPackages after successful group join
+  - Last resort KeyPackages SHOULD be deleted after fresh packages are published, not immediately after use
   - Do NOT delete if Welcome processing fails (to allow retry)
   - Monitor relay deletion confirmations
 
-**T.7.4 - Welcome Event Timing Race Conditions**
+#### T.7.4 - Welcome Event Timing Race Conditions
+
 - **Description**: Welcome events sent before Commits are confirmed could reference stale group state.
 - **Impact**: New members might join with incorrect group state.
 - **Countermeasures**:
-  - **CRITICAL**: Clients MUST wait for relay confirmation of Commit before sending Welcome (MIP-02)
+  - **CRITICAL**: Clients MUST wait for relay confirmation of Commit before sending Welcome ([MIP-02](02.md))
   - Ensure group state change is committed before inviting
   - Validate Welcome against current group state
 
-**T.7.5 - Large Group Welcome Limitations**
+#### T.7.5 - Large Group Welcome Limitations
+
 - **Description**: Welcome events for large groups may exceed Nostr relay message size limits (commonly 64KB-128KB). The actual threshold depends on ratchet tree structure, ciphersuite overhead, and extension data. ~150 participants is a conservative estimate.
 - **Prerequisites**: Group size grows beyond relay message size limits.
 - **Impact**: Denial of service for large groups, inability to add new members through standard Welcome mechanism.
-- **Affected Components**: MIP-02 (Welcome Events), MLS Welcome objects
+- **Affected Components**: [MIP-02](02.md) (Welcome Events), MLS Welcome objects
 - **Countermeasures**:
-  - Monitor group size and Welcome event sizes during development
+  - Clients SHOULD actively monitor Welcome message sizes during testing and development
+  - Clients MAY implement warning thresholds (e.g., warn admins when group reaches 100 members)
   - ~150 participants is a conservative threshold - actual limits vary by relay and group configuration
-  - MLS protocol work underway on "light" client Welcome objects that don't require full ratchet tree (See MIP-02 Large Groups)
+  - MLS protocol work underway on "light" client Welcome objects that don't require full ratchet tree (See [MIP-02](02.md) Large Groups)
   - Consider implementing group size limits or splitting large groups until light Welcome support is available
   - Test with target relays to determine actual size limits
 - **Residual Risk**: Large groups fundamentally limited until light Welcome objects are standardized and implemented.
 
-### 2.8 Group Message Security (MIP-03)
+### 2.8 Group Message Security ([MIP-03](03.md))
 
 Group messages use double encryption and ephemeral keypairs for privacy.
 
@@ -586,27 +658,30 @@ Group messages use double encryption and ephemeral keypairs for privacy.
 
 **Attack Scenarios**:
 
-**T.8.1 - Ephemeral Keypair Reuse**
+#### T.8.1 - Ephemeral Keypair Reuse
+
 - **Description**: Clients might accidentally reuse ephemeral keypairs for kind: 445 events.
 - **Impact**: Breaks privacy guarantees, enables sender correlation.
 - **Countermeasures**:
-  - **CRITICAL**: Never reuse ephemeral keypairs (MIP-03 requirement)
+  - **CRITICAL**: Never reuse ephemeral keypairs ([MIP-03](03.md) requirement)
   - Generate fresh keypair for each Group Event
   - Client implementations must enforce this
 
-**T.8.2 - Inner Event Signature Leakage**
+#### T.8.2 - Inner Event Signature Leakage
+
 - **Description**: Inner events (Nostr events inside MLS ApplicationMessages) that are signed with user's Nostr key could be published to public relays if leaked from compromised clients or through implementation bugs.
 - **Prerequisites**: Inner events contain valid signatures and could be extracted from encrypted envelopes.
 - **Impact**: Leaked events could be published to public relays, exposing group content to anyone. Most relays accept any validly-signed event, making published leaks irreversible.
-- **Affected Components**: MIP-03 (Application Messages, Security Requirements)
+- **Affected Components**: [MIP-03](03.md) (Application Messages, Security Requirements)
 - **Countermeasures**:
-  - **CRITICAL**: Inner events MUST remain unsigned - omit the `sig` field entirely (See MIP-03 Security Requirements)
+  - **CRITICAL**: Inner events MUST remain unsigned - omit the `sig` field entirely (See [MIP-03](03.md) Security Requirements)
   - Do NOT include `h` tags or other group identifiers in inner events
   - Without signatures, relays will reject leaked events as invalid, preventing publication
   - Clients MUST verify inner event pubkey matches MLS sender identity for authentication
 - **Residual Risk**: Minimal if properly implemented. Unsigned events cannot be published to standard Nostr relays.
 
-**T.8.3 - Exporter Secret Compromise**
+#### T.8.3 - Exporter Secret Compromise
+
 - **Description**: Compromise of `exporter_secret` for current epoch allows decryption of kind: 445 content field.
 - **Impact**: Partial decryption (still requires MLS symmetric keys for full decryption).
 - **Countermeasures**:
@@ -614,7 +689,17 @@ Group messages use double encryption and ephemeral keypairs for privacy.
   - Epoch rotation limits exposure window
   - Remove compromised members immediately
 
-### 2.9 Encrypted Media Security (MIP-04)
+#### T.8.4 - Message Replay Attacks
+
+- **Description**: Malicious relay or network attacker replays old kind: 445 messages.
+- **Impact**: Clients might process messages multiple times, causing UI confusion or logic errors.
+- **Countermeasures**:
+  - Clients SHOULD track processed message IDs (Nostr event IDs are unique)
+  - MLS provides epoch-based replay protection
+  - Client-side deduplication prevents duplicate processing
+  - Event ID uniqueness ensures same message cannot be replayed with same ID
+
+### 2.9 Encrypted Media Security ([MIP-04](04.md))
 
 Encrypted media sharing has specific security considerations beyond message encryption.
 
@@ -622,16 +707,18 @@ Encrypted media sharing has specific security considerations beyond message encr
 
 **Attack Scenarios**:
 
-**T.9.1 - Storage Provider Compromise**
-- **Description**: Encrypted media blobs stored on Blossom or other storage could be accessed if provider is compromised.
+#### T.9.1 - Storage Provider Compromise
+
+- **Description**: Encrypted media blobs stored on Blossom or other content-addressed storage could be accessed if provider is compromised.
 - **Impact**: While content remains encrypted, access patterns and metadata could be observed.
 - **Countermeasures**:
-  - Content-addressed storage (hash-based) prevents correlation
+  - Content-addressed storage (hash-based) prevents correlation - addresses are hashes of encrypted content (essentially random)
   - Encryption keys derived from MLS exporter secrets
   - Only current group members can decrypt
-  - Storage addresses are hashes of encrypted content (essentially random)
+  - Storage providers cannot determine content without decryption keys
 
-**T.9.2 - File Integrity Attacks**
+#### T.9.2 - File Integrity Attacks
+
 - **Description**: Attackers modify encrypted blobs or `imeta` tags to cause decryption failures or serve malicious content.
 - **Impact**: Denial of service, potential malicious content if decryption succeeds with wrong keys.
 - **Countermeasures**:
@@ -639,7 +726,8 @@ Encrypted media sharing has specific security considerations beyond message encr
   - AEAD associated data binding prevents metadata tampering
   - MIME type validation prevents content-type spoofing
 
-**T.9.3 - Version Compatibility Attacks**
+#### T.9.3 - Version Compatibility Attacks
+
 - **Description**: Clients encounter unknown encryption versions, potentially causing denial of service.
 - **Impact**: Inability to decrypt media, client crashes.
 - **Countermeasures**:
@@ -647,7 +735,8 @@ Encrypted media sharing has specific security considerations beyond message encr
   - Graceful handling of unknown versions with clear error messages
   - Version negotiation during group creation
 
-**T.9.4 - MIME Type Spoofing**
+#### T.9.4 - MIME Type Spoofing
+
 - **Description**: Attackers modify MIME types in `imeta` tags to cause clients to mishandle files.
 - **Impact**: Security vulnerabilities if clients trust MIME types without validation.
 - **Countermeasures**:
@@ -655,15 +744,17 @@ Encrypted media sharing has specific security considerations beyond message encr
   - MIME type canonicalization prevents format variations
   - Content-type validation after decryption
 
-**T.9.5 - Key Derivation Attacks**
+#### T.9.5 - Key Derivation Attacks
+
 - **Description**: Same file encrypted with different filenames must produce unique keys/nonces.
 - **Impact**: Nonce reuse could compromise ChaCha20-Poly1305 security.
 - **Countermeasures**:
-  - Filename inclusion in key/nonce derivation ensures uniqueness (MIP-04)
+  - Filename inclusion in key/nonce derivation ensures uniqueness ([MIP-04](04.md))
   - This is a security property, not a vulnerability
   - Prevents dangerous nonce reuse scenarios
 
-**T.9.6 - Forward Secrecy for Media**
+#### T.9.6 - Forward Secrecy for Media
+
 - **Description**: Historical media becomes inaccessible after MLS epoch changes, not just member removal.
 - **Impact**: Media forward secrecy differs from message forward secrecy.
 - **Countermeasures**:
@@ -679,23 +770,26 @@ Various DoS vectors exist that can degrade service quality or exhaust resources.
 
 **Attack Scenarios**:
 
-**T.10.1 - Gift-Wrapped Event Spam**
-- **Description**: Large volumes of encrypted NIP-59 events force decryption attempts.
+#### T.10.1 - Gift-Wrapped Event Spam
+
+- **Description**: Large volumes of encrypted [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md) events force decryption attempts.
 - **Impact**: Resource exhaustion, degraded performance.
 - **Countermeasures**:
-  - Relay-level spam protection (NIP-13 proof-of-work, NIP-42 authentication)
+  - Relay-level spam protection ([NIP-13](https://github.com/nostr-protocol/nips/blob/master/13.md) proof-of-work, [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md) authentication)
   - Client-side rate limiting
-  - Note: This is a fundamental limitation of NIP-59 beyond Marmot's scope (See also T.1.3)
+  - Note: This is a fundamental limitation of [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md) beyond Marmot's scope (See also T.1.3)
 
-**T.10.2 - Application Message Spam**
+#### T.10.2 - Application Message Spam
+
 - **Description**: Invalid kind: 445 events with valid-looking `h` tags for known groups but invalid ciphertexts.
 - **Impact**: Decryption attempts waste resources.
 - **Countermeasures**:
   - Client-side filtering based on event signatures
-  - Use multiple `nostr_group_id` values per group to limit exposure
+  - Use multiple `nostr_group_id` values per group to distribute attack surface
   - Rotate group IDs monthly to limit targeting (See also T.1.4)
 
-**T.10.3 - Invalid Key Package Spam**
+#### T.10.3 - Invalid Key Package Spam
+
 - **Description**: Many invalid KeyPackage events published to relays that clients must download and validate.
 - **Impact**: Client validation overhead, resource exhaustion on clients attempting to process invalid KeyPackages.
 - **Countermeasures**:
@@ -707,7 +801,8 @@ Various DoS vectors exist that can degrade service quality or exhaust resources.
 
 **Attack Scenarios**:
 
-**T.10.4 - Large Group Resource Exhaustion**
+#### T.10.4 - Large Group Resource Exhaustion
+
 - **Description**: Extremely large groups exhaust client resources.
 - **Impact**:
   - Large ratchet tree sizes (memory and computation)
@@ -718,7 +813,8 @@ Various DoS vectors exist that can degrade service quality or exhaust resources.
   - Use efficient data structures
   - Monitor resource usage
 
-**T.10.5 - Rapid State Changes**
+#### T.10.5 - Rapid State Changes
+
 - **Description**: Malicious admins commit updates at high frequency to overwhelm clients.
 - **Impact**: Client overwhelm, resource exhaustion, potential crashes.
 - **Countermeasures**:
@@ -730,16 +826,18 @@ Various DoS vectors exist that can degrade service quality or exhaust resources.
 
 **Attack Scenarios**:
 
-**T.10.6 - Relay Flooding**
+#### T.10.6 - Relay Flooding
+
 - **Description**: Attackers flood relays with Marmot events.
 - **Impact**: Degraded service quality, relay unavailability.
 - **Countermeasures**:
   - Relay-level rate limiting
-  - Authentication requirements (NIP-42)
-  - Proof-of-work (NIP-13)
+  - Authentication requirements ([NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md))
+  - Proof-of-work ([NIP-13](https://github.com/nostr-protocol/nips/blob/master/13.md))
   - Use multiple relays for redundancy
 
-**T.10.7 - Targeted Relay Attacks**
+#### T.10.7 - Targeted Relay Attacks
+
 - **Description**: DDoS specific relays that groups depend on.
 - **Impact**: Message delivery failures for affected groups.
 - **Countermeasures**:
@@ -756,7 +854,8 @@ Despite strong encryption, metadata can leak information about users and groups.
 
 **Attack Scenarios**:
 
-**T.11.1 - Key Package Metadata Leakage**
+#### T.11.1 - Key Package Metadata Leakage
+
 - **Description**: Key Package events reveal Marmot usage, public keys, ciphersuites, capabilities.
 - **Impact**: Identification of Marmot users, capability fingerprinting.
 - **Countermeasures**:
@@ -764,7 +863,8 @@ Despite strong encryption, metadata can leak information about users and groups.
   - Consider privacy implications when publishing KeyPackages
   - Use direct device-to-device sharing for sensitive cases
 
-**T.11.2 - Event Timing Patterns**
+#### T.11.2 - Event Timing Patterns
+
 - **Description**: Timing of event publications reveals activity patterns.
 - **Impact**: Inference of user activity, group communication patterns.
 - **Countermeasures**:
@@ -772,7 +872,8 @@ Despite strong encryption, metadata can leak information about users and groups.
   - Use cover traffic to obscure patterns
   - Distribute events across time
 
-**T.11.3 - Event Size Leakage**
+#### T.11.3 - Event Size Leakage
+
 - **Description**: Size of kind: 445 events leaks information about message length.
 - **Impact**: Inference of message content length.
 - **Countermeasures**:
@@ -780,19 +881,21 @@ Despite strong encryption, metadata can leak information about users and groups.
   - Multiple encryption layers add overhead
   - Consider additional padding for sensitive messages
 
-**T.11.4 - Group ID Tracking**
+#### T.11.4 - Group ID Tracking
+
 - **Description**: The `h` tag on kind: 445 events contains the `nostr_group_id` value from the Marmot Group Data Extension, allowing observers to track message volume and timing patterns for specific groups.
 - **Prerequisites**: Observer can query relays for kind: 445 events.
 - **Impact**: Tracking of message counts per group, activity levels, and communication patterns. Cannot determine group membership or content.
-- **Affected Components**: MIP-01 (Marmot Group Data Extension), MIP-03 (Group Events)
+- **Affected Components**: [MIP-01](01.md) (Marmot Group Data Extension), [MIP-03](03.md) (Group Events)
 - **Countermeasures**:
-  - **RECOMMENDED**: Rotate `nostr_group_id` values monthly through admin Commit updating the Marmot Group Data Extension (See MIP-01)
+  - **RECOMMENDED**: Rotate `nostr_group_id` values monthly through admin Commit updating the Marmot Group Data Extension (See [MIP-01](01.md))
   - Use multiple `nostr_group_id` values per logical group by having different members subscribe to different IDs
   - Ephemeral keypairs on kind: 445 events prevent sender identification
   - Distribute messages across multiple relays to fragment visibility
 - **Residual Risk**: Some activity tracking remains possible. Monthly rotation limits long-term tracking.
 
-**T.11.5 - Group Image Metadata**
+#### T.11.5 - Group Image Metadata
+
 - **Description**: Group image hashes in extension could be used for correlation.
 - **Impact**: Potential group identification across different contexts.
 - **Countermeasures**:
@@ -800,7 +903,8 @@ Despite strong encryption, metadata can leak information about users and groups.
   - Rotate group images if correlation is concern
   - Understand that image hashes persist across epochs
 
-**T.11.6 - Relay List Correlation**
+#### T.11.6 - Relay List Correlation
+
 - **Description**: Consistent relay lists across groups enable correlation.
 - **Impact**: Inference of group relationships or user overlap.
 - **Countermeasures**:
@@ -812,7 +916,8 @@ Despite strong encryption, metadata can leak information about users and groups.
 
 **Attack Scenarios**:
 
-**T.11.7 - Group Activity Tracking**
+#### T.11.7 - Group Activity Tracking
+
 - **Description**: Observers track activity levels for specific groups via `nostr_group_id` monitoring.
 - **Impact**: Inference of group importance, activity patterns.
 - **Countermeasures**:
@@ -820,7 +925,8 @@ Despite strong encryption, metadata can leak information about users and groups.
   - Ephemeral keys prevent sender identification
   - Multiple group IDs obscure tracking
 
-**T.11.8 - IP Address Correlation**
+#### T.11.8 - IP Address Correlation
+
 - **Description**: Relay operators correlate IP addresses that publish/subscribe to the same `nostr_group_id` values.
 - **Impact**: Potential inference of group membership based on IP address overlap.
 - **Countermeasures**:
@@ -829,11 +935,12 @@ Despite strong encryption, metadata can leak information about users and groups.
   - Rotate `nostr_group_id` values monthly
   - Use different relays for different groups (See also T.2.1)
 
-**T.11.9 - Message Burst Pattern Analysis**
+#### T.11.9 - Message Burst Pattern Analysis
+
 - **Description**: Attackers analyze patterns of message bursts to infer conversation dynamics, identify active discussions, or correlate group activity with external events.
 - **Prerequisites**: Observer can monitor event timing across relays.
 - **Impact**: Inference of conversation topics based on timing, identification of coordinated group activity, potential correlation with real-world events.
-- **Affected Components**: MIP-03 (Group Events)
+- **Affected Components**: [MIP-03](03.md) (Group Events)
 - **Countermeasures**:
   - Add random delays (0-30 seconds) before publishing events to obscure exact timing
   - Use cover traffic by periodically sending dummy encrypted messages
@@ -841,11 +948,12 @@ Despite strong encryption, metadata can leak information about users and groups.
   - Client implementations SHOULD implement timing obfuscation
 - **Residual Risk**: Sophisticated traffic analysis may still detect patterns. Complete protection requires constant cover traffic.
 
-**T.11.10 - Cross-Group Activity Correlation**
+#### T.11.10 - Cross-Group Activity Correlation
+
 - **Description**: Observers correlate activity patterns across multiple groups to identify users who participate in multiple groups based on timing similarities.
 - **Prerequisites**: Observer monitors multiple groups and can perform statistical correlation.
 - **Impact**: Potential identification of users active in multiple groups, even with ephemeral keys.
-- **Affected Components**: MIP-03 (Group Events), cross-group user behavior
+- **Affected Components**: [MIP-03](03.md) (Group Events), cross-group user behavior
 - **Countermeasures**:
   - Use different devices or identities for different groups when privacy is critical
   - Vary timing patterns across different groups
@@ -853,17 +961,31 @@ Despite strong encryption, metadata can leak information about users and groups.
   - Consider using different relays for different groups
 - **Residual Risk**: Sophisticated correlation attacks may succeed against users active in many groups.
 
-**T.11.11 - Message Size Fingerprinting**
+#### T.11.11 - Message Size Fingerprinting
+
 - **Description**: While MLS provides some padding, encrypted message sizes still leak information about plaintext length, potentially allowing inference of message type (short text vs. media sharing).
 - **Prerequisites**: Observer can monitor message sizes.
 - **Impact**: Inference of message content type (text, links, media references), potential identification of specific message patterns.
-- **Affected Components**: MIP-03 (Group Events), MIP-04 (Encrypted Media)
+- **Affected Components**: [MIP-03](03.md) (Group Events), [MIP-04](04.md) (Encrypted Media)
 - **Countermeasures**:
   - MLS padding obscures exact message lengths
   - Double encryption adds overhead
   - Consider application-level padding for sensitive messages
   - Use consistent message sizes where possible
 - **Residual Risk**: Some information leakage remains. Perfect size hiding requires significant bandwidth overhead.
+
+#### T.11.12 - Group Size Inference from Welcome Events
+
+- **Description**: Gift-wrapped Welcome events sent to new members have sizes correlated with group size (ratchet tree scales with member count).
+- **Prerequisites**: Observer monitoring a user's incoming kind: 1059 events.
+- **Impact**: Observers monitoring a user's incoming gift-wrapped events might infer approximate size of groups they're being added to based on message sizes.
+- **Affected Components**: [MIP-02](02.md) (Welcome Events), MLS Welcome objects
+- **Countermeasures**:
+  - This is inherent to MLS architecture and Welcome message structure
+  - Light Welcome objects (future MLS feature) would partially mitigate by reducing Welcome size
+  - Padding could obscure exact sizes but at significant bandwidth cost
+  - Gift-wrapping still prevents identification of Welcome vs. other message types
+- **Residual Risk**: Some group size inference possible for sophisticated observers. Mitigation limited until light Welcome objects available.
 
 ### 2.12 Cryptographic Attacks
 
@@ -873,7 +995,8 @@ The protocol relies on cryptographic primitives that could be targets for attack
 
 **Attack Scenarios**:
 
-**T.12.1 - MLS Ciphersuite Vulnerabilities**
+#### T.12.1 - MLS Ciphersuite Vulnerabilities
+
 - **Description**: Vulnerabilities discovered in MLS ciphersuites (AES-GCM, ChaCha20-Poly1305, HKDF).
 - **Impact**: Compromise of group message confidentiality.
 - **Countermeasures**:
@@ -882,7 +1005,8 @@ The protocol relies on cryptographic primitives that could be targets for attack
   - Update to patched versions when vulnerabilities discovered
   - Implement cryptographic agility for algorithm upgrades
 
-**T.12.2 - secp256k1 Weaknesses**
+#### T.12.2 - secp256k1 Weaknesses
+
 - **Description**: Breakthrough in elliptic curve cryptography compromises secp256k1.
 - **Impact**: Compromise of Nostr identities and signatures.
 - **Countermeasures**:
@@ -890,7 +1014,8 @@ The protocol relies on cryptographic primitives that could be targets for attack
   - Migration to post-quantum cryptography may be necessary
   - Monitor cryptographic research and advisories
 
-**T.12.3 - Hash Collision Attacks**
+#### T.12.3 - Hash Collision Attacks
+
 - **Description**: SHA-256 collisions become practical.
 - **Impact**: Event ID spoofing, integrity check bypass.
 - **Countermeasures**:
@@ -898,7 +1023,8 @@ The protocol relies on cryptographic primitives that could be targets for attack
   - Monitor hash function security research
   - Implement hash function agility
 
-**T.12.4 - Cryptographic Agility**
+#### T.12.4 - Cryptographic Agility
+
 - **Description**: Deprecated or broken algorithms require protocol updates.
 - **Impact**: Inability to upgrade without breaking compatibility.
 - **Countermeasures**:
@@ -910,7 +1036,8 @@ The protocol relies on cryptographic primitives that could be targets for attack
 
 **Attack Scenarios**:
 
-**T.12.5 - Side-Channel Attacks**
+#### T.12.5 - Side-Channel Attacks
+
 - **Description**: Timing attacks, cache attacks, or power analysis leak key material.
 - **Impact**: Key exposure despite encryption.
 - **Countermeasures**:
@@ -919,7 +1046,8 @@ The protocol relies on cryptographic primitives that could be targets for attack
   - Use secure hardware when available
   - Implement side-channel resistant algorithms
 
-**T.12.6 - Random Number Generation**
+#### T.12.6 - Random Number Generation
+
 - **Description**: Poor randomness in key generation or nonce generation.
 - **Impact**: Predictable keys compromise encryption.
 - **Countermeasures**:
@@ -928,7 +1056,8 @@ The protocol relies on cryptographic primitives that could be targets for attack
   - Validate randomness quality
   - Never reuse nonces
 
-**T.12.7 - Memory Safety**
+#### T.12.7 - Memory Safety
+
 - **Description**: Memory corruption bugs in native implementations leak keys.
 - **Impact**: Key material exposure.
 - **Countermeasures**:
@@ -937,23 +1066,37 @@ The protocol relies on cryptographic primitives that could be targets for attack
   - Implement fuzzing for security testing
   - Secure memory handling practices
 
-**T.12.8 - TLS Serialization Errors**
+#### T.12.8 - TLS Serialization Errors
+
 - **Description**: Incorrect TLS serialization of Marmot Group Data Extension causes interoperability or security issues.
 - **Impact**: Group state corruption, security bypasses.
 - **Countermeasures**:
-  - **CRITICAL**: Use exact TLS presentation language serialization (MIP-01)
+  - **CRITICAL**: Use exact TLS presentation language serialization ([MIP-01](01.md))
   - Proper length prefixes and byte alignment
   - Comprehensive serialization testing
   - Version detection prevents format mismatches
 
-**T.12.9 - Version Detection Failures**
+#### T.12.9 - Version Detection Failures
+
 - **Description**: Clients fail to properly detect or handle extension versions.
 - **Impact**: Security bypasses, client crashes.
 - **Countermeasures**:
-  - Implement version detection algorithm (MIP-01)
+  - Implement version detection algorithm ([MIP-01](01.md))
   - Forward compatibility for unknown versions
   - Graceful error handling with clear messages
   - Version validation before processing
+
+#### T.12.10 - Extension Version Downgrade
+
+- **Description**: Malicious admin could commit an older version of Marmot Group Data Extension to remove security features or bypass protections introduced in newer versions.
+- **Impact**: Potential security regression, removal of security features added in later versions.
+- **Affected Components**: [MIP-01](01.md) (Marmot Group Data Extension), version management
+- **Countermeasures**:
+  - Clients SHOULD warn users when extension version decreases
+  - Consider requiring unanimous member consent for version downgrades
+  - Document minimum supported versions clearly in client implementations
+  - Log version changes prominently for audit purposes
+- **Residual Risk**: Some downgrades may be legitimate (compatibility with older clients). Balance security with interoperability.
 
 ### 2.13 Operational Security
 
@@ -963,7 +1106,8 @@ Operational security considerations beyond protocol-level protections.
 
 **Attack Scenarios**:
 
-**T.13.1 - Key Backup Threats**
+#### T.13.1 - Key Backup Threats
+
 - **Description**: Key backup or restore mechanisms could be compromised.
 - **Impact**: Exposure of backed-up keys.
 - **Countermeasures**:
@@ -972,11 +1116,12 @@ Operational security considerations beyond protocol-level protections.
   - Limit backup access
   - Consider whether backups are necessary
 
-**T.13.2 - Key Rotation Failures**
+#### T.13.2 - Key Rotation Failures
+
 - **Description**: Keys not rotated regularly increase compromise impact.
 - **Impact**: Extended exposure windows.
 - **Countermeasures**:
-  - Regular signing key rotation (MIP-00)
+  - Regular signing key rotation ([MIP-00](00.md))
   - Client UI for easy key rotation
   - Automatic rotation prompts
   - Immediate rotation after compromise
@@ -985,7 +1130,8 @@ Operational security considerations beyond protocol-level protections.
 
 **Attack Scenarios**:
 
-**T.13.3 - Malicious Client Updates**
+#### T.13.3 - Malicious Client Updates
+
 - **Description**: Malicious client updates introduce vulnerabilities or backdoors.
 - **Impact**: Complete compromise of client security.
 - **Countermeasures**:
@@ -999,7 +1145,8 @@ Operational security considerations beyond protocol-level protections.
 
 **Attack Scenarios**:
 
-**T.13.4 - Unauthorized Member Addition**
+#### T.13.4 - Unauthorized Member Addition
+
 - **Description**: Attackers trick users into adding malicious members to groups.
 - **Impact**: Privacy breach, information leakage.
 - **Countermeasures**:
@@ -1008,7 +1155,8 @@ Operational security considerations beyond protocol-level protections.
   - Use multiple admins for verification
   - Monitor group membership changes
 
-**T.13.5 - Admin Privilege Granting**
+#### T.13.5 - Admin Privilege Granting
+
 - **Description**: Attackers trick users into granting admin privileges.
 - **Impact**: Complete group control by attacker.
 - **Countermeasures**:
@@ -1021,7 +1169,8 @@ Operational security considerations beyond protocol-level protections.
 
 **Attack Scenarios**:
 
-**T.13.6 - Device Synchronization Attacks**
+#### T.13.6 - Device Synchronization Attacks
+
 - **Description**: One device compromised while others remain secure creates synchronization issues.
 - **Impact**: Partial compromise, state desynchronization.
 - **Countermeasures**:
@@ -1030,7 +1179,8 @@ Operational security considerations beyond protocol-level protections.
   - Use device management features
   - Regular device audits
 
-**T.13.7 - Cross-Device Correlation**
+#### T.13.7 - Cross-Device Correlation
+
 - **Description**: Multiple devices in groups affect privacy properties.
 - **Impact**: Potential correlation of device ownership.
 - **Countermeasures**:
@@ -1038,7 +1188,8 @@ Operational security considerations beyond protocol-level protections.
   - Use different devices for different groups when possible
   - Monitor device activity patterns
 
-**T.13.8 - Device Removal Race Conditions**
+#### T.13.8 - Device Removal Race Conditions
+
 - **Description**: Device removed while offline creates synchronization issues.
 - **Impact**: Device might attempt to use stale group state.
 - **Countermeasures**:
@@ -1052,77 +1203,82 @@ Operational security considerations beyond protocol-level protections.
 
 These requirements are CRITICAL for security and MUST be implemented correctly. Failure to implement any of these creates serious vulnerabilities.
 
-#### 3.0.1 Credential Validation (MIP-00)
+**Severity Levels**:
+- **CRITICAL (Security Bypass)**: Requirements that prevent authentication bypass or information leakage. Failure enables impersonation or content exposure.
+- **CRITICAL (Correctness)**: Requirements that ensure protocol correctness and state consistency. Failure causes synchronization issues or data corruption.
+- **HIGH (Security Reduction)**: Requirements that significantly reduce security properties. Failure weakens but doesn't eliminate protections.
+
+#### 3.0.1 Credential Validation (MIP-00) - CRITICAL (Security Bypass)
 
 **Requirement**: Clients MUST validate that the Nostr public key in the MLS BasicCredential identity field exactly matches the kind: 443 KeyPackage event's pubkey field.
 
 - **Why Critical**: Prevents impersonation attacks where attackers publish KeyPackages with credentials belonging to other users
 - **Related Threat**: T.1.2 - Key Package Credential Mismatch
-- **Specification**: See MIP-00 (Identity Requirements)
+- **Specification**: See [MIP-00](00.md) (Identity Requirements)
 
-#### 3.0.2 Commit/Welcome Ordering (MIP-02)
+#### 3.0.2 Commit/Welcome Ordering ([MIP-02](02.md)) - CRITICAL (Correctness)
 
 **Requirement**: Clients MUST wait for relay confirmation of Commit publication before sending corresponding Welcome events.
 
 - **Why Critical**: Prevents race conditions where new members receive Welcome for group state that hasn't been finalized
 - **Related Threat**: T.7.4 - Welcome Event Timing Race Conditions
-- **Specification**: See MIP-02 (Timing Requirements)
+- **Specification**: See [MIP-02](02.md) (Timing Requirements)
 
-#### 3.0.3 Ephemeral Keypair Uniqueness (MIP-03)
+#### 3.0.3 Ephemeral Keypair Uniqueness ([MIP-03](03.md)) - HIGH (Security Reduction)
 
 **Requirement**: Clients MUST generate fresh ephemeral keypairs for EVERY kind: 445 Group Event. Never reuse keypairs.
 
 - **Why Critical**: Reuse breaks privacy guarantees and enables sender correlation across messages
 - **Related Threat**: T.8.1 - Ephemeral Keypair Reuse
-- **Specification**: See MIP-03 (Privacy Protection)
+- **Specification**: See [MIP-03](03.md) (Privacy Protection)
 
-#### 3.0.4 Unsigned Inner Events (MIP-03)
+#### 3.0.4 Unsigned Inner Events ([MIP-03](03.md)) - CRITICAL (Security Bypass)
 
 **Requirement**: Inner events (Nostr events inside MLS ApplicationMessages) MUST remain unsigned - omit the `sig` field entirely.
 
 - **Why Critical**: Signed events could be published to public relays if leaked, exposing group content irreversibly
 - **Related Threat**: T.8.2 - Inner Event Signature Leakage
-- **Specification**: See MIP-03 (Security Requirements)
+- **Specification**: See [MIP-03](03.md) (Security Requirements)
 
-#### 3.0.5 Signing Key Rotation After Last Resort Use (MIP-00)
+#### 3.0.5 Signing Key Rotation After Last Resort Use ([MIP-00](00.md)) - HIGH (Security Reduction)
 
 **Requirement**: Clients MUST rotate signing keys within one week after using last resort KeyPackages. Best practice: rotate within 24-48 hours.
 
 - **Why Critical**: Last resort KeyPackages can be reused, creating extended vulnerability window
 - **Related Threat**: T.7.1 - Last Resort KeyPackage Reuse
-- **Specification**: See MIP-00 (Signing Key Rotation)
+- **Specification**: See [MIP-00](00.md) (Signing Key Rotation)
 
-#### 3.0.6 Admin Authorization Verification (MIP-01, MIP-03)
+#### 3.0.6 Admin Authorization Verification ([MIP-01](01.md), [MIP-03](03.md)) - CRITICAL (Security Bypass)
 
 **Requirement**: Clients MUST verify that Commit senders are listed in the current `admin_pubkeys` array before processing any Commit.
 
 - **Why Critical**: Prevents unauthorized group state changes by non-admin members
 - **Related Threat**: T.4.x - Admin Privilege Abuse scenarios
-- **Specification**: See MIP-01 (Marmot Group Data Extension), MIP-03 (Commit Messages)
+- **Specification**: See [MIP-01](01.md) (Marmot Group Data Extension), [MIP-03](03.md) (Commit Messages)
 
-#### 3.0.7 Commit Race Condition Handling (MIP-03)
+#### 3.0.7 Commit Race Condition Handling ([MIP-03](03.md)) - CRITICAL (Correctness)
 
 **Requirement**: When receiving competing Commits for the same epoch, clients MUST apply exactly one using timestamp priority (earliest first), with ID as tiebreaker (lexicographically smallest).
 
 - **Why Critical**: Prevents group state forks and ensures all members converge on same state
 - **Related Threat**: T.4.6 - Commit Race Conditions
-- **Specification**: See MIP-03 (Commit Message Race Conditions)
+- **Specification**: See [MIP-03](03.md) (Commit Message Race Conditions)
 
-#### 3.0.8 TLS Serialization Accuracy (MIP-01)
+#### 3.0.8 TLS Serialization Accuracy ([MIP-01](01.md)) - CRITICAL (Correctness)
 
 **Requirement**: Implementations MUST use exact TLS presentation language serialization for Marmot Group Data Extension with proper length prefixes and byte alignment.
 
 - **Why Critical**: Incorrect serialization causes interoperability failures and potential security bypasses
 - **Related Threat**: T.12.8 - TLS Serialization Errors
-- **Specification**: See MIP-01 (TLS Serialization Requirements)
+- **Specification**: See [MIP-01](01.md) (TLS Serialization Requirements)
 
-#### 3.0.9 Media Integrity Verification (MIP-04)
+#### 3.0.9 Media Integrity Verification ([MIP-04](04.md)) - CRITICAL (Correctness)
 
 **Requirement**: Clients MUST verify SHA256(decrypted_content) matches the `x` field in `imeta` tags after decrypting media.
 
 - **Why Critical**: Detects file corruption, tampering, or decryption failures
 - **Related Threat**: T.9.2 - File Integrity Attacks
-- **Specification**: See MIP-04 (Integrity Verification)
+- **Specification**: See [MIP-04](04.md) (Integrity Verification)
 
 ### 3.1 Implementation Pitfalls
 
@@ -1182,7 +1338,7 @@ Common mistakes that developers should avoid when implementing Marmot:
 
 **Consequences**: Decryption failures, inability to decrypt messages from other implementations.
 
-**Solution**: Use exact context strings from specification. For MIP-04: `"mip04-v1" || 0x00 || file_hash || 0x00 || mime_type || 0x00 || filename || 0x00 || "key"`. Test cross-implementation compatibility.
+**Solution**: Use exact context strings from specification. For [MIP-04](04.md): `"mip04-v1" || 0x00 || file_hash || 0x00 || mime_type || 0x00 || filename || 0x00 || "key"`. Test cross-implementation compatibility.
 
 #### 3.1.8 Extension Version Handling
 
@@ -1190,7 +1346,7 @@ Common mistakes that developers should avoid when implementing Marmot:
 
 **Consequences**: Client crashes, inability to handle protocol evolution.
 
-**Solution**: Implement version detection (See MIP-01). Handle unknown versions gracefully with clear error messages.
+**Solution**: Implement version detection (See [MIP-01](01.md)). Handle unknown versions gracefully with clear error messages.
 
 #### 3.1.9 Commit Priority Logic Errors
 
@@ -1250,7 +1406,7 @@ Individual group members SHOULD:
   - Never share devices with untrusted individuals
 
 - **Key Management**:
-  - Rotate signing keys weekly in all active groups (See MIP-00)
+  - Rotate signing keys weekly in all active groups (See [MIP-00](00.md))
   - Secure Nostr private keys carefully - they control your identity across all Nostr applications
   - Consider using hardware security modules (HSM) or secure enclaves for key storage
   - Back up keys securely if needed, but understand backup security trade-offs
@@ -1284,8 +1440,8 @@ Group admins SHOULD:
   - Monitor group membership changes and investigate unexpected additions
 
 - **Group Configuration**:
-  - Use multiple relays (3-5) per group for redundancy (See MIP-01 Marmot Group Data Extension)
-  - Rotate `nostr_group_id` values monthly to limit tracking (See MIP-01)
+  - Use multiple relays (3-5) per group for redundancy (See [MIP-01](01.md) Marmot Group Data Extension)
+  - Rotate `nostr_group_id` values monthly to limit tracking (See [MIP-01](01.md))
   - Update group configuration (relays, metadata) as needed through Commits
   - Monitor relay reliability and switch when necessary
 
@@ -1329,8 +1485,8 @@ Relay operators SHOULD:
 
 - **Abuse Prevention**:
   - Implement rate limiting to prevent spam attacks
-  - Consider requiring authentication (NIP-42) for posting Marmot events
-  - Consider proof-of-work requirements (NIP-13) for expensive operations
+  - Consider requiring authentication ([NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md)) for posting Marmot events
+  - Consider proof-of-work requirements ([NIP-13](https://github.com/nostr-protocol/nips/blob/master/13.md)) for expensive operations
   - Monitor for abuse patterns and respond appropriately
 
 - **Reliability**:
@@ -1345,7 +1501,69 @@ Relay operators SHOULD:
   - Be transparent about logging and data retention policies
   - Consider supporting privacy-enhancing technologies (e.g., accepting Tor connections)
 
-### 3.5 Security Properties Summary
+### 3.5 Testing Requirements
+
+Comprehensive testing is essential to ensure security requirements are properly implemented. This section provides concrete testing recommendations for implementers.
+
+#### 3.5.1 Security Testing
+
+**Critical Security Requirements Testing**:
+- **Credential mismatch detection**: Test that clients reject KeyPackages where MLS credential identity doesn't match event pubkey
+- **Ephemeral keypair uniqueness**: Validate that each kind: 445 event uses a unique keypair (add assertions in development)
+- **Inner event signature validation**: Verify clients reject or warn about signed inner events
+- **Admin authorization bypass**: Attempt Commits from non-admin members and verify rejection
+- **Race condition handling**: Send simultaneous Commits and verify consistent state across clients
+
+**Attack Scenario Testing**:
+- **Gift-wrapped event spam**: Test client behavior under high volume of invalid [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md) events
+- **Welcome timing races**: Test new member join when Commit hasn't propagated
+- **Large group limits**: Test Welcome message sizes approaching relay limits
+- **Replay attacks**: Verify clients deduplicate replayed kind: 445 events
+
+#### 3.5.2 Interoperability Testing
+
+**Cross-Implementation Compatibility**:
+- Message exchange between different Marmot client implementations
+- TLS serialization compatibility for Marmot Group Data Extension
+- Extension version handling across different client versions
+- Media encryption/decryption across implementations
+
+**Protocol Compliance**:
+- MLS message format validation against OpenMLS
+- Nostr event format validation against NIPs
+- [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md) gift-wrapping format compliance
+- [NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md) encryption compatibility
+
+#### 3.5.3 Fuzzing Targets
+
+**High-Priority Fuzzing**:
+- Extension deserialization (TLS format parsing)
+- MLS message processing (Commits, Proposals, Welcome objects)
+- Nostr event parsing (kind: 443, 444, 445, 10051)
+- Media decryption ([MIP-04](04.md) format handling)
+- Key derivation (exporter secret contexts)
+
+**Fuzzing Goals**:
+- Detect crashes from malformed input
+- Identify memory safety issues
+- Find edge cases in parsing logic
+- Validate error handling paths
+
+#### 3.5.4 Performance Testing
+
+**Resource Exhaustion Scenarios**:
+- Large group scalability (100-150 members)
+- High message volume handling
+- Rapid Commit frequency response
+- Multiple concurrent group membership
+
+**Limits Testing**:
+- Welcome message size limits
+- Relay message size constraints
+- Event processing throughput
+- Memory usage under load
+
+### 3.6 Security Properties Summary
 
 **Strong Protections**:
 - Message confidentiality via MLS symmetric encryption
@@ -1366,23 +1584,23 @@ Relay operators SHOULD:
 
 ### 4.1 Normative References
 
-- **RFC 9420**: The Messaging Layer Security (MLS) Protocol
-- **RFC 9750**: MLS Architecture
-- **MIP-00**: Credentials & Key Packages
-- **MIP-01**: Group Construction & Marmot Group Data Extension
-- **MIP-02**: Welcome Events
-- **MIP-03**: Group Messages
-- **MIP-04**: Encrypted Media (optional)
+- **[RFC 9420](https://www.rfc-editor.org/rfc/rfc9420.html)**: The Messaging Layer Security (MLS) Protocol
+- **[RFC 9750](https://www.rfc-editor.org/rfc/rfc9750.html)**: MLS Architecture
+- **[MIP-00](00.md)**: Credentials & Key Packages
+- **[MIP-01](01.md)**: Group Construction & Marmot Group Data Extension
+- **[MIP-02](02.md)**: Welcome Events
+- **[MIP-03](03.md)**: Group Messages
+- **[MIP-04](04.md)**: Encrypted Media (optional)
 
 ### 4.2 Informative References
 
-- **NIP-01**: Basic protocol flow description
-- **NIP-13**: Proof of Work
-- **NIP-42**: Authentication of clients to relays
-- **NIP-44**: Encrypted Direct Message
-- **NIP-59**: Gift Wrap
-- **NIP-70**: Replaceable Events
-- **NIP-92**: File Metadata
+- **[NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md)**: Basic protocol flow description
+- **[NIP-13](https://github.com/nostr-protocol/nips/blob/master/13.md)**: Proof of Work
+- **[NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md)**: Authentication of clients to relays
+- **[NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md)**: Encrypted Direct Message
+- **[NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md)**: Gift Wrap
+- **[NIP-70](https://github.com/nostr-protocol/nips/blob/master/70.md)**: Replaceable Events
+- **[NIP-92](https://github.com/nostr-protocol/nips/blob/master/92.md)**: File Metadata
 - **RFC 6819**: OAuth 2.0 Threat Model and Security Considerations (format reference)
 
 ## 5. Acknowledgments
