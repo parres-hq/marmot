@@ -62,7 +62,7 @@ sequenceDiagram
 
     Note over C,R3: KeyPackages now discoverable<br/>on user's advertised relays
 
-    rect rgb(200, 220, 255)
+    rect rgb(100, 100, 100)
         Note over C: Later: KeyPackage consumed<br/>for group join
         C->>R1: DELETE KeyPackage (kind: 5)
         C->>R2: DELETE KeyPackage (kind: 5)
