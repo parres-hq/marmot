@@ -1,2 +1,16 @@
-# Claude AI agent local settings (user-specific, not committed)
-.claude/settings.local.json
+# macOS
+.DS_Store
+.Trashes
+
+# AI Assistant directories
+.claude/
+.opencode/
+.cursor/
+.aider*
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
