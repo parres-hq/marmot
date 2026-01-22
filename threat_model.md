@@ -664,6 +664,38 @@ Key packages enable asynchronous group invitations and have specific security co
   - Test with target relays to determine actual size limits
 - **Residual Risk**: Large groups fundamentally limited until light Welcome objects are standardized and implemented.
 
+#### T.7.6 - init_key Retention After Group Join
+
+- **Description**: Implementations that retain the private init_key material after successfully processing a Welcome message create a forward secrecy vulnerability. If the device is later compromised, attackers could decrypt captured Welcome messages.
+- **Prerequisites**:
+  1. Implementation fails to delete private init_key after Welcome processing
+  2. Attacker has captured the gift-wrapped Welcome message from relays
+  3. Attacker compromises the device and obtains BOTH the user's Nostr private key (to unwrap the NIP-59 gift wrap) AND the retained init_key (to decrypt the MLS Welcome)
+- **Impact**: Compromise of historical Welcome messages enables attacker to recover group secrets from the epoch when the member joined. Depending on group activity, this may allow decryption of historical messages.
+- **Affected Components**: [MIP-00](00.md) (Private Key Material Management), [MIP-02](02.md) (Processing Requirements)
+- **Countermeasures**:
+  - **CRITICAL**: Implementations MUST securely delete private init_key material after successfully processing a Welcome (See [MIP-00](00.md) Private Key Material Management)
+  - Use secure deletion with memory zeroization
+  - For last resort KeyPackages, retain init_key only while the KeyPackage remains published
+  - Perform immediate self-update after joining to limit the value of compromised init_keys (See [MIP-02](02.md) Post-Join Self-Update Requirement)
+- **Residual Risk**: If init_key is properly deleted and self-update is performed, risk is minimal. Note that exploitation requires compromise of both the Nostr private key and the init_key—proper init_key deletion provides defense in depth even if the Nostr key is compromised.
+
+#### T.7.7 - Delayed Self-Update After Join
+
+- **Description**: New group members who do not perform a self-update after joining continue using key material derived from their KeyPackage. Since KeyPackages are published to relays, this key material has been exposed to potential observers.
+- **Prerequisites**:
+  1. Member joins group via Welcome but does not perform self-update
+  2. Attacker has observed or captured the KeyPackage from relays
+  3. For full exploitation: Attacker must also compromise the user's Nostr private key to decrypt the gift-wrapped Welcome message, plus the init_key to decrypt the MLS Welcome itself
+- **Impact**: Extended forward secrecy vulnerability window. If the device is later fully compromised (Nostr key + init_key), the attacker could recover group secrets from the join epoch. The longer the member remains without self-updating, the more messages may be decryptable.
+- **Affected Components**: [MIP-02](02.md) (Post-Join Self-Update Requirement), MLS Update Proposals
+- **Countermeasures**:
+  - **RECOMMENDED**: Perform self-update immediately after processing Welcome, before sending any application messages
+  - **MUST**: Perform self-update within 24 hours of joining
+  - Client implementations SHOULD automate or strongly prompt for post-join self-update
+  - UI should clearly indicate when self-update is pending/recommended
+- **Residual Risk**: Groups with frequent commits from other members provide natural epoch rotation, reducing this risk. Low-activity groups are more vulnerable if self-update is delayed. Note that full exploitation requires device compromise exposing both Nostr and MLS key material.
+
 ### 2.8 Group Message Security ([MIP-03](03.md))
 
 Group messages use double encryption and ephemeral keypairs for privacy.
@@ -1299,6 +1331,23 @@ These requirements are CRITICAL for security and MUST be implemented correctly. 
 - **Related Threat**: T.9.2 - File Integrity Attacks
 - **Specification**: See [MIP-04](04.md) (Integrity Verification)
 
+#### 3.0.10 init_key Secure Deletion ([MIP-00](00.md), [MIP-02](02.md)) - HIGH (Security Reduction)
+
+**Requirement**: Clients MUST securely delete private init_key material from local storage after successfully processing a Welcome message. Deletion MUST include memory zeroization.
+
+- **Why Critical**: Retained init_keys create forward secrecy vulnerabilities. Device compromise could enable decryption of captured Welcome messages and recovery of historical group secrets.
+- **Exception**: For last resort KeyPackages, retain the init_key only while the KeyPackage remains published on relays.
+- **Related Threat**: T.7.6 - init_key Retention After Group Join
+- **Specification**: See [MIP-00](00.md) (Private Key Material Management), [MIP-02](02.md) (Processing Requirements)
+
+#### 3.0.11 Post-Join Self-Update ([MIP-02](02.md)) - HIGH (Security Reduction)
+
+**Requirement**: Clients MUST perform a self-update (MLS Update proposal for own LeafNode) within 24 hours of joining a group. RECOMMENDED: Perform immediately before sending any application messages.
+
+- **Why Critical**: KeyPackage key material was publicly observable on relays. Continued use extends the forward secrecy vulnerability window. Self-update replaces this with fresh, never-published key material.
+- **Related Threat**: T.7.7 - Delayed Self-Update After Join
+- **Specification**: See [MIP-02](02.md) (Post-Join Self-Update Requirement)
+
 ### 3.1 Implementation Pitfalls
 
 Common mistakes that developers should avoid when implementing Marmot:
@@ -1387,6 +1436,22 @@ Common mistakes that developers should avoid when implementing Marmot:
 
 **Solution**: Implement weekly rotation prompts. Make UI prominent and easy. Consider automatic rotation for high-security contexts.
 
+#### 3.1.11 init_key Retention After Welcome
+
+**Pitfall**: Keeping the private init_key material in storage after successfully joining a group via Welcome message.
+
+**Consequences**: Forward secrecy vulnerability. If device is later compromised, attacker could decrypt captured Welcome messages and recover historical group secrets.
+
+**Solution**: Securely delete private init_key immediately after successful Welcome processing. Use memory zeroization. For last resort KeyPackages, delete init_key only when rotating to a new last resort package. See [MIP-00](00.md) Private Key Material Management.
+
+#### 3.1.12 Missing Post-Join Self-Update
+
+**Pitfall**: Not performing a self-update after joining a group, leaving the member's LeafNode with key material derived from the published KeyPackage.
+
+**Consequences**: Extended forward secrecy vulnerability. KeyPackage key material was publicly observable on relays; continued use increases the value of any compromise of that material.
+
+**Solution**: Perform self-update immediately after processing Welcome, before sending any application messages. Automate this in client implementations or provide prominent UI prompts. See [MIP-02](02.md) Post-Join Self-Update Requirement.
+
 ### 3.2 Implementation Requirements
 
 Implementations MUST:
@@ -1399,6 +1464,8 @@ Implementations MUST:
 - Handle Commit race conditions using timestamp/ID priority
 - Use exact TLS serialization for Marmot Group Data Extension
 - Verify file integrity after media decryption
+- Securely delete private init_key material after Welcome processing (with memory zeroization)
+- Perform self-update within 24 hours of joining a group (RECOMMENDED: immediately before sending messages)
 
 ### 3.3 Best Practices
 
@@ -1536,6 +1603,8 @@ Comprehensive testing is essential to ensure security requirements are properly 
 - **Inner event signature validation**: Verify clients reject or warn about signed inner events
 - **Admin authorization bypass**: Attempt non-self-update Commits from non-admin members and verify rejection; verify self-update Commits from non-admins are accepted
 - **Race condition handling**: Send simultaneous Commits and verify consistent state across clients
+- **init_key deletion verification**: Verify private init_key is securely deleted from storage after Welcome processing (memory zeroization, file removal)
+- **Post-join self-update**: Verify clients perform or prompt for self-update after joining via Welcome
 
 **Attack Scenario Testing**:
 - **Gift-wrapped event spam**: Test client behavior under high volume of invalid [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md) events
