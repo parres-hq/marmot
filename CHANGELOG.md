@@ -37,6 +37,9 @@
 
 ### Added
 
+- **MIP-00: Multi-device support via `client_id` tag**: Added recommended `client_id` tag to KeyPackage events (`kind: 443`) that uniquely identifies each client installation. This enables inviters to discover all of a user's devices and select exactly one KeyPackage per device when creating group invitations. Includes a new "Multi-Device Support" section with the discovery algorithm, privacy considerations, and backward compatibility guidance.
+- **MIP-02: Multi-device Welcome delivery guidance**: Added a "Multi-Device Considerations" section explaining that inviters must create a separate Welcome for each of a user's devices and how devices identify their own Welcome via the `e` tag.
+
 ### Fixed
 
 ### Removed
