@@ -27,9 +27,9 @@
 
 ### Breaking changes
 
-### Changed
+- **Encoding format**: KeyPackage (kind:443) and Welcome (kind:444) events now require base64 encoding for the `content` field. The `encoding` tag MUST be `["encoding", "base64"]`. Hex encoding was used by early implementations but is no longer supported. Implementations MUST reject events with missing or non-base64 `encoding` tags.
 
-- **Encoding format**: KeyPackage (kind:443) and Welcome (kind:444) events now require base64 encoding for the `content` field. The `encoding` tag MUST be `["encoding", "base64"]`. Hex encoding was used by early implementations but is no longer supported. Implementations MUST reject events with missing, absent, or non-base64 `encoding` tags.
+### Changed
 
 ### Added
 
