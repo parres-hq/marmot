@@ -102,7 +102,7 @@ sequenceDiagram
 
     A->>A: Build Marmot Group<br/>Data Extension
 
-    Note over A: Extension fields:<br/>- version: 1<br/>- nostr_group_id (random 32 bytes)<br/>- name, description<br/>- admin_pubkeys (TLS array)<br/>- relays (TLS array)<br/>- image fields (optional)
+    Note over A: Extension fields:<br/>- version: 2<br/>- nostr_group_id (random 32 bytes)<br/>- name, description<br/>- admin_pubkeys (raw 32-byte keys)<br/>- relays (length-prefixed URLs)<br/>- image fields (optional)
 
     A->>MLS: Add extension to<br/>GroupContext
 

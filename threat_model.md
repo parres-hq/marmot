@@ -1410,7 +1410,7 @@ Common mistakes that developers should avoid when implementing Marmot:
 
 **Consequences**: Decryption failures, inability to decrypt messages from other implementations.
 
-**Solution**: Use exact context strings from specification. For [MIP-04](04.md): `"mip04-v1" || 0x00 || file_hash || 0x00 || mime_type || 0x00 || filename || 0x00 || "key"`. Test cross-implementation compatibility.
+**Solution**: Use exact context strings from specification. For [MIP-04](04.md): `"mip04-v2" || 0x00 || file_hash || 0x00 || mime_type || 0x00 || filename || 0x00 || "key"`. Test cross-implementation compatibility.
 
 #### 3.1.8 Extension Version Handling
 
