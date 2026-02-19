@@ -1248,6 +1248,7 @@ Operational security considerations beyond protocol-level protections.
   - MLS handles out-of-order messages gracefully
   - Clients should validate group state on reconnect
   - Error handling for stale state scenarios
+  - Use per-group retry flows that refresh epoch-specific data (GroupInfo/exporter_secret/resumption_psk) before retrying External Commits
 
 ## 3. Security Considerations
 
@@ -1310,7 +1311,9 @@ These requirements are CRITICAL for security and MUST be implemented correctly. 
 
 **Requirement**: Clients MUST verify that Commit senders are listed in the current `admin_pubkeys` array before processing any Commit, EXCEPT for self-update Commits and SelfRemove-only Commits. Self-update Commits (containing only an Update proposal for the sender's own LeafNode) and SelfRemove-only Commits (containing only SelfRemove proposals by reference) MAY be processed from any member without admin verification. Self-update and SelfRemove-only Commits MUST NOT be combined.
 
-- **Why Critical**: Prevents unauthorized structural group state changes by non-admin members while allowing all members to maintain key hygiene and process voluntary departures
+For groups that enable [MIP-06](06.md), there is one additional carve-out: `new_member_commit` External Commits MAY be processed only when the group explicitly signals MIP-06 support (`marmot_multi_device` extension), and only after all MIP-06 authorization checks pass (identity match, Nostr identity proof, strict Resumption PSK validation).
+
+- **Why Critical**: Prevents unauthorized structural group state changes by non-admin members while allowing all members to maintain key hygiene, process voluntary departures, and admit additional devices only under the explicit safeguards defined by MIP-06
 - **Related Threat**: T.4.x - Admin Privilege Abuse scenarios
 - **Specification**: See [MIP-01](01.md) (Marmot Group Data Extension), [MIP-03](03.md) (Commit Messages)
 
@@ -1354,6 +1357,24 @@ These requirements are CRITICAL for security and MUST be implemented correctly. 
 - **Why Critical**: KeyPackage key material was publicly observable on relays. Continued use extends the forward secrecy vulnerability window. Self-update replaces this with fresh, never-published key material.
 - **Related Threat**: T.7.7 - Delayed Self-Update After Join
 - **Specification**: See [MIP-02](02.md) (Post-Join Self-Update Requirement)
+
+#### 3.0.12 Multi-Device External Commit Validation ([MIP-06](06.md)) - CRITICAL (Security Bypass / Correctness)
+
+**Requirement**: For MIP-06-enabled groups, clients MUST enforce all of the following before accepting a multi-device External Commit:
+
+- Group-level MIP-06 signaling is enabled (`marmot_multi_device`, `0xF2F0`)
+- Joining LeafNode credential identity matches an existing member identity
+- `authenticated_data` carries a valid Nostr identity proof
+- Exactly one Resumption PSK proposal is present with:
+  - `psktype = resumption`
+  - `usage = application`
+  - `psk_group_id = FramedContent.group_id`
+  - `psk_epoch = FramedContent.epoch`
+  - `psk_nonce` length = `KDF.Nh`
+
+- **Why Critical**: Missing any of these checks can allow unauthorized device insertion or epoch-divergence behavior between implementations.
+- **Related Threats**: T.13.4 (Unauthorized Member Addition), T.13.8 (Device state race conditions)
+- **Specification**: See [MIP-06](06.md)
 
 ### 3.1 Implementation Pitfalls
 
@@ -1469,6 +1490,7 @@ Implementations MUST:
 - Keep inner events unsigned to prevent accidental public publishing
 - Rotate signing keys regularly, especially after using last resort KeyPackages
 - Verify admin status before processing Commits (except self-update and SelfRemove-only Commits from any member)
+- For MIP-06 groups, enforce explicit multi-device signaling and strict External Commit validation checks
 - Handle Commit race conditions using timestamp/ID priority
 - Use exact TLS serialization for Marmot Group Data Extension
 - Verify file integrity after media decryption
