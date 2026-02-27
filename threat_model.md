@@ -216,12 +216,12 @@ Network observers include entities that can capture packets between clients and 
 
 #### T.1.4 - Application Message Spam
 
-- **Description**: Attackers publish kind: 445 events with valid-looking `h` tags for known groups but invalid ciphertexts.
-- **Impact**: Clients must download and attempt decryption before detecting invalidity, wasting resources.
+- **Description**: Attackers attempt to publish kind: 445 events targeting a group.
+- **Impact**: Without the shared group signing key, attackers cannot produce valid signatures for the group pubkey. Relays reject events with invalid signatures before delivery.
 - **Countermeasures**:
-  - Client-side filtering based on event signatures
-  - Use multiple `nostr_group_id` values per group to distribute attack surface
-  - Rotate group IDs periodically to limit exposure
+  - Group signing key (see [MIP-01](01.md)): all Group Events are signed with a shared key known only to group members, and clients subscribe by `authors` filter instead of `#h` tag
+  - Relays reject events with invalid signatures at ingestion, preventing delivery to group members
+  - Admin-initiated key rotation after member removal prevents removed members from signing new events
 
 ### 2.2 Relay Operators
 
@@ -827,12 +827,22 @@ Various DoS vectors exist that can degrade service quality or exhaust resources.
 
 #### T.10.2 - Application Message Spam
 
-- **Description**: Invalid kind: 445 events with valid-looking `h` tags for known groups but invalid ciphertexts.
-- **Impact**: Decryption attempts waste resources.
+- **Description**: Attackers attempt to publish kind: 445 events targeting a group.
+- **Impact**: Without the shared group signing key, attackers cannot produce valid signatures for the group pubkey. Relays reject events with invalid signatures before delivery.
 - **Countermeasures**:
-  - Client-side filtering based on event signatures
-  - Use multiple `nostr_group_id` values per group to distribute attack surface
-  - Rotate group IDs monthly to limit targeting (See also T.1.4)
+  - Group signing key (see [MIP-01](01.md)): cryptographic exclusion of non-members from publishing to the group
+  - `authors`-based subscription replaces `#h` tag subscription, so relays filter at the signature level
+  - See also T.1.4
+
+#### T.10.2.1 - NIP-09 Deletion by Group Members
+
+- **Description**: Because all group members share the signing key, any member can create a valid [NIP-09](https://github.com/nostr-protocol/nips/blob/master/09.md) deletion request (kind: 5) or [NIP-62](https://github.com/nostr-protocol/nips/blob/master/62.md) vanish request for other members' kind: 445 events. This capability does not exist with ephemeral keypairs.
+- **Impact**: A malicious insider can request deletion of other members' messages from relays. The threat is bounded: the attacker must be a current group member, the attack is observable (kind: 5 events are public, though the individual sender cannot be identified since all members share the key), client-side caching preserves events locally, and multi-relay redundancy provides resilience.
+- **Countermeasures**:
+  - Clients MUST NOT honor NIP-09 deletion events that reference kind: 445 events
+  - Clients MUST NOT issue NIP-09 or NIP-62 events using the `group_signing_key`
+  - Clients SHOULD monitor for kind: 5 and kind: 62 events from the group pubkey and alert users when detected (the individual sender cannot be identified)
+  - Groups SHOULD use at least 3 relays for redundancy
 
 #### T.10.3 - Invalid Key Package Spam
 
