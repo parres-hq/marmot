@@ -234,21 +234,21 @@ sequenceDiagram
 
     S->>S: Extract exporter_secret<br/>for current epoch
 
-    S->>S: Derive NIP-44 keys<br/>from exporter_secret
+    S->>S: Derive encryption_key via<br/>HKDF-Expand(exporter_secret,<br/>"mip03-group-event-v1", 32)
 
-    S->>S: Encrypt MLSMessage<br/>with NIP-44
+    S->>S: Generate random 12-byte nonce<br/>Encrypt MLSMessage with<br/>ChaCha20-Poly1305
 
     S->>S: Generate fresh<br/>ephemeral keypair
 
-    S->>S: Create kind: 445 event<br/>ephemeral pubkey<br/>encrypted content<br/>h tag: nostr_group_id
+    S->>S: Create kind: 445 event<br/>ephemeral pubkey<br/>content: base64(nonce||ciphertext)<br/>h tag: nostr_group_id (routing)
 
     S->>R: Publish Group Event (445)
 
     R->>Rec: Deliver to subscribers<br/>(subscribed to h tag)
 
-    Rec->>Rec: Derive NIP-44 keys<br/>from own exporter_secret
+    Rec->>Rec: Derive encryption_key from<br/>own exporter_secret
 
-    Rec->>Rec: Decrypt to MLSMessage
+    Rec->>Rec: Decrypt to MLSMessage<br/>(ChaCha20-Poly1305)
 
     Rec->>MLS: Process MLSMessage
 
@@ -266,13 +266,13 @@ sequenceDiagram
 **Data Flow:**
 1. Sender creates unsigned inner event
 2. MLS encrypts with group keys
-3. NIP-44 encrypts MLS message (exporter_secret)
+3. ChaCha20-Poly1305 encrypts MLS message (key derived from exporter_secret)
 4. Published with ephemeral keypair
-5. Recipients decrypt NIP-44 layer
+5. Recipients decrypt ChaCha20-Poly1305 layer
 6. MLS decrypts and authenticates inner content
 
 **Security Notes:**
-- ✅ Double encryption (MLS + NIP-44)
+- ✅ Double encryption (MLS + ChaCha20-Poly1305)
 - ✅ Ephemeral key per message (sender privacy)
 - ✅ MLS authentication (sender identity)
 - ✅ Inner event unsigned (leak protection)
@@ -293,7 +293,7 @@ sequenceDiagram
 
     MLS->>MLS: Sign with MLS<br/>signing key
 
-    M->>M: Wrap in MLSMessage<br/>Encrypt (MLS + NIP-44)
+    M->>M: Wrap in MLSMessage<br/>Encrypt (MLS + ChaCha20-Poly1305)
 
     M->>M: Create kind: 445 event<br/>with ephemeral key
 
@@ -343,7 +343,7 @@ sequenceDiagram
 
     Note over A: DO NOT apply locally yet
 
-    A->>A: Wrap Commit in<br/>MLSMessage + NIP-44
+    A->>A: Wrap Commit in<br/>MLSMessage + ChaCha20-Poly1305
 
     A->>A: Create kind: 445 event<br/>ephemeral key
 
@@ -539,11 +539,11 @@ sequenceDiagram
 
 ### Protection Matrix by Event Kind
 
-| Event Kind | TLS | Nostr Sig | Ephemeral Key | NIP-44 | MLS Encrypt | MLS Auth | Inner Unsigned |
-|------------|-----|-----------|---------------|--------|-------------|----------|----------------|
-| **443** (KeyPackage) | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ Credential | N/A |
-| **10051** (Relay List) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | N/A |
-| **444** (Welcome) via NIP-59 | ✅ | ✅ Ephemeral | ✅ | ✅ | ❌ Content is MLS | ❌ | ✅ |
-| **445** (Group Event) | ✅ | ✅ Ephemeral | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Event Kind | TLS | Nostr Sig | Ephemeral Key | NIP-44 | ChaCha20-Poly1305 | MLS Encrypt | MLS Auth | Inner Unsigned |
+|------------|-----|-----------|---------------|--------|-------------------|-------------|----------|----------------|
+| **443** (KeyPackage) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ Credential | N/A |
+| **10051** (Relay List) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | N/A |
+| **444** (Welcome) via NIP-59 | ✅ | ✅ Ephemeral | ✅ | ✅ | ❌ | ❌ Content is MLS | ❌ | ✅ |
+| **445** (Group Event) | ✅ | ✅ Ephemeral | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ |
 
 

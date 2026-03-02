@@ -109,7 +109,7 @@ Any Nostr implementation used with Marmot **MUST**:
 2. **Other Required NIPs**
 
    - **NIP-09**: Event deletion
-   - **NIP-44**: Encrypted Payloads (versioned encryption)
+   - **NIP-44**: Encrypted Payloads (versioned encryption; used by NIP-59 gift wrap for Welcome events — not used for kind: 445 group events, which use ChaCha20-Poly1305 directly)
    - **NIP-59**: Gift Wrap (sealed sender)
    - **NIP-65**: Inbox/Outbox relay model
 

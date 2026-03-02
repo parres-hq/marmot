@@ -123,7 +123,7 @@ Understanding what entities users must trust is critical for evaluating Marmot's
    - Relays CAN observe metadata, IP addresses, and timing patterns
 
 2. **Network observers**:
-   - Passive observers cannot decrypt traffic (TLS + MLS + [NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md) encryption)
+   - Passive observers cannot decrypt traffic (TLS + MLS + ChaCha20-Poly1305 encryption)
    - Active attackers cannot forge or modify messages without detection
 
 3. **Storage providers** (for encrypted media, See [MIP-04](04.md)):
@@ -169,7 +169,7 @@ Network observers include entities that can capture packets between clients and 
 - **Key Package events (kind: 443)**: Public signing keys, MLS credentials containing Nostr public keys, supported ciphersuites, and capabilities. This data is intentionally public and unencrypted.
 - **Key Package list events (kind: 10051)**: Relay URLs where users publish KeyPackages. This data is intentionally public.
 - **Welcome events (kind: 444)**: Gift-wrapped using [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md), appearing as kind: 1059 events. Observers cannot determine the payload is a Welcome message without the recipient's Nostr private key.
-- **Application Message events (kind: 445)**: Double-encrypted content (MLS symmetric encryption + [NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md)-derived encryption). Observers see encrypted content and ephemeral public keys but cannot decrypt without group secrets.
+ - **Application Message events (kind: 445)**: Double-encrypted content (MLS symmetric encryption + ChaCha20-Poly1305, key derived from MLS exporter secret). Observers see encrypted content and ephemeral public keys but cannot decrypt without group secrets.
 
 **Countermeasures**:
 - Use TLS for all WebSocket connections to relays
@@ -728,11 +728,11 @@ Group messages use double encryption and ephemeral keypairs for privacy.
 
 #### T.8.3 - Exporter Secret Compromise
 
-- **Description**: Compromise of `exporter_secret` for current epoch allows decryption of kind: 445 content field.
-- **Impact**: Partial decryption (still requires MLS symmetric keys for full decryption).
+- **Description**: Compromise of `exporter_secret` for current epoch allows decryption of kind: 445 content field (the outer ChaCha20-Poly1305 layer, key derived via HKDF-Expand from the exporter secret).
+- **Impact**: Partial decryption (still requires MLS symmetric keys for full decryption of the inner MLS layer).
 - **Countermeasures**:
-  - Double encryption provides defense in depth
-  - Epoch rotation limits exposure window
+  - Double encryption provides defense in depth (MLS + ChaCha20-Poly1305)
+  - Epoch rotation limits exposure window (new exporter secret per epoch)
   - Remove compromised members immediately
 
 #### T.8.4 - Message Replay Attacks
@@ -1624,7 +1624,7 @@ Comprehensive testing is essential to ensure security requirements are properly 
 - MLS message format validation against OpenMLS
 - Nostr event format validation against NIPs
 - [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md) gift-wrapping format compliance
-- [NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md) encryption compatibility
+   - ChaCha20-Poly1305 decryption compatibility (kind: 445 outer layer)
 
 #### 3.5.3 Fuzzing Targets
 
@@ -1689,7 +1689,7 @@ Comprehensive testing is essential to ensure security requirements are properly 
 - **[NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md)**: Basic protocol flow description
 - **[NIP-13](https://github.com/nostr-protocol/nips/blob/master/13.md)**: Proof of Work
 - **[NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md)**: Authentication of clients to relays
-- **[NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md)**: Encrypted Direct Message
+- **[NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md)**: Encrypted Direct Message (used by NIP-59 gift wrap for Welcome events; not used for kind: 445 group events)
 - **[NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md)**: Gift Wrap
 - **[NIP-70](https://github.com/nostr-protocol/nips/blob/master/70.md)**: Replaceable Events
 - **[NIP-92](https://github.com/nostr-protocol/nips/blob/master/92.md)**: File Metadata

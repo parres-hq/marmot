@@ -53,7 +53,7 @@ marmot/
 2. **Nostr**: Provides decentralized relay network and identity system
 3. **Marmot Group Data Extension**: Custom MLS extension containing group metadata
 4. **KeyPackages**: Public invitation cards for asynchronous group joins
-5. **Double Encryption**: MLS symmetric encryption + NIP-44 encryption for application messages
+5. **Double Encryption**: MLS symmetric encryption + ChaCha20-Poly1305 (key derived from MLS exporter secret) for kind: 445 application messages
 
 ### Event Kinds
 
@@ -143,7 +143,7 @@ When working on protocol specifications, ensure these are always addressed:
 - Use Nostrbook MCP server to query NIPs (if available)
 - Key NIPs referenced:
   - NIP-01: Basic protocol flow
-  - NIP-44: Encrypted Direct Message (key derivation)
+  - NIP-44: Encrypted Direct Message (used by NIP-59 for Welcome events; **not** used for kind: 445 group events)
   - NIP-59: Gift Wrap (Welcome event encryption)
   - NIP-70: Replaceable Events (KeyPackage deletion)
 
@@ -177,6 +177,7 @@ When working on protocol specifications, ensure these are always addressed:
 5. **Examples**: Keep examples complete and valid
 6. **Terminology**: Use precise MLS and Nostr terminology
 7. **Status tracking**: Update MIP status (draft → review → stable)
+8. **DO NOT edit `EE.md`**: This file is a historic record and MUST NOT be modified under any circumstances. It is read-only.
 
 ## Common Pitfalls to Avoid
 
