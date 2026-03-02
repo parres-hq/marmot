@@ -728,7 +728,7 @@ Group messages use double encryption and ephemeral keypairs for privacy.
 
 #### T.8.3 - Exporter Secret Compromise
 
-- **Description**: Compromise of `exporter_secret` for current epoch allows decryption of kind: 445 content field (the outer ChaCha20-Poly1305 layer, key derived via HKDF-Expand from the exporter secret).
+- **Description**: Compromise of `exporter_secret` for current epoch allows decryption of kind: 445 content field (the outer ChaCha20-Poly1305 layer, key derived directly from the exporter secret).
 - **Impact**: Partial decryption (still requires MLS symmetric keys for full decryption of the inner MLS layer).
 - **Countermeasures**:
   - Double encryption provides defense in depth (MLS + ChaCha20-Poly1305)
