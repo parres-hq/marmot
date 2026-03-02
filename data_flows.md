@@ -232,11 +232,11 @@ sequenceDiagram
 
     MLS->>MLS: Encrypt with group<br/>symmetric keys
 
-    S->>S: Extract exporter_secret<br/>for current epoch
+    S->>S: Derive exporter_secret via<br/>MLS-Exporter("marmot",<br/>"group-event", 32)
 
-    S->>S: Derive encryption_key via<br/>HKDF-Expand(exporter_secret,<br/>"mip03-group-event-v1", 32)
+    S->>S: Derive encryption_key via<br/>HKDF-Expand-SHA256(exporter_secret,<br/>"mip03-group-event-v1", 32)
 
-    S->>S: Generate random 12-byte nonce<br/>Encrypt MLSMessage with<br/>ChaCha20-Poly1305
+    S->>S: Generate random 12-byte nonce<br/>Set aad = empty byte string<br/>Encrypt MLSMessage with<br/>ChaCha20-Poly1305
 
     S->>S: Generate fresh<br/>ephemeral keypair
 
@@ -246,7 +246,7 @@ sequenceDiagram
 
     R->>Rec: Deliver to subscribers<br/>(subscribed to h tag)
 
-    Rec->>Rec: Derive encryption_key from<br/>own exporter_secret
+    Rec->>Rec: Derive exporter_secret and<br/>encryption_key with same<br/>MLS-Exporter + HKDF-Expand-SHA256 inputs
 
     Rec->>Rec: Decrypt to MLSMessage<br/>(ChaCha20-Poly1305)
 
@@ -260,13 +260,13 @@ sequenceDiagram
 
     Rec->>Rec: Display message
 
-    Note over S,Rec: Message encrypted twice:<br/>MLS + NIP-44
+    Note over S,Rec: Message encrypted twice:<br/>MLS + ChaCha20-Poly1305
 ```
 
 **Data Flow:**
 1. Sender creates unsigned inner event
 2. MLS encrypts with group keys
-3. ChaCha20-Poly1305 encrypts MLS message (key derived from exporter_secret)
+3. ChaCha20-Poly1305 encrypts MLS message (key derived via MLS-Exporter + HKDF-Expand-SHA256; AAD = empty byte string)
 4. Published with ephemeral keypair
 5. Recipients decrypt ChaCha20-Poly1305 layer
 6. MLS decrypts and authenticates inner content
@@ -545,5 +545,4 @@ sequenceDiagram
 | **10051** (Relay List) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | N/A |
 | **444** (Welcome) via NIP-59 | ✅ | ✅ Ephemeral | ✅ | ✅ | ❌ | ❌ Content is MLS | ❌ | ✅ |
 | **445** (Group Event) | ✅ | ✅ Ephemeral | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ |
-
 

@@ -169,7 +169,7 @@ Network observers include entities that can capture packets between clients and 
 - **Key Package events (kind: 443)**: Public signing keys, MLS credentials containing Nostr public keys, supported ciphersuites, and capabilities. This data is intentionally public and unencrypted.
 - **Key Package list events (kind: 10051)**: Relay URLs where users publish KeyPackages. This data is intentionally public.
 - **Welcome events (kind: 444)**: Gift-wrapped using [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md), appearing as kind: 1059 events. Observers cannot determine the payload is a Welcome message without the recipient's Nostr private key.
- - **Application Message events (kind: 445)**: Double-encrypted content (MLS symmetric encryption + ChaCha20-Poly1305, key derived from MLS exporter secret). Observers see encrypted content and ephemeral public keys but cannot decrypt without group secrets.
+- **Application Message events (kind: 445)**: Double-encrypted content (MLS symmetric encryption + ChaCha20-Poly1305, key derived from MLS exporter secret). Observers see encrypted content and ephemeral public keys but cannot decrypt without group secrets.
 
 **Countermeasures**:
 - Use TLS for all WebSocket connections to relays
@@ -1702,4 +1702,3 @@ This threat model is based on the Marmot protocol specifications, MLS protocol d
 ---
 
 **Note**: This is a living document and should be updated as new threats are identified or protocol specifications evolve.
-
