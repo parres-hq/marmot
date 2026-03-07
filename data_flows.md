@@ -75,6 +75,7 @@ sequenceDiagram
 2. KeyPackage published to multiple relays (redundancy)
 3. Relay list published (helps others find KeyPackages)
 4. After use, KeyPackage deleted (unless last_resort)
+5. Relay deletion is best-effort; clients must not assume one-live-KeyPackage semantics
 
 **Security Notes:**
 - KeyPackage content is public (needed for invitations)
@@ -181,7 +182,7 @@ sequenceDiagram
 ```
 
 **Data Flow:**
-1. Admin fetches member's KeyPackage from relays
+1. Admin fetches member's KeyPackages from relays and selects the freshest valid candidate
 2. Admin creates MLS Add Proposal and Commit
 3. **Critical**: Commit published and confirmed BEFORE Welcome sent
 4. Welcome gift-wrapped and sent privately (NIP-59)

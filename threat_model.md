@@ -622,7 +622,9 @@ Key packages enable asynchronous group invitations and have specific security co
 - **Impact**: Old KeyPackages could be used if not properly deleted.
 - **Countermeasures**:
   - Clients SHOULD delete non-last-resort KeyPackages after successful group join
+  - Inviters MUST validate all candidate KeyPackages client-side and select the freshest valid candidate rather than assuming relay-side replacement
   - Last resort KeyPackages SHOULD be deleted after fresh packages are published, not immediately after use
+  - Clients SHOULD retain `init_key` material for superseded relay-published KeyPackages until the KeyPackage is used or deletion has been acknowledged by each publishing relay
   - Do NOT delete if Welcome processing fails (to allow retry)
   - Monitor relay deletion confirmations
 

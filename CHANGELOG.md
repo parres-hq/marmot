@@ -31,6 +31,8 @@
 
 ### Changed
 
+- **KeyPackage relay handling**: Clarified that `kind:443` KeyPackages are regular Nostr events and correctness MUST NOT depend on relay-specific "one event per tag" retention. Inviters now select the freshest valid KeyPackage client-side, and publishers should retain superseded `init_key` material until relay deletions are acknowledged.
+
 ### Added
 
 ### Fixed
