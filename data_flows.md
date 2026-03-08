@@ -4,31 +4,48 @@ This document provides comprehensive data flow diagrams and architectural overvi
 
 ## Table of Contents
 
-1. [Actor Definitions](#actor-definitions)
-2. [Key Package Distribution Flow](#key-package-distribution-flow)
-3. [Group Creation Flow](#group-creation-flow)
-4. [Member Invitation Flow](#member-invitation-flow)
-5. [Group Messaging Flow](#group-messaging-flow)
-6. [Group Administration Flow](#group-administration-flow)
-7. [Cryptographic Protection Layers](#cryptographic-protection-layers)
+- [Marmot Protocol Data Flow and Architecture](#marmot-protocol-data-flow-and-architecture)
+  - [Table of Contents](#table-of-contents)
+  - [Actor Definitions](#actor-definitions)
+    - [Clients](#clients)
+    - [Relays](#relays)
+    - [Blossom Servers](#blossom-servers)
+  - [Key Package Distribution Flow](#key-package-distribution-flow)
+  - [Group Creation Flow](#group-creation-flow)
+  - [Member Invitation Flow](#member-invitation-flow)
+  - [Group Messaging Flow](#group-messaging-flow)
+    - [Application Message (Chat)](#application-message-chat)
+    - [Proposal Message](#proposal-message)
+    - [Commit Message (Admin)](#commit-message-admin)
+  - [Group Administration Flow](#group-administration-flow)
+    - [Update Group Metadata](#update-group-metadata)
+    - [Add/Remove Members](#addremove-members)
+    - [Signing Key Rotation](#signing-key-rotation)
+      - [Self-Update Commit (Preferred)](#self-update-commit-preferred)
+    - [Voluntary Leave (SelfRemove)](#voluntary-leave-selfremove)
+  - [Cryptographic Protection Layers](#cryptographic-protection-layers)
+    - [Protection Matrix by Event Kind](#protection-matrix-by-event-kind)
 
 ---
 
 ## Actor Definitions
 
 ### Clients
+
 - **Identity**: Nostr keypair (secp256k1)
 - **MLS Identity**: Credential containing Nostr pubkey
 - **Capabilities**: Create groups, send/receive messages, send/receive files, publish KeyPackages, Welcomes, and other events
 - **Local State**: MLS group state, message history, KeyPackages, local media storage
 
 ### Relays
+
 - **Role**: Store and distribute Nostr events
 - **Trust Model**: Untrusted for confidentiality, relied upon for availability
 - **Capabilities**: Accept, store, query, and distribute events
 - **Observable Data**: Event metadata (kind, timestamps, tags), encrypted content
 
 ### Blossom Servers
+
 - **Role**: Content-addressed storage for encrypted media
 - **Trust Model**: Untrusted - cannot decrypt stored content, relied upon for availability
 - **Capabilities**: Store and retrieve blobs by SHA256 hash
@@ -71,12 +88,14 @@ sequenceDiagram
 ```
 
 **Data Flow:**
+
 1. Client generates MLS KeyPackage locally
 2. KeyPackage published to multiple relays (redundancy)
 3. Relay list published (helps others find KeyPackages)
 4. After use, KeyPackage deleted (unless last_resort)
 
 **Security Notes:**
+
 - KeyPackage content is public (needed for invitations)
 - Nostr signature prevents impersonation
 - Credential links Nostr identity to MLS signing key
@@ -114,6 +133,7 @@ sequenceDiagram
 ```
 
 **Data Flow:**
+
 1. Admin generates random MLS group ID (private, never published)
 2. Generates random `nostr_group_id` for relay routing
 3. Creates Marmot Group Data Extension with metadata
@@ -121,6 +141,7 @@ sequenceDiagram
 5. Group state stored locally only
 
 **Security Notes:**
+
 - MLS group ID is private (cryptographic boundary)
 - `nostr_group_id` is public-ish (observable by relays)
 - Extension is cryptographically authenticated
@@ -181,6 +202,7 @@ sequenceDiagram
 ```
 
 **Data Flow:**
+
 1. Admin fetches member's KeyPackage from relays
 2. Admin creates MLS Add Proposal and Commit
 3. **Critical**: Commit published and confirmed BEFORE Welcome sent
@@ -189,6 +211,7 @@ sequenceDiagram
 6. Member deletes consumed KeyPackage
 
 **Security Notes:**
+
 - ✅ Credential validation prevents impersonation
 - ✅ Commit/Welcome ordering prevents race conditions
 - ✅ Gift-wrapping hides invitation from observers
@@ -264,6 +287,7 @@ sequenceDiagram
 ```
 
 **Data Flow:**
+
 1. Sender creates unsigned inner event
 2. MLS encrypts with group keys
 3. ChaCha20-Poly1305 encrypts MLS message (key derived via MLS-Exporter; AAD = empty byte string)
@@ -272,6 +296,7 @@ sequenceDiagram
 6. MLS decrypts and authenticates inner content
 
 **Security Notes:**
+
 - ✅ Double encryption (MLS + ChaCha20-Poly1305)
 - ✅ Ephemeral key per message (sender privacy)
 - ✅ MLS authentication (sender identity)
@@ -311,6 +336,7 @@ sequenceDiagram
 ```
 
 **Data Flow:**
+
 1. Member creates MLS Proposal
 2. Wrapped in encrypted Group Event
 3. Published to relays
@@ -318,14 +344,15 @@ sequenceDiagram
 5. Admin may include in future Commit
 
 **Security Notes:**
+
 - ✅ MLS signature authenticates proposer
 - ✅ Encrypted like application messages
 - ⚠️ Any member can create proposals
-- ✅ Only admins can commit proposals (except self-updates)
+- ✅ Only admins can commit proposals (except self-updates and SelfRemove processing)
 
 ### Commit Message (Admin)
 
-Admins can create Commits that include any proposals. Non-admin members can only create self-update Commits (see Key Rotation Flow).
+Admins can create Commits that include any proposals. Non-admin members can only create self-update Commits (see Key Rotation Flow) and dedicated SelfRemove-only Commits (see [MIP-03](03.md)).
 
 ```mermaid
 sequenceDiagram
@@ -371,6 +398,7 @@ sequenceDiagram
 ```
 
 **Data Flow:**
+
 1. Admin creates MLS Commit
 2. **Critical**: Published to relays BEFORE applying locally
 3. Wait for relay confirmation
@@ -382,7 +410,8 @@ sequenceDiagram
 **Exception - Initial Group Creation**: The very first Commit that creates a group MUST NOT be sent to relays. This initial Commit is applied locally only, establishing epoch 0. It exists purely on the creating admin's device until the first member invitation. This preserves privacy by not exposing group creation metadata to relays. The first Commit published to relays is the one adding the first member. This intentionally departs from MLS spec recommendations—since no other members exist yet, there's no risk of state divergence, and privacy benefits outweigh coordination guarantees.
 
 **Security Notes:**
-- ✅ Admin verification REQUIRED for non-self-update Commits
+
+- ✅ Admin verification REQUIRED for Commits that are not self-updates or SelfRemove-only
 - ✅ Epoch advancement provides PCS
 - ✅ Timestamp ordering prevents forks
 - ⚠️ Multiple admins need coordination
@@ -433,6 +462,7 @@ sequenceDiagram
 ```
 
 **Data Flow:**
+
 1. Admin creates updated extension
 2. Wraps in Proposal and Commit
 3. Publishes and waits for confirmation
@@ -440,6 +470,7 @@ sequenceDiagram
 5. Update relay subscriptions if needed
 
 **Security Notes:**
+
 - ✅ Extension changes cryptographically authenticated
 - ✅ Admin verification REQUIRED
 - ✅ TLS serialization ensures consistency
@@ -476,10 +507,12 @@ sequenceDiagram
 ```
 
 **Data Flow:**
+
 - **Add**: Proposal → Commit → Welcome (see detailed flow above)
 - **Remove**: Proposal → Commit → Epoch advance → Keys invalidated
 
 **Security Notes:**
+
 - ✅ Epoch change invalidates removed member's keys
 - ✅ Forward secrecy for future messages
 - ⚠️ Removed member retains historical messages
@@ -522,16 +555,84 @@ sequenceDiagram
 ```
 
 **Data Flow:**
+
 1. Member creates self-update Commit (Update for own LeafNode only)
 2. Published to relays and confirmed
 3. Other members verify it's a valid self-update
 4. Epoch advances, new signing key active
 
 **Security Notes:**
+
 - ✅ Regular rotation limits compromise impact
 - ✅ RECOMMENDED: Weekly rotation
 - ✅ CRITICAL: Rotate after last_resort KeyPackage use
 - ✅ PCS achieved after epoch advance
+
+### Voluntary Leave (SelfRemove)
+
+Any member can leave a group without admin involvement using the SelfRemove proposal type ([MLS Extensions draft](https://datatracker.ietf.org/doc/draft-ietf-mls-extensions/)). SelfRemove is an empty struct — the departing member is identified by the sender field of the signed proposal, making forgery structurally impossible.
+
+```mermaid
+sequenceDiagram
+    participant L as Leaving Member
+    participant MLS as MLS Library
+    participant R as Relays
+    participant M as Other Member
+    participant MMLS as Member's MLS
+
+    Note over L: Member wants to leave group
+
+    L->>MLS: Create SelfRemove proposal
+
+    Note over L: SelfRemove = empty struct<br/>Sender identity IS the payload
+
+    MLS->>L: SelfRemove as PublicMessage<br/>(signed + membership tag)
+
+    L->>R: Publish as Group Event (445)<br/>Encrypted with ChaCha20-Poly1305
+
+    R->>M: Deliver SelfRemove event
+
+    M->>MMLS: Decrypt and verify proposal<br/>1. Signature (sender's LeafNode key)<br/>2. Membership tag (epoch key)<br/>3. Epoch match
+
+    Note over M: Proposal cached with ProposalRef<br/>(hash of AuthenticatedContent)
+
+    M->>MMLS: Create Commit including<br/>SelfRemove by reference
+
+    Note over M: Any member can send a<br/>SelfRemove-only Commit<br/>Committer ≠ removed member
+
+    M->>R: Publish Commit (445)
+
+    R-->>M: OK confirmation
+
+    M->>MMLS: Apply Commit
+
+    R->>L: Deliver Commit
+    L->>L: Process Commit<br/>Confirm own removal<br/>Delete group state
+
+    Note over L,M: Departing member's leaf blanked<br/>Group advances to new epoch
+```
+
+**Data Flow:**
+
+1. Departing member creates SelfRemove proposal (MLS PublicMessage)
+2. Published as encrypted Group Event to relays
+3. Other members receive, verify signature + membership tag + epoch
+4. Any member sends a dedicated SelfRemove-only Commit containing the proposal by ProposalRef (admins may also include it in a broader Commit)
+5. Commit published and confirmed
+6. All members process removal, epoch advances
+
+**Error Paths:**
+
+> **Note**: A Commit containing SelfRemove proposals MUST be rejected if the resulting `admin_pubkeys` set would be empty — the group would become unmanageable. Members must transfer admin rights before leaving. Additionally, the committer MUST NOT be the member being removed (RFC 9420 §12.2). If both a SelfRemove and a Remove target the same leaf, SelfRemove takes priority and the Remove is invalid.
+
+**Security Notes:**
+
+- ✅ SelfRemove has no target field — sender identity is the only input
+- ✅ Proposal is signed by departing member's LeafNode key (unforgeable)
+- ✅ Any member can create a SelfRemove-only Commit (no admin dependency)
+- ✅ Committer cannot be the removed member (RFC 9420 §12.2)
+- ✅ Commit MUST be rejected if SelfRemove proposals would leave `admin_pubkeys` empty
+- ✅ If both SelfRemove and Remove target the same leaf, SelfRemove takes priority
 
 ---
 
@@ -539,9 +640,9 @@ sequenceDiagram
 
 ### Protection Matrix by Event Kind
 
-| Event Kind | TLS | Nostr Sig | Ephemeral Key | NIP-44 | ChaCha20-Poly1305 | MLS Encrypt | MLS Auth | Inner Unsigned |
-|------------|-----|-----------|---------------|--------|-------------------|-------------|----------|----------------|
-| **443** (KeyPackage) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ Credential | N/A |
-| **10051** (Relay List) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | N/A |
-| **444** (Welcome) via NIP-59 | ✅ | ✅ Ephemeral | ✅ | ✅ | ❌ | ❌ Content is MLS | ❌ | ✅ |
-| **445** (Group Event) | ✅ | ✅ Ephemeral | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Event Kind                   | TLS | Nostr Sig    | Ephemeral Key | NIP-44 | ChaCha20-Poly1305 | MLS Encrypt       | MLS Auth      | Inner Unsigned |
+| ---------------------------- | --- | ------------ | ------------- | ------ | ----------------- | ----------------- | ------------- | -------------- |
+| **443** (KeyPackage)         | ✅  | ✅           | ❌            | ❌     | ❌                | ❌                | ✅ Credential | N/A            |
+| **10051** (Relay List)       | ✅  | ✅           | ❌            | ❌     | ❌                | ❌                | ❌            | N/A            |
+| **444** (Welcome) via NIP-59 | ✅  | ✅ Ephemeral | ✅            | ✅     | ❌                | ❌ Content is MLS | ❌            | ✅             |
+| **445** (Group Event)        | ✅  | ✅ Ephemeral | ✅            | ❌     | ✅                | ✅                | ✅            | ✅             |

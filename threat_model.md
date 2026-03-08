@@ -43,6 +43,7 @@ The Marmot protocol enables secure group messaging by combining MLS end-to-end e
 ### 1.1 Scope
 
 This threat model covers:
+
 - Key package management and credential validation
 - Group construction and state management
 - Welcome event handling and group invitations
@@ -55,6 +56,7 @@ This threat model covers:
 ### 1.2 Threat Model Assumptions
 
 This document assumes attackers may have:
+
 - **Passive network observation**: Ability to monitor network traffic and relay communications
 - **Active network manipulation**: Ability to inject, modify, or drop messages
 - **Relay operator access**: Control over one or more Nostr relays
@@ -67,6 +69,7 @@ This document assumes attackers may have:
 #### What Marmot Provides
 
 Marmot aims to provide:
+
 - **Message confidentiality**: Protection against unauthorized reading of messages through MLS symmetric encryption
 - **Message integrity**: Protection against unauthorized modification via cryptographic signatures
 - **Authentication**: Verification of message origin and group membership through MLS credentials and Nostr identities
@@ -143,7 +146,7 @@ The primary trust boundaries in Marmot are:
 
 2. **Device boundary**: Each device has its own keys and must be explicitly added to groups. Device compromise affects only that device.
 
-3. **Admin privilege boundary**: Only users listed in the `admin_pubkeys` array can commit structural group state changes (membership, settings, extension updates). Non-admin members may only create self-update Commits to rotate their own key material (See [MIP-01](01.md) and [MIP-03](03.md)).
+3. **Admin privilege boundary**: Only users listed in the `admin_pubkeys` array can commit structural group state changes (membership, settings, extension updates). Non-admin members may only create self-update Commits (to rotate their own key material) or SelfRemove-only Commits (to process voluntary departures) — these two Commit types MUST NOT be combined. See [MIP-01](01.md) and [MIP-03](03.md).
 
 4. **Epoch boundary**: MLS epochs provide forward secrecy and post-compromise security boundaries. Key material rotates with epoch transitions.
 
@@ -160,18 +163,21 @@ Network observers include entities that can capture packets between clients and 
 **Threat**: Attackers monitoring network traffic can observe TLS-encrypted packets and Nostr event metadata.
 
 **Attack Scenarios**:
+
 - Observing event kinds (443, 444, 445, 10051) published to relays
 - Monitoring event sizes and timing patterns
 - Tracking `nostr_group_id` values in kind: 445 event `h` tags
 - Correlating activity patterns across multiple relays
 
 **Observable Information**:
+
 - **Key Package events (kind: 443)**: Public signing keys, MLS credentials containing Nostr public keys, supported ciphersuites, and capabilities. This data is intentionally public and unencrypted.
 - **Key Package list events (kind: 10051)**: Relay URLs where users publish KeyPackages. This data is intentionally public.
 - **Welcome events (kind: 444)**: Gift-wrapped using [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md), appearing as kind: 1059 events. Observers cannot determine the payload is a Welcome message without the recipient's Nostr private key.
 - **Application Message events (kind: 445)**: Double-encrypted content (MLS symmetric encryption + ChaCha20-Poly1305, key derived from MLS exporter secret). Observers see encrypted content and ephemeral public keys but cannot decrypt without group secrets.
 
 **Countermeasures**:
+
 - Use TLS for all WebSocket connections to relays
 - Gift-wrapping Welcome events ([NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md)) prevents identification of Welcome messages
 - Ephemeral keypairs for kind: 445 events prevent sender correlation
@@ -567,14 +573,15 @@ MLS provides specific security guarantees related to key compromise, but with im
 
 Different types of keys in Marmot have different rotation characteristics:
 
-| Key Type | Rotation Mechanism | Rotation Frequency | Impact Scope |
-|----------|-------------------|-------------------|--------------|
-| **MLS Signing Keys** | Update proposals ([MIP-00](00.md)) | Recommended: Weekly | Single group |
-| **MLS Encryption Keys** | Automatic with epoch transitions | Every Commit | Single group |
-| **Nostr Private Keys** | Manual key migration | Rare/Never | All Nostr applications |
-| **Ephemeral Keypairs** | Fresh generation per message | Every message | Single message |
+| Key Type                | Rotation Mechanism                 | Rotation Frequency  | Impact Scope           |
+| ----------------------- | ---------------------------------- | ------------------- | ---------------------- |
+| **MLS Signing Keys**    | Update proposals ([MIP-00](00.md)) | Recommended: Weekly | Single group           |
+| **MLS Encryption Keys** | Automatic with epoch transitions   | Every Commit        | Single group           |
+| **Nostr Private Keys**  | Manual key migration               | Rare/Never          | All Nostr applications |
+| **Ephemeral Keypairs**  | Fresh generation per message       | Every message       | Single message         |
 
 **Important Notes**:
+
 - **MLS Signing Keys**: Rotated via Update proposals within each group independently. Weekly rotation recommended for security.
 - **MLS Encryption Keys**: Automatically rotated with every epoch transition (any Commit that modifies membership or updates keys).
 - **Nostr Keys**: Identity keys that control user identity across ALL Nostr applications. Rotation affects entire Nostr ecosystem and should be done carefully.
@@ -1250,6 +1257,7 @@ Operational security considerations beyond protocol-level protections.
 These requirements are CRITICAL for security and MUST be implemented correctly. Failure to implement any of these creates serious vulnerabilities.
 
 **Severity Levels**:
+
 - **CRITICAL (Security Bypass)**: Requirements that prevent authentication bypass or information leakage. Failure enables impersonation or content exposure.
 - **CRITICAL (Correctness)**: Requirements that ensure protocol correctness and state consistency. Failure causes synchronization issues or data corruption.
 - **HIGH (Security Reduction)**: Requirements that significantly reduce security properties. Failure weakens but doesn't eliminate protections.
@@ -1301,9 +1309,9 @@ These requirements are CRITICAL for security and MUST be implemented correctly. 
 
 #### 3.0.6 Admin Authorization Verification ([MIP-01](01.md), [MIP-03](03.md)) - CRITICAL (Security Bypass)
 
-**Requirement**: Clients MUST verify that Commit senders are listed in the current `admin_pubkeys` array before processing any Commit, EXCEPT for self-update Commits. Self-update Commits (containing only an Update proposal for the sender's own LeafNode) MAY be processed from any member without admin verification.
+**Requirement**: Clients MUST verify that Commit senders are listed in the current `admin_pubkeys` array before processing any Commit, EXCEPT for self-update Commits and SelfRemove-only Commits. Self-update Commits (containing only an Update proposal for the sender's own LeafNode) and SelfRemove-only Commits (containing only SelfRemove proposals by reference) MAY be processed from any member without admin verification. Self-update and SelfRemove-only Commits MUST NOT be combined.
 
-- **Why Critical**: Prevents unauthorized structural group state changes by non-admin members while allowing all members to maintain key hygiene
+- **Why Critical**: Prevents unauthorized structural group state changes by non-admin members while allowing all members to maintain key hygiene and process voluntary departures
 - **Related Threat**: T.4.x - Admin Privilege Abuse scenarios
 - **Specification**: See [MIP-01](01.md) (Marmot Group Data Extension), [MIP-03](03.md) (Commit Messages)
 
@@ -1394,7 +1402,7 @@ Common mistakes that developers should avoid when implementing Marmot:
 
 **Consequences**: Unauthorized state changes, privilege escalation.
 
-**Solution**: For non-self-update Commits, verify admin status BEFORE processing, using current epoch's admin list from extension. For self-update Commits, verify the Commit contains ONLY an Update proposal for the sender's own LeafNode before processing.
+**Solution**: For Commits that are not self-updates or SelfRemove-only, verify admin status BEFORE processing, using current epoch's admin list from extension. For self-update Commits, verify the Commit contains ONLY an Update proposal for the sender's own LeafNode — no other proposal types. For SelfRemove-only Commits, verify the Commit contains ONLY SelfRemove proposals by reference — no other proposal types. Self-update and SelfRemove-only Commits MUST NOT be combined.
 
 #### 3.1.6 TLS Serialization Edge Cases
 
@@ -1455,12 +1463,13 @@ Common mistakes that developers should avoid when implementing Marmot:
 ### 3.2 Implementation Requirements
 
 Implementations MUST:
+
 - Validate credential matching for KeyPackage events (Nostr pubkey in credential matches event pubkey)
 - Wait for Commit confirmation before sending Welcome events
 - Never reuse ephemeral keypairs for Group Events
 - Keep inner events unsigned to prevent accidental public publishing
 - Rotate signing keys regularly, especially after using last resort KeyPackages
-- Verify admin status before processing Commits (except self-update Commits from any member)
+- Verify admin status before processing Commits (except self-update and SelfRemove-only Commits from any member)
 - Handle Commit race conditions using timestamp/ID priority
 - Use exact TLS serialization for Marmot Group Data Extension
 - Verify file integrity after media decryption
@@ -1470,6 +1479,7 @@ Implementations MUST:
 ### 3.3 Best Practices
 
 Implementations SHOULD:
+
 - Use multiple admins for groups to provide checks and balances
 - Implement client-side rate limiting and message filtering
 - Rotate `nostr_group_id` values periodically
@@ -1598,15 +1608,18 @@ Comprehensive testing is essential to ensure security requirements are properly 
 #### 3.5.1 Security Testing
 
 **Critical Security Requirements Testing**:
+
 - **Credential mismatch detection**: Test that clients reject KeyPackages where MLS credential identity doesn't match event pubkey
 - **Ephemeral keypair uniqueness**: Validate that each kind: 445 event uses a unique keypair (add assertions in development)
 - **Inner event signature validation**: Verify clients reject or warn about signed inner events
-- **Admin authorization bypass**: Attempt non-self-update Commits from non-admin members and verify rejection; verify self-update Commits from non-admins are accepted
+- **Admin authorization bypass**: Attempt unauthorized Commits from non-admin members and verify rejection; verify self-update and SelfRemove-only Commits from non-admins are accepted; verify SelfRemove proposals cannot be forged (sender identity is cryptographically bound); verify a Commit containing SelfRemove proposals is rejected if it would leave admin_pubkeys empty
+- **SelfRemove validation**: Verify a Commit combining self-update and SelfRemove proposals is rejected; verify a member cannot commit their own SelfRemove (RFC 9420 §12.2); verify duplicate SelfRemove proposals in the same epoch are rejected; verify SelfRemove takes priority over Remove targeting the same leaf; verify that a stale SelfRemove from a prior epoch is rejected and the departing member re-issues it in the current epoch
 - **Race condition handling**: Send simultaneous Commits and verify consistent state across clients
 - **init_key deletion verification**: Verify private init_key is securely deleted from storage after Welcome processing (memory zeroization, file removal)
 - **Post-join self-update**: Verify clients perform or prompt for self-update after joining via Welcome
 
 **Attack Scenario Testing**:
+
 - **Gift-wrapped event spam**: Test client behavior under high volume of invalid [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md) events
 - **Welcome timing races**: Test new member join when Commit hasn't propagated
 - **Large group limits**: Test Welcome message sizes approaching relay limits
@@ -1615,20 +1628,23 @@ Comprehensive testing is essential to ensure security requirements are properly 
 #### 3.5.2 Interoperability Testing
 
 **Cross-Implementation Compatibility**:
+
 - Message exchange between different Marmot client implementations
 - TLS serialization compatibility for Marmot Group Data Extension
 - Extension version handling across different client versions
 - Media encryption/decryption across implementations
 
 **Protocol Compliance**:
+
 - MLS message format validation against OpenMLS
 - Nostr event format validation against NIPs
 - [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md) gift-wrapping format compliance
-   - ChaCha20-Poly1305 decryption compatibility (kind: 445 outer layer)
+  - ChaCha20-Poly1305 decryption compatibility (kind: 445 outer layer)
 
 #### 3.5.3 Fuzzing Targets
 
 **High-Priority Fuzzing**:
+
 - Extension deserialization (TLS format parsing)
 - MLS message processing (Commits, Proposals, Welcome objects)
 - Nostr event parsing (kind: 443, 444, 445, 10051)
@@ -1636,6 +1652,7 @@ Comprehensive testing is essential to ensure security requirements are properly 
 - Key derivation (exporter secret contexts)
 
 **Fuzzing Goals**:
+
 - Detect crashes from malformed input
 - Identify memory safety issues
 - Find edge cases in parsing logic
@@ -1644,12 +1661,14 @@ Comprehensive testing is essential to ensure security requirements are properly 
 #### 3.5.4 Performance Testing
 
 **Resource Exhaustion Scenarios**:
+
 - Large group scalability (100-150 members)
 - High message volume handling
 - Rapid Commit frequency response
 - Multiple concurrent group membership
 
 **Limits Testing**:
+
 - Welcome message size limits
 - Relay message size constraints
 - Event processing throughput
@@ -1658,6 +1677,7 @@ Comprehensive testing is essential to ensure security requirements are properly 
 ### 3.6 Security Properties Summary
 
 **Strong Protections**:
+
 - Message confidentiality via MLS symmetric encryption
 - Forward secrecy (after member removal and state deletion)
 - Post-compromise security (after key updates)
@@ -1665,6 +1685,7 @@ Comprehensive testing is essential to ensure security requirements are properly 
 - Double encryption for application messages
 
 **Remaining Vulnerabilities**:
+
 - Malicious insiders (members and admins)
 - Metadata leakage (timing, group activity, IP correlation)
 - Spam and DoS attacks (gift-wrapped events, invalid messages)

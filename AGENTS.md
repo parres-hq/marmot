@@ -7,6 +7,7 @@ A guide for AI coding agents working on the Marmot Protocol specification. This 
 Marmot is a secure, decentralized group messaging protocol that combines the [MLS Protocol](https://www.rfc-editor.org/rfc/rfc9420.html) with [Nostr's](https://github.com/nostr-protocol/nostr) decentralized network. The protocol enables end-to-end encrypted group messaging without relying on centralized servers.
 
 **Key Characteristics:**
+
 - Protocol specification repository (not an implementation)
 - Markdown-based documentation (MIPs - Marmot Implementation Proposals)
 - References MLS RFCs and Nostr NIPs
@@ -70,7 +71,7 @@ When working on protocol specifications, ensure these are always addressed:
 2. **Commit/Welcome Ordering**: Commits MUST be confirmed before sending Welcome events
 3. **Ephemeral Keypair Uniqueness**: Fresh keypair for EVERY kind: 445 event
 4. **Unsigned Inner Events**: Inner events MUST NOT be signed (prevents leak publication)
-5. **Admin Authorization**: Non-self-update Commits MUST verify sender is in admin_pubkeys array (self-update Commits are allowed from any member)
+5. **Admin Authorization**: Commits that are not self-updates or SelfRemove-only MUST verify sender is in admin_pubkeys array (self-update and SelfRemove-only Commits are allowed from any member)
 6. **TLS Serialization**: Exact TLS presentation language format required
 
 ## Code Style & Conventions
