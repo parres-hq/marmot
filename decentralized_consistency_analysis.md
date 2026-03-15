@@ -125,80 +125,39 @@ The goal is instead:
 
 ## Recommended Direction
 
-The best pure-decentralized hardening strategy is to add a convergence model to Marmot without introducing a mandatory coordinator.
+The best pure-decentralized hardening strategy is to make Marmot's operational convergence guidance more explicit without introducing a mandatory coordinator.
 
 The proposed shape is:
 
-- activation safety,
-- commit discipline,
+- stronger Commit discipline,
+- clearer post-join and post-offline send hygiene,
 - drift and fork containment,
-- bounded catch-up rules,
+- same-epoch conflict handling,
 - and recovery semantics.
 
 This is a strengthening of Marmot, not a reinvention of it.
 
 ## Recommended Additions
 
-### 1. Add a Local Convergence State Machine
+### 1. Clarify Post-Join Send Hygiene
 
-Future spec work should define explicit local client states for group activation and recovery. Suggested states:
+From the recipient's point of view, a Welcome is the start of group membership. The new member does not have meaningful access to earlier encrypted group history and cannot use older ciphertexts to reconstruct prior state.
 
-- `PendingJoin`
-- `Active`
-- `StateUncertain`
-- `Quarantined`
+The real risk begins immediately after successful Welcome processing: newer Commits may already exist on reachable relays, and a freshly joined member can fork itself out of the group if it sends a self-update or application traffic from stale visible state.
 
-Purpose:
+Future Marmot text should therefore say clearly that after processing a Welcome, clients SHOULD make a bounded best-effort attempt to process newer visible group state before sending their first self-update or other outbound traffic.
 
-- prevent immediate use of uncertain state,
-- make recovery behavior interoperable,
-- and stop drifted clients from continuing to emit damaging traffic.
+This should also be paired with an explicit distinction between:
 
-### 2. Separate Welcome Processing From Join Activation
+- MLS validation of the Welcome-derived state itself,
+- confirmation that the joined epoch matches the inviter's intended branch,
+- and bounded catch-up for newer visible Commits.
 
-Marmot should stop modeling Welcome processing as equivalent to a fully active join.
+That distinction matters because a newly added member cannot meaningfully validate pre-join encrypted history. What the new member can validate is the joined epoch and whether it still appears safe to act from.
 
-Instead:
+### 2. Require Freshness Checks Before Structural Commits
 
-- processing a Welcome creates candidate group state,
-- activation happens only after bounded catch-up and branch checks,
-- and clients remain non-sending until activation conditions are met.
-
-This is one of the highest-value changes Marmot can make.
-
-### 3. Bind Welcome To Its Parent Commit Privately
-
-The parent Commit identity should be available to the recipient, but should not be made unnecessarily public.
-
-The current preferred approach is to include the parent Commit event id inside the inner NIP-59 rumor, not on the outer gift-wrap. This gives the recipient the exact transport-level branch anchor while minimizing public metadata leakage.
-
-Recommended private rumor tags:
-
-- `commit`: parent `kind: 445` Commit event id
-- `epoch`: post-Commit epoch, optional but recommended
-
-This allows the recipient to:
-
-- fetch the intended parent Commit,
-- reason about same-epoch conflicts,
-- diagnose stale or losing branches,
-- and keep the branch linkage private from relays and observers.
-
-### 4. Require Bounded Catch-Up Before Activation
-
-After processing a Welcome, a client should not immediately begin sending messages or self-updating. Instead, the client should perform bounded catch-up from the configured relay set.
-
-At a minimum, future normative text should require the client to:
-
-- fetch recent group events from all configured relays that are currently reachable,
-- process unseen Commits and relevant Proposals,
-- and remain pending if the parent Commit cannot be located or branch uncertainty remains.
-
-The catch-up procedure must be bounded so clients do not wait forever.
-
-### 5. Require Freshness Checks Before Structural Commits
-
-The same discipline that applies to join activation should also apply to commit creation.
+The same discipline that applies after joining or resuming from stale state should also apply to commit creation.
 
 Before sending any structural Commit, especially member add or remove Commits, the client should:
 
@@ -208,14 +167,13 @@ Before sending any structural Commit, especially member add or remove Commits, t
 
 Without this, stale admins or stale devices can keep creating new state from obsolete branches.
 
-### 6. Treat Drift As A First-Class Protocol Condition
+### 3. Treat Drift As A First-Class Operational Condition
 
 State drift should not be treated as a mere debugging concern. It should become an explicit operational condition.
 
 Possible triggers include:
 
 - competing Commits for the same epoch,
-- missing or ambiguous Welcome parent Commit,
 - ratchet tree invariant failures on join or commit processing,
 - evidence of same-epoch divergent state,
 - repeated authenticated failures that imply stale local state rather than junk input.
@@ -227,7 +185,45 @@ When drift is detected, the client should:
 - attempt recovery catch-up,
 - and quarantine unresolved or losing branches.
 
-### 7. Strengthen Same-Epoch Conflict Handling
+This can be specified as required behavior under uncertainty without standardizing a full client lifecycle state machine.
+
+### 4. Use RFC-Aligned Consistency Signals
+
+The MLS RFCs already provide two useful consistency signals that Marmot can build on without changing core MLS behavior:
+
+- `tree_hash`, which is already part of `GroupContext` and is carried inside the `GroupInfo` encrypted in the MLS `Welcome`,
+- `epoch_authenticator`, which RFC 9420 describes as a per-epoch value for confirming that two clients have the same view of the group.
+
+This distinction is important for avoiding redundant event data.
+
+#### `epoch_authenticator` Is The Best Additional Signal
+
+Unlike `tree_hash`, `epoch_authenticator` is not already carried in the Welcome path. It is therefore the most useful low-overhead value to add if Marmot wants a stronger branch-consistency check in mixed-client or adversarial delivery environments.
+
+The right use is narrow and specific:
+
+- the inviter includes the welcome epoch's `epoch_authenticator` in encrypted Welcome-associated metadata,
+- the joiner derives its own `epoch_authenticator` after successful Welcome processing,
+- the joiner compares the two,
+- a mismatch is treated as evidence of drift, fork, or implementation inconsistency.
+
+This does not prove that no newer Commit exists elsewhere. It does prove something narrower and still valuable: the joiner and inviter agree on the cryptographic state of the welcome epoch.
+
+#### Normative Direction
+
+For Marmot, these checks should not remain soft diagnostics in mixed-client ecosystems.
+
+The intended direction is:
+
+- MLS tree validation remains mandatory through normal Welcome processing,
+- clients MUST fail closed on ratchet-tree or related MLS validation failures,
+- Marmot SHOULD add encrypted `epoch_authenticator` confirmation for the Welcome epoch,
+- clients that support this confirmation SHOULD compare it before first outbound traffic,
+- clients MUST quarantine state on mismatch and MUST NOT send application traffic or structural Commits from that state.
+
+Failure to enforce these checks materially increases the risk of silent drift and persistent forks in mixed-client environments.
+
+### 5. Strengthen Same-Epoch Conflict Handling
 
 Marmot already has a deterministic same-epoch Commit selection rule. That rule is useful, but insufficient by itself.
 
@@ -235,24 +231,23 @@ Future spec work should also define:
 
 - how clients behave while the winning branch is still uncertain,
 - what happens to Welcomes produced from the losing branch,
-- when local state becomes `StateUncertain`,
+- when local state becomes uncertain,
 - and when re-invitation is required.
 
-### 8. Add Recovery Semantics
+### 6. Add Recovery Semantics
 
 The protocol should define what clients do when they cannot safely converge.
 
 This includes:
 
-- missing parent Commit after bounded retry,
-- losing Welcome branch,
+- losing Welcome-producing branch,
 - invalid ratchet tree state,
 - persistent drift after catch-up,
 - and repeated invalid artifacts from the same source.
 
 Recovery should fail closed. The right answer is not to weaken MLS validation. The right answer is to quarantine unsafe state and require resync or fresh invitation.
 
-### 9. Add Relay Discipline Guidance
+### 7. Add Relay Discipline Guidance
 
 Even in the pure decentralized profile, deployment guidance matters.
 
@@ -265,7 +260,7 @@ Recommended guidance:
 
 This does not solve ordering, but it materially improves convergence in practice.
 
-### 10. Add An Interop-Safe Operational Profile
+### 8. Add An Interop-Safe Operational Profile
 
 Even before assisted coordination is standardized, Marmot should document a safer behavior profile for mixed implementations or unreliable environments.
 
@@ -273,24 +268,10 @@ Recommended behaviors:
 
 - serialize or slow down membership-changing operations when possible,
 - avoid aggressive self-updates near add/join windows,
-- treat join-time and post-join self-updates conservatively,
+- treat post-join and post-offline self-updates conservatively,
 - prefer fewer concurrent admin actions.
 
 This can begin as guidance and later become a formal deployment profile.
-
-## Why The Welcome Rumor Tag Approach Is Good
-
-The preferred binding design is to place the parent Commit event id inside the Welcome rumor rather than in public outer event metadata.
-
-Why this is attractive:
-
-- it is private to the recipient,
-- it does not change the MLS Welcome object,
-- it does not require a new private payload format,
-- it fits NIP-59 naturally,
-- and it gives the recipient a clear branch anchor.
-
-This is a good example of the kind of change Marmot should prefer: operationally useful, privacy-preserving, and additive.
 
 ## What Should Probably Not Be Added Yet
 
@@ -313,9 +294,9 @@ Some limitations are fundamental to asynchronous decentralized systems and shoul
 
 Clients cannot know with certainty that no competing Commit exists somewhere on an unseen relay.
 
-### No Perfect Immediate Activation
+### No Perfect Global Visibility
 
-There is no perfect rule that makes immediate activation after Welcome always safe in a partitioned or delayed network.
+Neither a newly joined member nor an existing member returning from an offline period can know with certainty that no unseen competing Commit exists somewhere beyond their current relay view.
 
 ### No Complete Prevention Of Stale Writers
 
@@ -345,17 +326,19 @@ Such helper services can remain optional and untrusted for content while still i
 
 The next stage of protocol work should likely be organized around the following topics:
 
-### Convergence Model
+### Post-Join And Resume Hygiene
 
-- define local activation and uncertainty states,
-- define activation criteria,
-- define state transitions.
+- define what newly joined members should do before first outbound traffic,
+- define what returning members should do before creating new Commits,
+- define conservative guidance for post-join self-updates.
 
-### Welcome Hardening
+### Welcome Handling
 
-- define private parent Commit binding in the rumor,
-- define join activation rules,
-- define pending and quarantine semantics.
+- clarify that Welcome processing initializes membership for the Welcome epoch,
+- define failure handling for invalid or losing Welcome-derived state,
+- define optional diagnostic metadata only if it provides clear value,
+- avoid duplicating `tree_hash` outside standard MLS `GroupInfo`,
+- define whether encrypted Welcome-associated `epoch_authenticator` confirmation becomes required for interoperable mixed-client safety.
 
 ### Commit Discipline
 
@@ -389,9 +372,10 @@ That does not weaken Marmot. It clarifies what is required to make it real.
 
 The strongest path forward is not to weaken MLS validation or add unnecessary public metadata. It is to make Marmot more explicit about:
 
-- when state is only tentative,
-- when clients must catch up,
-- when clients must pause,
-- and how clients recover from uncertainty or drift.
+- when clients must reconcile visible newer state before sending,
+- when clients must defer Commits,
+- which consistency signals are already provided by MLS and which are worth adding,
+- when clients must pause under uncertainty,
+- and how clients recover from drift or losing branches.
 
 If Marmot adopts that model, then a pure decentralized profile remains viable, privacy-preserving, and much more production-capable than it is today.

@@ -644,10 +644,10 @@ Key packages enable asynchronous group invitations and have specific security co
   - **CRITICAL**: Clients MUST wait for relay confirmation of Commit before sending Welcome ([MIP-02](02.md))
   - This requirement applies to ALL member additions to existing groups (not initial group creation)
   - Ensure group state change is committed before inviting
-  - Recipients SHOULD treat newly processed Welcomes as `PendingJoin` until they complete bounded catch-up and reconcile the parent Commit branch
-  - Welcome rumors SHOULD privately identify the parent `kind: 445` Commit event so recipients can fetch and validate the intended branch without exposing the linkage publicly
+  - Recipients SHOULD avoid sending application messages or self-updates immediately after joining until they have made a bounded best-effort attempt to process newer visible group state
+  - Any parent Commit identifier carried in the private Welcome rumor SHOULD be treated as diagnostic metadata only, not as a prerequisite for correct Welcome processing
   - Consider implementing retry logic with exponential backoff for relay confirmation
-  - **Note**: Sender-side ordering remains the primary prevention. Receiver-side `PendingJoin` and branch checks reduce damage when relay visibility is incomplete, but they do not provide perfect prevention in an asynchronous decentralized network.
+  - **Note**: Sender-side ordering remains the primary prevention. Receiver-side sync-before-send discipline and branch checks reduce damage when relay visibility is incomplete, but they do not provide perfect prevention in an asynchronous decentralized network.
 - **Affected Components**: [MIP-02](02.md) (Timing Requirements), [MIP-03](03.md) (Commit Messages)
 - **Residual Risk**: If senders violate this requirement, state forks will occur and require manual recovery. No receiver-side mitigation is reliable.
 
@@ -665,10 +665,9 @@ Key packages enable asynchronous group invitations and have specific security co
   - Recovery becomes harder because further traffic accumulates on inconsistent state
 - **Affected Components**: [MIP-02](02.md) (Join Activation, Post-Join Self-Update), [MIP-03](03.md) (Sending Restrictions Under Uncertainty)
 - **Countermeasures**:
-  - Clients SHOULD enter `PendingJoin` after processing a Welcome
-  - Clients MUST perform bounded catch-up before activation and before first self-update
-  - Clients MUST NOT send application messages while `PendingJoin`
-  - Clients SHOULD quarantine Welcome state that is later found to depend on a losing branch
+  - Clients SHOULD make a bounded best-effort attempt to process newer visible group state after joining and before first self-update
+  - Clients MUST NOT send application messages while local state is known to be uncertain
+  - Clients SHOULD quarantine joined state that is later found to depend on a losing branch
 - **Residual Risk**: Bounded catch-up improves safety but cannot guarantee global visibility in a decentralized network.
 
 #### T.7.9 - Welcome Branch Ambiguity
@@ -684,8 +683,8 @@ Key packages enable asynchronous group invitations and have specific security co
   - Implementations produce inconsistent recovery behavior
 - **Affected Components**: [MIP-02](02.md) (Welcome Rumor Structure, Parent Commit Binding)
 - **Countermeasures**:
-  - Welcome rumors SHOULD privately identify the parent `kind: 445` Commit event
-  - Recipients SHOULD use that binding during bounded catch-up and branch reconciliation
+  - If implementations include a parent Commit hint, it SHOULD remain private to the Welcome rumor
+  - Recipients SHOULD treat that hint as diagnostic assistance, not a substitute for MLS validation or normal Commit reconciliation
   - Public outer gift-wrap metadata SHOULD remain minimal to reduce metadata leakage
 - **Residual Risk**: Parent branch identification improves recovery but cannot guarantee that the referenced branch is globally winning.
 
@@ -703,7 +702,7 @@ Key packages enable asynchronous group invitations and have specific security co
 - **Affected Components**: [MIP-02](02.md) (Activation and Branch Failures), [MIP-03](03.md) (State Uncertainty and Drift)
 - **Countermeasures**:
   - Clients SHOULD treat invariant-class MLS validation failures as evidence of branch inconsistency, not as recoverable soft errors
-  - Clients in `StateUncertain` MUST avoid structural Commits
+  - Clients in uncertain local state MUST avoid structural Commits
   - Losing or inconsistent branch state SHOULD be quarantined
   - Implementations SHOULD surface clear diagnostics for recovery and interop debugging
 - **Residual Risk**: Strict validation prevents silent acceptance, but a buggy client can still emit bad state until users or policy remove it from the group.
