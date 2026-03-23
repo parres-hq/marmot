@@ -88,6 +88,8 @@ Deterministic and semi-deterministic tests around invite/join failure suggest se
 - mixed-implementation differences in proposal bundling or commit sequencing,
 - and implementation-specific tree-state divergence that later poisons future Welcomes.
 
+The newer [`epoch_authenticator` Welcome-path cases](https://github.com/marmot-protocol/marmot-ts/blob/docs/invite-join-drift-analysis/src/__tests__/epoch-authenticator-drift.test.ts) sharpen one part of this analysis. They support using `epoch_authenticator` as a post-join same-epoch consistency signal: in the honest case it confirms that inviter and joiner derived the same Welcome-epoch state, while in branch-race, wrong-branch, or forged-claim scenarios it helps distinguish successful join from successful join onto suspicious or misbound state.
+
 These scenarios do not suggest that Marmot is impossible. They suggest that Marmot needs stronger coordination rules around activation, commit creation, and recovery.
 
 ## Mental Model
@@ -200,6 +202,8 @@ This distinction is important for avoiding redundant event data.
 
 Unlike `tree_hash`, `epoch_authenticator` is not already carried in the Welcome path. It is therefore the most useful low-overhead value to add if Marmot wants a stronger branch-consistency check in mixed-client or adversarial delivery environments.
 
+This is also a natural extension of how MLS implementations already treat the value in practice: as a compact equality check that two parties derived the same epoch state. The Marmot-specific proposal is not to give `epoch_authenticator` a different meaning, but to carry that same signal across the Welcome boundary so the joiner can compare the inviter's claim against locally derived state after successful Welcome processing.
+
 The right use is narrow and specific:
 
 - the inviter includes the welcome epoch's `epoch_authenticator` in encrypted Welcome-associated metadata,
@@ -212,6 +216,8 @@ This does not prove that no newer Commit exists elsewhere. It does prove somethi
 #### Normative Direction
 
 For Marmot, these checks should not remain soft diagnostics in mixed-client ecosystems.
+
+The honest-path result is important but limited: when the Welcome is valid and the inviter is honest, `epoch_authenticator` is mostly confirmatory. Its real value appears in the non-ideal cases that decentralized delivery makes plausible, especially raced branches, mixed implementations, buggy state production, or adversarially wrong metadata.
 
 The intended direction is:
 
