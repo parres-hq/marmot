@@ -623,7 +623,7 @@ sequenceDiagram
 
 **Error Paths:**
 
-> **Note**: A Commit containing SelfRemove proposals MUST be rejected if the resulting `admin_pubkeys` set would be empty — the group would become unmanageable. Members must transfer admin rights before leaving. Additionally, the committer MUST NOT be the member being removed (RFC 9420 §12.2). If both a SelfRemove and a Remove target the same leaf, SelfRemove takes priority and the Remove is invalid.
+> **Note**: A Commit containing SelfRemove proposals MUST be rejected if the resulting `admin_pubkeys` set would be empty — the group would become unmanageable. Members MUST transfer admin rights before leaving. Additionally, the committer MUST NOT be the member being removed (RFC 9420 §12.2). If both a SelfRemove and a Remove target the same leaf, the Remove proposal MUST be considered invalid during proposal validation. Commit builders MUST NOT include both for the same leaf.
 
 **Security Notes:**
 
