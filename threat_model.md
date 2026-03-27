@@ -732,13 +732,13 @@ Group messages use double encryption and ephemeral keypairs for privacy.
   - Clients MUST verify inner event pubkey matches MLS sender identity for authentication
 - **Residual Risk**: Minimal if properly implemented. Unsigned events cannot be published to standard Nostr relays.
 
-#### T.8.3 - Exporter Secret Compromise
+#### T.8.3 - Group Event Outer Key Compromise
 
-- **Description**: Compromise of `exporter_secret` for current epoch allows decryption of kind: 445 content field (the outer ChaCha20-Poly1305 layer, key derived directly from the exporter secret).
+- **Description**: Compromise of the current epoch's `group_event_key` allows decryption of the kind: 445 content field (the outer ChaCha20-Poly1305 layer).
 - **Impact**: Partial decryption (still requires MLS symmetric keys for full decryption of the inner MLS layer).
 - **Countermeasures**:
   - Double encryption provides defense in depth (MLS + ChaCha20-Poly1305)
-  - Epoch rotation limits exposure window (new exporter secret per epoch)
+  - Epoch rotation limits exposure window (new `group_event_key` per epoch)
   - Remove compromised members immediately
 
 #### T.8.4 - Message Replay Attacks
@@ -1223,13 +1223,13 @@ Operational security considerations beyond protocol-level protections.
 
 #### T.13.6 - Device Synchronization Attacks
 
-- **Description**: One device compromised while others remain secure creates synchronization and authorization risks. A compromised existing device may exfiltrate pairing payload data (`GroupInfo`, `exporter_secret`, `resumption_psk`) or intentionally bootstrap an attacker-controlled second device through a valid MIP-06 External Commit.
-- **Impact**: Partial compromise can become full compromise for every selected group. An attacker with pairing payload secrets can publish decryptable `kind: 445` events for the current epoch and can add a new leaf that continues to receive future group state until removed.
+- **Description**: One device compromised while others remain secure creates synchronization and authorization risks. A compromised existing device may exfiltrate pairing payload data (`GroupInfo`, `group_event_key`, `resumption_psk`) or intentionally bootstrap an attacker-controlled second device through a valid MIP-06 External Commit.
+- **Impact**: Partial compromise can become full compromise for every selected group. An attacker with pairing payload secrets can publish decryptable `kind: 445` events for the current epoch and can add a new leaf that continues to receive future group state until removed. If the compromised identity is listed in `admin_pubkeys`, the newly added leaf inherits admin privileges immediately.
 - **Countermeasures**:
   - Remove compromised devices immediately with MLS Remove operations
-  - Monitor device additions and surface them clearly to users
+  - Monitor device additions and surface them clearly to users, especially when the joining identity is an admin identity
   - Require explicit MIP-06 signaling plus all authorization checks (identity match, Nostr identity proof, Resumption PSK validation) before accepting External Commits
-  - Securely delete pairing-only secret material after transfer on both devices
+  - Securely delete pairing-only secret material as soon as the relevant transfer or pairing session completes
   - Use device management features and regular device audits
 
 #### T.13.7 - Cross-Device Correlation
@@ -1251,7 +1251,26 @@ Operational security considerations beyond protocol-level protections.
   - MLS handles out-of-order messages gracefully
   - Clients should validate group state on reconnect
   - Error handling for stale state scenarios
-  - Use per-group retry flows that refresh epoch-specific data (GroupInfo/exporter_secret/resumption_psk) before retrying External Commits
+  - Use per-group retry flows that refresh epoch-specific data (`GroupInfo` / `group_event_key` / `resumption_psk`) before retrying External Commits
+
+#### T.13.9 - External Commit Flooding
+
+- **Description**: A malicious or compromised member repeatedly adds new same-identity devices through valid MIP-06 External Commits, forcing the group through rapid epoch advances.
+- **Impact**: CPU, battery, and bandwidth exhaustion on all members. Even valid External Commits can become a denial-of-service vector if relays are flooded with repeated same-identity joins.
+- **Countermeasures**:
+  - Surface repeated same-identity device joins and unusual epoch churn prominently in clients
+  - Use relay-side spam controls and rate-limiting where possible
+  - Remove abusive identities or leaves through normal MLS group governance
+  - Implementations may optimize local processing and UX around bursts of valid Commits, but MUST NOT invent divergent protocol-level rejection rules for otherwise valid Commits
+
+#### T.13.10 - Pairing Bootstrap Key Substitution
+
+- **Description**: An attacker intercepts or substitutes `new_ephemeral_pubkey` during Phase 1 bootstrap and causes the existing device to encrypt the pairing payload to the attacker's key.
+- **Impact**: Exposure of `GroupInfo`, `group_event_key`, and `resumption_psk` for every selected group, enabling active attacks and unauthorized device insertion if the attacker also has the user's Nostr signing capability.
+- **Countermeasures**:
+  - Use an authenticated bootstrap channel or an explicit user-verified key confirmation step
+  - Treat unauthenticated broadcast discovery (for example BLE advertisement alone) as insufficient for Phase 1
+  - Abort pairing on any key-verification mismatch
 
 ## 3. Security Considerations
 
@@ -1366,8 +1385,11 @@ For groups that enable [MIP-06](06.md), there is one additional carve-out: `new_
 **Requirement**: For MIP-06-enabled groups, clients MUST enforce all of the following before accepting a multi-device External Commit:
 
 - Group-level MIP-06 signaling is enabled (`marmot_multi_device`, `0xF2F0`)
+- The outer `kind: 445` layer decrypts successfully under the current epoch's `group_event_key`
+- The joining LeafNode is fully validated per RFC 9420 before its fields are used
 - Joining LeafNode credential identity matches an existing member identity
 - `authenticated_data` carries a valid Nostr identity proof
+- The External Commit contains no `Remove` proposals
 - Exactly one Resumption PSK proposal is present with:
   - `psktype = resumption`
   - `usage = application`
@@ -1375,8 +1397,8 @@ For groups that enable [MIP-06](06.md), there is one additional carve-out: `new_
   - `psk_epoch = FramedContent.epoch`
   - `psk_nonce` length = `KDF.Nh`
 
-- **Why Critical**: Missing any of these checks can allow unauthorized device insertion or epoch-divergence behavior between implementations.
-- **Related Threats**: T.13.4 (Unauthorized Member Addition), T.13.8 (Device state race conditions)
+- **Why Critical**: Missing any of these checks can allow unauthorized device insertion, malformed-leaf acceptance, or epoch-divergence behavior between implementations.
+- **Related Threats**: T.13.4 (Unauthorized Member Addition), T.13.8 (Device state race conditions), T.13.9 (External Commit Flooding), T.13.10 (Pairing Bootstrap Key Substitution)
 - **Specification**: See [MIP-06](06.md)
 
 ### 3.1 Implementation Pitfalls
