@@ -1223,22 +1223,25 @@ Operational security considerations beyond protocol-level protections.
 
 #### T.13.6 - Device Synchronization Attacks
 
-- **Description**: One device compromised while others remain secure creates synchronization issues.
-- **Impact**: Partial compromise, state desynchronization.
+- **Description**: One device compromised while others remain secure creates synchronization and authorization risks. A compromised existing device may exfiltrate pairing payload data (`GroupInfo`, `exporter_secret`, `resumption_psk`) or intentionally bootstrap an attacker-controlled second device through a valid MIP-06 External Commit.
+- **Impact**: Partial compromise can become full compromise for every selected group. An attacker with pairing payload secrets can publish decryptable `kind: 445` events for the current epoch and can add a new leaf that continues to receive future group state until removed.
 - **Countermeasures**:
-  - Remove compromised devices immediately
-  - Monitor device additions
-  - Use device management features
-  - Regular device audits
+  - Remove compromised devices immediately with MLS Remove operations
+  - Monitor device additions and surface them clearly to users
+  - Require explicit MIP-06 signaling plus all authorization checks (identity match, Nostr identity proof, Resumption PSK validation) before accepting External Commits
+  - Securely delete pairing-only secret material after transfer on both devices
+  - Use device management features and regular device audits
 
 #### T.13.7 - Cross-Device Correlation
 
-- **Description**: Multiple devices in groups affect privacy properties.
-- **Impact**: Potential correlation of device ownership.
+- **Description**: Multiple devices in the same group can weaken privacy by making device count and timing patterns more observable. Repeated join-style External Commits for the same Nostr identity may let members or relay observers infer that one user operates multiple devices, and similarities in device names or pairing behavior can increase correlation further.
+- **Impact**: Potential correlation of device ownership across groups, leakage of rough device counts for a user, and a larger metadata surface even when message contents remain protected.
 - **Countermeasures**:
-  - Understand that multiple devices increase attack surface
+  - Understand that multiple devices increase attack surface and metadata leakage
+  - Treat device-name disclosure as optional and user-controlled
   - Use different devices for different groups when possible
   - Monitor device activity patterns
+  - Minimize observable pairing retries and unnecessary device additions
 
 #### T.13.8 - Device Removal Race Conditions
 
