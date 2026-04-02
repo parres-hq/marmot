@@ -13,6 +13,8 @@
 
 ### Changed
 
+- **Encrypted media previews**: [MIP-04](04.md) now documents optional `thumbhash` `imeta` tags alongside `blurhash`, recommends emitting `thumbhash` in new implementations, requires receivers to parse both preview hash fields, and notes that `blurhash` remains only for backward compatibility in this version. ([#64](https://github.com/marmot-protocol/marmot/pull/64))
+
 ### Added
 
 ### Fixed
