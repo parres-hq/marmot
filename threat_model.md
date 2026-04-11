@@ -324,7 +324,7 @@ Group members have access to all group state, including cryptographic secrets an
 
 #### T.3.6 - Disappearing Message Non-Compliance
 
-- **Description**: Disappearing messages (configured via `disappearing_message_duration_secs` in the Marmot Group Data Extension, [MIP-01](01.md)) are a best-effort feature. Members can modify their client to ignore expiration or retain messages beyond the configured duration. Relay operators may not honor [NIP-40](https://github.com/nostr-protocol/nips/blob/master/40.md) expiration tags, continuing to store and serve events after expiry.
+- **Description**: Disappearing messages (configured via `disappearing_message_secs` in the Marmot Group Data Extension, [MIP-01](01.md)) are a best-effort feature. Members can modify their client to ignore expiration or retain messages beyond the configured duration. Relay operators may not honor [NIP-40](https://github.com/nostr-protocol/nips/blob/master/40.md) expiration tags, continuing to store and serve events after expiry.
 - **Impact**: Messages intended to disappear may persist indefinitely on some clients or relays, undermining the privacy expectations of group members.
 - **Affected Components**: [MIP-01](01.md) (Disappearing Messages), [MIP-03](03.md) (Group Events, expiration tag)
 - **Countermeasures**:
