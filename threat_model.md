@@ -313,6 +313,19 @@ Group members have access to all group state, including cryptographic secrets an
   - For sensitive conversations, rotate group membership periodically
   - Remove members who no longer need access promptly
 
+#### T.3.6 - Disappearing Message Non-Compliance
+
+- **Description**: Disappearing messages (configured via `disappearing_message_duration_secs` in the Marmot Group Data Extension, [MIP-01](01.md)) are a best-effort feature. Members can modify their client to ignore expiration or retain messages beyond the configured duration. Relay operators may not honor [NIP-40](https://github.com/nostr-protocol/nips/blob/master/40.md) expiration tags, continuing to store and serve events after expiry.
+- **Impact**: Messages intended to disappear may persist indefinitely on some clients or relays, undermining the privacy expectations of group members.
+- **Affected Components**: [MIP-01](01.md) (Disappearing Messages), [MIP-03](03.md) (Group Events, expiration tag)
+- **Countermeasures**:
+  - Disappearing messages are cooperative — all participants must use compliant clients for full effectiveness
+  - NIP-40 expiration tags provide relay-side hints but compliance is not guaranteed
+  - SQLite implementations SHOULD enable `PRAGMA secure_delete = ON` to overwrite deleted message content on disk, reducing forensic recoverability
+  - Users should understand that disappearing messages reduce casual retention, not guarantee cryptographic erasure
+  - Media files referenced by expired messages are NOT automatically deleted from Blossom servers — this is a known limitation
+- **Residual Risk**: Malicious or non-compliant members can always retain message content. Disappearing messages provide a social norm and best-effort cleanup, not a cryptographic guarantee.
+
 #### T.3.5 - Fake Proposals
 
 - **Description**: Members create proposals that waste bandwidth and processing time.
@@ -478,6 +491,8 @@ A compromised client device represents a severe threat with access to all stored
   - Limit message retention on devices
   - Encrypt message storage
   - Delete messages when no longer needed
+  - Enable `PRAGMA secure_delete = ON` in SQLite to overwrite deleted content on disk, reducing forensic recoverability of expired or deleted messages
+  - Configure disappearing messages ([MIP-01](01.md)) to automatically reduce the retention window
   - Forward secrecy limits exposure if device was removed previously
 
 #### T.5.7 - Nostr Key Compromise Cross-Application Impact

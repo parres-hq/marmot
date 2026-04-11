@@ -121,7 +121,7 @@ sequenceDiagram
 
     A->>A: Build Marmot Group<br/>Data Extension
 
-    Note over A: Extension fields:<br/>- version: 2<br/>- nostr_group_id (random 32 bytes)<br/>- name, description<br/>- admin_pubkeys (raw 32-byte keys)<br/>- relays (length-prefixed URLs)<br/>- image fields (optional)
+    Note over A: Extension fields:<br/>- version: 3<br/>- nostr_group_id (random 32 bytes)<br/>- name, description<br/>- admin_pubkeys (raw 32-byte keys)<br/>- relays (length-prefixed URLs)<br/>- image fields (optional)<br/>- disappearing_message_duration_secs (optional)
 
     A->>MLS: Add extension to<br/>GroupContext
 
@@ -263,7 +263,7 @@ sequenceDiagram
 
     S->>S: Generate fresh<br/>ephemeral keypair
 
-    S->>S: Create kind: 445 event<br/>ephemeral pubkey<br/>content: base64(nonce||ciphertext)<br/>h tag: nostr_group_id (routing)
+    S->>S: Create kind: 445 event<br/>ephemeral pubkey<br/>content: base64(nonce||ciphertext)<br/>h tag: nostr_group_id (routing)<br/>expiration tag (if disappearing msgs)
 
     S->>R: Publish Group Event (445)
 
@@ -434,7 +434,7 @@ sequenceDiagram
 
     A->>A: Create updated<br/>Marmot Group Data Extension
 
-    Note over A: Updated fields:<br/>- name or description<br/>- relays list<br/>- nostr_group_id<br/>- admin_pubkeys
+    Note over A: Updated fields:<br/>- name or description<br/>- relays list<br/>- nostr_group_id<br/>- admin_pubkeys<br/>- disappearing_message_duration_secs
 
     A->>MLS: Create GroupContextExtensions<br/>Proposal
 
