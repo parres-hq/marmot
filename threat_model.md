@@ -313,6 +313,15 @@ Group members have access to all group state, including cryptographic secrets an
   - For sensitive conversations, rotate group membership periodically
   - Remove members who no longer need access promptly
 
+#### T.3.5 - Fake Proposals
+
+- **Description**: Members create proposals that waste bandwidth and processing time.
+- **Impact**: Resource exhaustion, though proposals require admin commitment to take effect.
+- **Countermeasures**:
+  - Admins can ignore or reject malicious proposals
+  - Client-side proposal validation and filtering
+  - Remove members who abuse proposal system
+
 #### T.3.6 - Disappearing Message Non-Compliance
 
 - **Description**: Disappearing messages (configured via `disappearing_message_duration_secs` in the Marmot Group Data Extension, [MIP-01](01.md)) are a best-effort feature. Members can modify their client to ignore expiration or retain messages beyond the configured duration. Relay operators may not honor [NIP-40](https://github.com/nostr-protocol/nips/blob/master/40.md) expiration tags, continuing to store and serve events after expiry.
@@ -325,15 +334,6 @@ Group members have access to all group state, including cryptographic secrets an
   - Users should understand that disappearing messages reduce casual retention, not guarantee cryptographic erasure
   - Media files referenced by expired messages are NOT automatically deleted from Blossom servers — this is a known limitation
 - **Residual Risk**: Malicious or non-compliant members can always retain message content. Disappearing messages provide a social norm and best-effort cleanup, not a cryptographic guarantee.
-
-#### T.3.5 - Fake Proposals
-
-- **Description**: Members create proposals that waste bandwidth and processing time.
-- **Impact**: Resource exhaustion, though proposals require admin commitment to take effect.
-- **Countermeasures**:
-  - Admins can ignore or reject malicious proposals
-  - Client-side proposal validation and filtering
-  - Remove members who abuse proposal system
 
 ### 2.4 Group Administrators
 
