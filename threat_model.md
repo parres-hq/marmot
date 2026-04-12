@@ -1223,12 +1223,12 @@ Operational security considerations beyond protocol-level protections.
 
 #### T.13.6 - Device Synchronization Attacks
 
-- **Description**: One device compromised while others remain secure creates synchronization and authorization risks. A compromised existing device may exfiltrate pairing payload data (`GroupInfo`, `group_event_key`, `resumption_psk`) or intentionally bootstrap an attacker-controlled second device through a valid MIP-06 External Commit.
+- **Description**: One device compromised while others remain secure creates synchronization and authorization risks. A compromised existing device may exfiltrate pairing payload data (`GroupInfo`, `group_event_key`, `join_psk`) or intentionally bootstrap an attacker-controlled second device through a valid MIP-06 External Commit.
 - **Impact**: Partial compromise can become full compromise for every selected group. An attacker with pairing payload secrets can publish decryptable `kind: 445` events for the current epoch and can add a new leaf that continues to receive future group state until removed. If the compromised identity is listed in `admin_pubkeys`, the newly added leaf inherits admin privileges immediately.
 - **Countermeasures**:
   - Remove compromised devices immediately with MLS Remove operations
   - Monitor device additions and surface them clearly to users, especially when the joining identity is an admin identity
-  - Require explicit MIP-06 signaling plus all authorization checks (identity match, Nostr identity proof, Resumption PSK validation) before accepting External Commits
+  - Require explicit MIP-06 signaling plus all authorization checks (identity match, Nostr identity proof, MIP-06 join PSK validation) before accepting External Commits
   - Securely delete pairing-only secret material as soon as the relevant transfer or pairing session completes
   - Use device management features and regular device audits
 
@@ -1251,7 +1251,7 @@ Operational security considerations beyond protocol-level protections.
   - MLS handles out-of-order messages gracefully
   - Clients should validate group state on reconnect
   - Error handling for stale state scenarios
-  - Use per-group retry flows that refresh epoch-specific data (`GroupInfo` / `group_event_key` / `resumption_psk`) before retrying External Commits
+  - Use per-group retry flows that refresh epoch-specific data (`GroupInfo` / `group_event_key` / `join_psk`) before retrying External Commits
 
 #### T.13.9 - External Commit Flooding
 
@@ -1266,7 +1266,7 @@ Operational security considerations beyond protocol-level protections.
 #### T.13.10 - Pairing Bootstrap Key Substitution
 
 - **Description**: An attacker intercepts or substitutes `new_ephemeral_pubkey` during Phase 1 bootstrap and causes the existing device to encrypt the pairing payload to the attacker's key.
-- **Impact**: Exposure of `GroupInfo`, `group_event_key`, and `resumption_psk` for every selected group, enabling active attacks and unauthorized device insertion if the attacker also has the user's Nostr signing capability.
+- **Impact**: Exposure of `GroupInfo`, `group_event_key`, and `join_psk` for every selected group, enabling active attacks and unauthorized device insertion if the attacker also has the user's Nostr signing capability.
 - **Countermeasures**:
   - Use an authenticated bootstrap channel or an explicit user-verified key confirmation step
   - Treat unauthenticated broadcast discovery (for example BLE advertisement alone) as insufficient for Phase 1
@@ -1333,7 +1333,7 @@ These requirements are CRITICAL for security and MUST be implemented correctly. 
 
 **Requirement**: Clients MUST verify that Commit senders are listed in the current `admin_pubkeys` array before processing any Commit, EXCEPT for self-update Commits and SelfRemove-only Commits. Self-update Commits (containing only an Update proposal for the sender's own LeafNode) and SelfRemove-only Commits (containing only SelfRemove proposals by reference) MAY be processed from any member without admin verification. Self-update and SelfRemove-only Commits MUST NOT be combined.
 
-For groups that enable [MIP-06](06.md), there is one additional carve-out: `new_member_commit` External Commits MAY be processed only when the group explicitly signals MIP-06 support (`marmot_multi_device` extension), and only after all MIP-06 authorization checks pass (identity match, Nostr identity proof, strict Resumption PSK validation).
+For groups that enable [MIP-06](06.md), there is one additional carve-out: `new_member_commit` External Commits MAY be processed only when the group explicitly signals MIP-06 support (`marmot_multi_device` extension), and only after all MIP-06 authorization checks pass (identity match, Nostr identity proof, strict MIP-06 join PSK validation).
 
 - **Why Critical**: Prevents unauthorized structural group state changes by non-admin members while allowing all members to maintain key hygiene, process voluntary departures, and admit additional devices only under the explicit safeguards defined by MIP-06
 - **Related Threat**: T.4.x - Admin Privilege Abuse scenarios
@@ -1384,17 +1384,17 @@ For groups that enable [MIP-06](06.md), there is one additional carve-out: `new_
 
 **Requirement**: For MIP-06-enabled groups, clients MUST enforce all of the following before accepting a multi-device External Commit:
 
-- Group-level MIP-06 signaling is enabled (`marmot_multi_device`, `0xF2F0`)
+- Group-level MIP-06 signaling is enabled (`marmot_multi_device`, `0xF2F0`) and every current non-blank leaf advertises `0xF2F0`
 - The outer `kind: 445` layer decrypts successfully under the current epoch's `group_event_key`
 - The joining LeafNode is fully validated per RFC 9420 before its fields are used
 - Joining LeafNode credential identity matches an existing member identity
 - `authenticated_data` carries a valid Nostr identity proof
-- The External Commit contains no `Remove` proposals
-- Exactly one Resumption PSK proposal is present with:
-  - `psktype = resumption`
-  - `usage = application`
-  - `psk_group_id = FramedContent.group_id`
-  - `psk_epoch = FramedContent.epoch`
+- The External Commit contains no proposals other than the required `ExternalInit` proposal and the MIP-06 join PSK `PreSharedKey` proposal
+- Exactly one MIP-06 join PSK proposal is present with:
+  - `psktype = external`
+  - `psk_id` parses as `MarmotMultiDeviceJoinPskId`
+  - `psk_id.label = ASCII("marmot-mip06-join-psk-v1")`
+  - `psk_id.group_context_hash = SHA-256(TLS-serialized GroupContext)`
   - `psk_nonce` length = `KDF.Nh`
 
 - **Why Critical**: Missing any of these checks can allow unauthorized device insertion, malformed-leaf acceptance, or epoch-divergence behavior between implementations.
