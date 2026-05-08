@@ -42,6 +42,8 @@
 
 ### Fixed
 
+- **MIP-01 HKDF hash function and input encoding**: [MIP-01](01.md) now explicitly specifies **HKDF-SHA256** for all image encryption key and upload keypair derivations (v1 and v2), and pins canonical encoding of HKDF inputs: `salt` is the empty octet string (zero bytes, length 0, NOT a null/None value or RFC 5869's HashLen-zeros default), `info` labels are UTF-8 bytes with no terminator or length prefix. Previously the hash was unspecified and `salt=None` was ambiguous across crypto libraries, both producing different PRKs across implementations and breaking interoperability. Aligns with the mandatory MLS ciphersuite `0x0001`. ([#51](https://github.com/marmot-protocol/marmot-security/issues/51))
+
 ### Removed
 
 ### Deprecated
