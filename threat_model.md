@@ -335,6 +335,16 @@ Group members have access to all group state, including cryptographic secrets an
   - Media files referenced by expired messages are NOT automatically deleted from Blossom servers — this is a known limitation
 - **Residual Risk**: Malicious or non-compliant members can always retain message content. Disappearing messages provide a social norm and best-effort cleanup, not a cryptographic guarantee.
 
+#### T.3.7 - Epoch-Advance Spam via Self-Update Commits
+
+- **Description**: A non-admin group member sends a high-frequency stream of self-update Commits. Each Commit advances the MLS epoch, forcing every other member to derive a new exporter secret, update MLS group state, and re-derive the ChaCha20-Poly1305 key used for `kind: 445` events. The attacker pays O(1) per Commit; the rest of the group pays O(N).
+- **Impact**: Asymmetric denial of service. A single misbehaving member in a 50-member group can impose roughly 50× their own cryptographic work on the group, overwhelming mobile or low-power clients in particular. This is distinct from T.4.7 (which covers the same pattern from admins) and from T.3.1 (application-message spam, which does not advance the epoch); the O(N) amplification on every single Commit is what makes self-update spam particularly damaging.
+- **Countermeasures**:
+  - Sender-side rate limit: members SHOULD NOT issue self-update Commits more frequently than once per 60 seconds, except in response to a detected security event (see [MIP-03](03.md))
+  - Receiver-side throttling: clients SHOULD defer the CPU-intensive key derivation triggered by inbound self-update Commits on a per-sender basis, smoothing instantaneous load without skipping commits accepted by the race-condition rules
+  - Detection-and-response: admins SHOULD treat sustained rate-limit violation as evidence of malicious behavior and remove the offending member via an MLS Remove operation
+  - Client UX: warn the local user before issuing a self-update Commit if one was already issued within the last 60 seconds, to prevent accidental over-rotation
+
 ### 2.4 Group Administrators
 
 Group admins have all member capabilities plus additional privileges to modify group state.
@@ -415,6 +425,7 @@ Group admins have all member capabilities plus additional privileges to modify g
   - Client-side rate limiting
   - Admin removal if behavior detected
   - Client warnings for rapid admin actions
+  - For the equivalent attack from non-admins via self-update Commits (which any member can issue), see T.3.7
 
 #### T.4.8 - Malformed Proposal Commits
 
@@ -882,12 +893,12 @@ Various DoS vectors exist that can degrade service quality or exhaust resources.
 
 #### T.10.5 - Rapid State Changes
 
-- **Description**: Malicious admins commit updates at high frequency to overwhelm clients.
+- **Description**: Malicious admins commit updates at high frequency to overwhelm clients. The same epoch-advance amplification is also reachable by any non-admin member through self-update Commit spam — see T.3.7 for the dedicated treatment of that variant.
 - **Impact**: Client overwhelm, resource exhaustion, potential crashes.
 - **Countermeasures**:
-  - Client-side rate limiting for Commit processing
-  - Remove malicious admin if behavior detected
-  - Client warnings for rapid admin actions (See also T.4.7)
+  - Client-side rate limiting for self-update Commit processing per sender (default 60s floor per [MIP-03](03.md)), while preserving in-order application of accepted Commits. Admin Commits are intentionally excluded from this throttle so urgent admin recovery actions are not delayed
+  - Remove malicious admin or member if behavior detected
+  - Client warnings for rapid admin actions (See also T.4.7 for the admin variant and T.3.7 for the non-admin self-update variant)
 
 #### 2.10.3 Network-Level DoS
 
@@ -1474,6 +1485,14 @@ Common mistakes that developers should avoid when implementing Marmot:
 
 **Solution**: Perform self-update immediately after processing Welcome, before sending any application messages. Automate this in client implementations or provide prominent UI prompts. See [MIP-02](02.md) Post-Join Self-Update Requirement.
 
+#### 3.1.13 Unbounded Self-Update Commit Rate
+
+**Pitfall**: Treating self-update Commits as fully member-controlled and applying every inbound self-update immediately, regardless of how rapidly they arrive from a single sender. Because any member can self-update at will and each Commit advances the epoch, an attacker can pay O(1) per Commit while every other member pays O(N) in key derivations.
+
+**Consequences**: Asymmetric denial of service. Mobile and low-power clients in larger groups can be saturated by a single misbehaving member. See T.3.7.
+
+**Solution**: Throttle the *processing* of inbound self-update Commits on a per-sender basis (default: at most one epoch advance per 60 seconds of local processing time per sender), without dropping or skipping commits accepted by the race-condition rules. Throttle outbound self-updates the same way — and warn the user before issuing a second self-update within 60 seconds. Surface sustained rate-limit violations to admins so the offending member can be removed via an MLS Remove. See [MIP-03](03.md) Self-update Commit rate limiting.
+
 ### 3.2 Implementation Requirements
 
 Implementations MUST:
@@ -1496,6 +1515,7 @@ Implementations SHOULD:
 
 - Use multiple admins for groups to provide checks and balances
 - Implement client-side rate limiting and message filtering
+- Throttle self-update Commits per sender (default: no faster than one epoch advance per 60 seconds per sender) to prevent epoch-advance spam (See T.3.7)
 - Rotate `nostr_group_id` values periodically
 - Use multiple relays per group
 - Add random delays to obscure timing patterns
