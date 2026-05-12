@@ -52,3 +52,15 @@ Marmot documents that use MLS exporter secrets must define the label, context, o
 exporter uses should prefer the MLS extensions Safe framework when the needed backend support exists.
 
 Registered Marmot exporter labels are listed in [registries.md](./registries.md).
+
+## TODO: Safe exporter migration
+
+Before this draft becomes normative, decide how Marmot exporter-derived secrets move to the MLS Extensions Safe
+framework.
+
+The decision should cover:
+
+- which current exporter labels stay as legacy compatibility inputs;
+- which app component ids own `SafeExportSecret` calls;
+- how component ids, component names, or other namespaced values are used as label or context inputs;
+- migration rules for kind `445` group-event encryption, encrypted media, and multi-device join PSKs.
