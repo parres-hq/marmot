@@ -1,28 +1,29 @@
-# Proposed Spec Layout
+# Spec layout
 
 Status: sketch.
 
-The current MIP set mixes stable protocol surfaces with feature behavior. This
-layout separates the parts that should rarely change from the parts that should
-grow often.
+The current MIP set mixes stable protocol surfaces with feature behavior. The rewrite organizes docs around the surface
+an implementer is building.
+
+MIPs remain useful history. They should point to the stable docs they changed.
 
 ## Top Level
 
 ```text
 spec/
   README.md
-  laws.md
+  principles.md
   foundation/
     identity.md
-    credentials.md
     canonical-encoding.md
     wire-envelopes.md
-    mls-profile.md
+    application-messages.md
+    mls-protocol.md
     errors.md
     registries.md
   state-machine/
+    README.md
     group-state.md
-    transitions.md
     publish-lifecycle.md
     inbound-processing.md
     convergence.md
@@ -30,13 +31,15 @@ spec/
   app-components/
     README.md
     group-profile-v1.md
-    group-image-v1.md
+    group-blossom-image-v1.md
     admin-policy-v1.md
     nostr-routing-v1.md
     message-retention-v1.md
   transports/
+    README.md
     nostr.md
   features/
+    README.md
     self-remove.md
     encrypted-media.md
     push-notifications.md
@@ -51,39 +54,40 @@ spec/
 
 Foundation documents define shared surfaces:
 
-- identity and credentials
-- KeyPackage publication and validation
+- identity, credentials, KeyPackages, and capability negotiation
 - canonical encodings
+- app payload shape
 - wire envelopes
-- MLS profile choices
+- MLS protocol choices
 - error and stale-result taxonomy
 - registries for component ids, proposal ids, and extension ids
 
-Foundation documents should change rarely.
+Foundation documents should change rarely. They carry stable Marmot invariants: Nostr identity, unsigned Nostr-shaped
+app payloads, MLS group security, canonical byte rules, capability advertisement, and Marmot-owned registries.
 
 ## State Machine
 
-State-machine documents define protocol behavior that every transport and
-feature relies on:
+State-machine documents define protocol behavior that every transport and feature relies on:
 
 - local publish lifecycle
 - inbound message processing
+- group lifecycle states
 - duplicate handling
 - convergence and branch selection
 - retained history requirements
 - non-application input classification
 
-These documents describe required transitions and validation rules. They do not
-prescribe local module names, queues, database schemas, or API boundaries.
+These documents describe required transitions and validation rules. They do not prescribe local module names, queues,
+database schemas, or API boundaries.
 
 ## App Components
 
-App component documents define versioned group-context dictionaries.
+App component documents define custom MLS app components carried by the GroupContext app data dictionary.
 
 Each component document owns:
 
 - component id
-- version
+- component name and version
 - payload schema
 - update schema
 - canonical encoding
@@ -92,33 +96,36 @@ Each component document owns:
 - removal behavior
 - migration behavior
 
-Most new features should land here.
+Most feature-owned group state should land here.
 
 ## Transports
 
 Transport documents define how Marmot bytes move over a network.
 
-Transport documents may define transport-specific app components. They should
-not define generic group semantics.
+Transport documents may define transport-specific delivery addresses, event shapes, relay or endpoint selection, fetch
+rules, and app components. They should not define generic group semantics.
 
 ## Features
 
-Feature documents describe behavior that spans components or user-facing
-operations.
+Feature documents describe behavior that spans components or user-facing operations.
 
-A feature document should mostly reference foundation, state-machine, and
-component documents. It should not duplicate their rules.
+A feature document should mostly reference foundation, state-machine, and component documents. It should not duplicate
+their rules.
+
+Feature documents stay separate from app components. The feature doc explains the flow. The app component doc owns the
+bytes.
+
+When a feature has an interop-visible breaking change, the spec must name the new version in a capability, component id,
+proposal id, event kind, or feature document. Git history is useful, but it is not a version-negotiation mechanism.
 
 ## Implementation Model
 
-The implementation model is non-normative. It can map the protocol to local
-terms used by this repository, including engine APIs, queues, storage choices,
-and diagnostics.
+The implementation model is non-normative. It can map the protocol to local terms used by this repository, including
+engine APIs, queues, storage choices, and diagnostics.
 
 ## MIPs
 
 MIPs become change records.
 
-After the rewrite, a MIP should say what changed, why it changed, and which
-canonical spec documents were updated. The stable spec should be readable
-without replaying the MIP history.
+After the rewrite, a MIP should say what changed, why it changed, and which canonical spec documents were updated. The
+stable spec should be readable without replaying the MIP history.

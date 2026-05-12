@@ -1,0 +1,59 @@
+# Registries
+
+Status: sketch.
+
+This file collects Marmot-owned ids so new documents do not accidentally reuse a value.
+
+The owning document defines the bytes and validation rules. This registry only names the value.
+
+## App component ids
+
+Marmot app components use MLS private-use component ids.
+
+| Component id | Name                                | Document                                                       |
+| ------------ | ----------------------------------- | -------------------------------------------------------------- |
+| `0x8001`     | `marmot.group.profile.v1`           | [doc](../app-components/group-profile-v1.md)                   |
+| `0x8002`     | `marmot.group.blossom.image.v1`     | [doc](../app-components/group-blossom-image-v1.md)             |
+| `0x8003`     | `marmot.group.admin-policy.v1`      | [doc](../app-components/admin-policy-v1.md)                    |
+| `0x8004`     | `marmot.transport.nostr.routing.v1` | [doc](../app-components/nostr-routing-v1.md)                   |
+| `0x8005`     | `marmot.group.message-retention.v1` | [doc](../app-components/message-retention-v1.md)               |
+
+## Legacy MLS extension ids
+
+These are existing or in-flight Marmot MLS extension ids from the MIP-era specs. The rewrite may replace some of them
+with app components, but implementations still need to recognize them while migration is active.
+
+| Extension id | Name                    | Notes                                                       |
+| ------------ | ----------------------- | ----------------------------------------------------------- |
+| `0xF2EE`     | `marmot_group_data`     | Monolithic group metadata from the current MIP-era spec.    |
+| `0xF2EF`     | `encrypted_device_name` | Optional encrypted device label from the multi-device work. |
+| `0xF2F0`     | `marmot_multi_device`   | Multi-device signaling gate from the multi-device work.     |
+
+## Marmot custom proposal types
+
+No Marmot-owned custom MLS proposal type is assigned in this draft yet.
+
+`IdentityRemove` is the first likely candidate. It must claim a proposal type here before becoming normative.
+
+## Nostr event kinds used by Marmot
+
+These event kinds are part of the current Nostr binding or MIP-era specs. Transport and feature docs own their exact
+event shapes.
+
+| Kind    | Name                    | Layer                        |
+| ------- | ----------------------- | ---------------------------- |
+| `444`   | Marmot welcome rumor    | Nostr welcome transport      |
+| `445`   | Marmot group message    | Nostr group transport        |
+| `446`   | Push notification rumor | Push notification transport  |
+| `10051` | KeyPackage relay list   | Nostr account transport      |
+| `30443` | Marmot KeyPackage event | Nostr KeyPackage publication |
+
+## Exporter labels
+
+Existing Marmot exporter uses should be treated as registered until their owning docs move or replace them.
+
+| Label                          | Context owner         | Output                          |
+| ------------------------------ | --------------------- | ------------------------------- |
+| `"marmot" / "group-event"`     | Nostr group transport | kind `445` outer encryption key |
+| `"marmot" / "encrypted-media"` | encrypted media       | media key material              |
+| `"marmot-mip06-join-psk-v1"`   | multi-device join     | external PSK material           |

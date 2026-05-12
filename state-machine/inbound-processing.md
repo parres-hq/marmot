@@ -1,0 +1,102 @@
+# Inbound processing
+
+Status: sketch.
+
+Inbound processing accepts bytes from a transport, turns them into Marmot protocol input, and gives each input a
+disposition.
+
+Transport delivery is evidence that bytes exist. It is not evidence that those bytes define the canonical group state.
+
+## Processing shape
+
+```text
+transport message
+  -> peel or decode transport envelope
+  -> retain protocol bytes
+  -> classify welcome, commit, proposal, or MLS application message
+  -> feed group-state input into convergence
+  -> emit accepted, stale, deferred, or invalidated disposition
+  -> emit application-visible output when canonical state or delivered payloads change
+```
+
+The exact local API is implementation-defined. The protocol-visible result is the disposition.
+
+## Message identity
+
+Each inbound message has a message id used for deduplication. A client MUST deduplicate before applying state changes.
+
+The message id used for deduplication must be stable for the carried protocol bytes. It must not depend on local receive
+order, relay order, subscription id, or database row id.
+
+Duplicate input MUST receive an `AlreadySeen` disposition and MUST NOT be applied twice.
+
+## Classification
+
+After transport peeling, a group message is one of:
+
+- a commit;
+- a proposal;
+- an MLS application message carrying a Marmot app payload;
+- malformed or unsupported input.
+
+A welcome is addressed to one member and creates or joins a group according to the MLS welcome rules and Marmot identity
+rules.
+
+Malformed input MUST fail closed. Unsupported input MUST fail closed when the active group policy requires support for
+that input (e.g. a welcome requires capabilities the client does not support).
+
+## Deferred input
+
+A client MAY defer an input when it cannot yet be processed but may become processable after more protocol bytes arrive.
+
+Common deferred cases:
+
+- an MLS application message for a future candidate epoch;
+- a child commit whose parent branch is unavailable;
+- input received while the group is in `PendingPublish` or `Merging`.
+
+Deferred input MUST be retried when the missing state becomes available or when convergence advances the canonical
+branch.
+
+## Stale input
+
+Input that cannot affect the group MUST receive a stale or dropped disposition. This includes:
+
+- duplicate messages;
+- messages for unknown groups;
+- welcomes addressed to another member;
+- own echoes;
+- commits older than the retained anchor;
+- MLS application messages older than the retained app-payload window;
+- commits outside the rollback horizon.
+
+Stale input MUST NOT mutate canonical group state.
+
+## Application-visible output
+
+Inbound processing can produce two kinds of output for the application:
+
+- state notifications, when canonical group state changes or a retained decision becomes visible;
+- delivered app payloads, when an MLS application message is accepted on the selected branch.
+
+State notifications include events such as:
+
+- group joined;
+- epoch advanced;
+- member added or removed;
+- component state changed;
+- branch recovered;
+- app payload invalidated because its MLS application message belonged only to a losing branch.
+
+A state notification is not a delivered app payload. It tells the application what changed in the group state.
+
+## Delivered app payloads
+
+An MLS application message is an input to convergence. A delivered app payload is the output handed to the application
+after that input is accepted.
+
+A Marmot app payload is delivered only if its MLS application message decrypts on the selected branch and remains inside
+the retained app-payload window.
+
+A Marmot app payload whose MLS application message decrypts only on a losing branch MUST be reported as invalidated, not
+delivered as accepted application output.
