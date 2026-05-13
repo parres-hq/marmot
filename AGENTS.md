@@ -37,7 +37,8 @@ test plans. Put those in `implementation-model.md`, `docs/marmot-architecture/`,
 - Principles explain how to write the spec. Keep exact client requirements in the document for the surface they affect.
 - Keep Marmot component ids in the private-use MLS range.
 - Component major versions are represented by component ids. A breaking version gets a new component id and document.
-- Component payloads are direct data dictionaries. Do not add a generic Marmot envelope inside each component.
+- Component payloads are direct bytes for that component id. Do not add a
+  generic Marmot envelope inside each component.
 - Keep transport data in transport components. Nostr routing belongs in `marmot.transport.nostr.routing.v1`.
 - Treat Nostr relays in the Nostr routing component as canonical signed routing state for Nostr-routed groups.
 - Keep app components in `app-components/`. Feature docs may require and reference them.

@@ -102,8 +102,9 @@ Required components MUST NOT be removed while still listed in GroupContext `app_
 
 Unknown required components fail closed through negotiation.
 
-Unknown non-required component entries MUST be preserved byte-for-byte when a client rewrites the app data dictionary.
-The client must not parse, normalize, sort inside, partially copy, or re-encode unknown component bytes.
+Unknown non-required component entries MUST be preserved byte-for-byte when a
+client rewrites `app_data_dictionary`. The client must not parse, normalize,
+sort inside, partially copy, or re-encode unknown component bytes.
 
 ## Authorization
 

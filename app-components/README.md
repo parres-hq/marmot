@@ -2,7 +2,10 @@
 
 Status: sketch.
 
-This directory defines Marmot custom app components carried by the MLS `app_data_dictionary` extension.
+This directory defines Marmot custom app components carried by the MLS
+`app_data_dictionary` extension. Each component has its own component id and
+opaque data bytes; Marmot defines those bytes only for Marmot-owned component
+ids.
 
 Each file defines one component id. Component major versions are represented by component ids. A breaking v2 gets a new
 component id and a new file.

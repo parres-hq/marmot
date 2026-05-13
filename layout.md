@@ -82,7 +82,8 @@ database schemas, or API boundaries.
 
 ## App Components
 
-App component documents define custom MLS app components carried by the GroupContext app data dictionary.
+App component documents define custom MLS app components carried in the
+GroupContext `app_data_dictionary`.
 
 Each component document owns:
 

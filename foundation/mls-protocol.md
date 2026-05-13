@@ -29,8 +29,9 @@ The Marmot account identity carried in credentials is defined in [identity.md](.
 
 ## App components and group state
 
-New group-level feature state should use MLS app data dictionary components when the backend supports the MLS extensions
-draft features Marmot needs.
+New group-level feature state should use MLS app components carried in
+`app_data_dictionary` when the backend supports the MLS extensions draft
+features Marmot needs.
 
 The shared component model is defined in [../app-components.md](../app-components.md). Component ids are registered in
 [registries.md](./registries.md).
@@ -53,7 +54,7 @@ exporter uses should prefer the MLS extensions Safe framework when the needed ba
 
 Registered Marmot exporter labels are listed in [registries.md](./registries.md).
 
-## TODO: Safe exporter migration
+## Open decision: Safe exporter migration
 
 Before this draft becomes normative, decide how Marmot exporter-derived secrets move to the MLS Extensions Safe
 framework.
