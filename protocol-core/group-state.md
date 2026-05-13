@@ -1,6 +1,6 @@
 # Group state
 
-Status: sketch.
+Status: draft for internal review.
 
 Each Marmot group has one canonical MLS state at a time. A client may temporarily hold candidate or pending state, but
 only one state is visible as the group's canonical state.
@@ -65,7 +65,7 @@ A client in `Unrecoverable` MUST NOT choose the current local state merely becau
 MUST stop applying group-state changes until it has a verified repair path.
 
 A repair path may restore retained state, import a verified current snapshot, rejoin through MLS, or use another
-recovery method defined by a future state-machine document.
+recovery method defined by a future protocol-core document.
 
 ## Sync states
 

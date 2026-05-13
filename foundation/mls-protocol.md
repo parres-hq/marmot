@@ -1,6 +1,6 @@
 # MLS protocol
 
-Status: sketch.
+Status: draft for internal review.
 
 Marmot currently uses MLS as its continuous group key agreement (CGKA) protocol.
 
@@ -29,17 +29,16 @@ The Marmot account identity carried in credentials is defined in [identity.md](.
 
 ## App components and group state
 
-New group-level feature state should use MLS app components carried in
-`app_data_dictionary` when the backend supports the MLS extensions draft
-features Marmot needs.
+New group-level feature state should use MLS app components carried in `app_data_dictionary` when the backend supports
+the MLS extensions draft features Marmot needs.
 
-The shared component model is defined in [../app-components.md](../app-components.md). Component ids are registered in
+The shared component model is defined in [../app-components/](../app-components/). Component ids are registered in
 [registries.md](./registries.md).
 
 ## Custom extensions and proposals
 
-Existing Marmot groups may still use older Marmot-specific MLS extensions such as `marmot_group_data`. The rewrite is
-moving the stable spec toward smaller app components.
+Existing Marmot groups may still use older Marmot-specific MLS extensions such as `marmot_group_data`. This draft moves
+the stable spec toward smaller app components.
 
 New persistent group state should prefer app components. A custom MLS proposal type is appropriate only when the feature
 needs proposal semantics that a component update cannot express.

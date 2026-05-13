@@ -1,6 +1,6 @@
 # Encrypted media
 
-Status: sketch.
+Status: draft for internal review.
 
 Encrypted media lets a Marmot app payload refer to an encrypted blob stored outside the MLS message.
 
@@ -14,7 +14,7 @@ Blossom-backed group image component is `marmot.group.blossom.image.v1`.
 - App payload: media reference event kind and tags.
 - Blob storage: upload and fetch backend.
 
-No persistent group app component is required for encrypted media v1.
+No persistent group app component is required for encrypted media.
 
 ## Behavior
 
@@ -26,30 +26,78 @@ the referenced hash or content id before handing the file to the application.
 
 Blob upload and download are outside MLS group state. A failed upload or failed fetch does not change the group epoch.
 
-## Blob-store boundary
+## Current version
 
-Blossom is the current blob backend. The encrypted media feature should define the encrypted blob and reference format
-in a way that can support another blob backend later.
+The current MIP-era media version is `mip04-v2`.
 
-A Blossom-specific reference can be one supported reference type. It should not be the only possible media reference
-model.
+New media references MUST use `mip04-v2`. Version `mip04-v1` used deterministic nonce derivation and must not be used
+for new media.
+
+The media reference is currently carried in NIP-92-style `imeta` tags inside an inner Marmot app event. A `mip04-v2`
+reference includes:
+
+- `url`: encrypted blob URL;
+- `m`: canonical MIME type;
+- `filename`: original display filename;
+- `x`: SHA-256 hash of the original plaintext file, hex encoded;
+- `n`: random 12-byte encryption nonce, hex encoded as 24 characters;
+- `v`: `mip04-v2`;
+- optional preview fields such as `dim`, `thumbhash`, and `blurhash`.
 
 ## Key derivation
 
-The MIP-era feature derives media key material from the MLS exporter label registered as `"marmot" / "encrypted-media"`,
-then uses file metadata to derive the per-file key.
+The MIP-era feature derives media key material from the MLS exporter label registered as `"marmot" / "encrypted-media"`.
+
+For `mip04-v2`:
+
+```text
+exporter_secret = MLS-Exporter("marmot", "encrypted-media", 32)
+file_key        = HKDF-Expand(exporter_secret,
+                              "mip04-v2" || 0x00 || file_hash ||
+                              0x00 || mime_type || 0x00 || filename ||
+                              0x00 || "key",
+                              32)
+nonce           = random(12)
+```
+
+The MIME type is lowercased, trimmed, stripped of parameters, and normalized to its canonical form before key
+derivation.
 
 This draft needs to settle whether encrypted media continues to use that raw exporter label or moves to an MLS
 component-scoped safe exporter.
+
+## Encryption
+
+`mip04-v2` uses ChaCha20-Poly1305.
+
+```text
+aad = "mip04-v2" || 0x00 || file_hash || 0x00 || mime_type || 0x00 || filename
+encrypted_content = ChaCha20-Poly1305.encrypt(file_key, nonce, plaintext, aad)
+```
+
+The `x` field is the hash of the original plaintext file. Storage systems may address the encrypted blob by
+`SHA-256(encrypted_content)`.
+
+## Blob-store boundary
+
+Blossom is the current reference blob backend. The encrypted media feature defines encrypted blob behavior and media
+metadata, while the blob backend defines upload, fetch, deletion, and URL rules.
+
+A Blossom-specific reference can be one supported reference type. It should not be the only possible media reference
+model.
 
 ## Validation
 
 A receiver MUST reject an encrypted media reference if:
 
 - the media reference cannot be decoded;
-- required hash, nonce, or key-derivation fields are missing;
+- the version is absent or unsupported;
+- the version is `mip04-v1`;
+- required URL, MIME type, filename, plaintext hash, nonce, or version fields are missing;
+- the `n` field is not exactly a 12-byte nonce encoded as 24 hex characters;
 - the fetched encrypted bytes do not match the referenced hash or content id;
 - decryption fails;
+- the plaintext SHA-256 does not match the `x` field;
 - the decrypted media type or size violates the owning message-kind rules.
 
 ## Migration notes

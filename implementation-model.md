@@ -1,6 +1,6 @@
 # Marmot Implementation Model
 
-Status: non-normative sketch.
+Status: non-normative draft for internal review.
 
 This document describes one way to implement the Marmot protocol. It is not a wire contract.
 

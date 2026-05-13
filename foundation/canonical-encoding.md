@@ -1,6 +1,6 @@
 # Canonical encoding
 
-Status: sketch.
+Status: draft for internal review.
 
 When Marmot signs, hashes, stores, compares, or names protocol values by bytes, those bytes must have one encoding.
 
@@ -46,11 +46,11 @@ A QUIC variable-length integer length prefix uses the two high bits of the first
 length:
 
 | Length value                      | Prefix size | High bits |
-| --------------------------------- | ----------: | --------- |
-| `0..63`                           |      1 byte | `00`      |
-| `64..16383`                       |     2 bytes | `01`      |
-| `16384..1073741823`               |     4 bytes | `10`      |
-| `1073741824..4611686018427387903` |     8 bytes | `11`      |
+| --------------------------------- | ----------- | --------- |
+| `0..63`                           | 1 byte      | `00`      |
+| `64..16383`                       | 2 bytes     | `01`      |
+| `16384..1073741823`               | 4 bytes     | `10`      |
+| `1073741824..4611686018427387903` | 8 bytes     | `11`      |
 
 The remaining bits, together with any following length bytes, carry the length in network byte order.
 

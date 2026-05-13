@@ -1,0 +1,65 @@
+# Welcomes
+
+Status: draft for internal review.
+
+This document describes the member join flow built around MLS Welcomes.
+
+## Surfaces
+
+- Foundation identity and KeyPackages.
+- MLS protocol: Add, Commit, Welcome, KeyPackageRef, and post-join Update.
+- Protocol-core publish lifecycle.
+- The active transport binding for Welcome delivery.
+- The active transport routing state for post-join group traffic.
+
+## Behavior
+
+An inviter adds a new member by committing an MLS Add that uses the invitee's KeyPackage. The resulting group-state
+change must be published before the inviter sends the Welcome.
+
+For member additions after initial group creation, the inviter must wait for the Commit publish obligation to succeed
+before sending the Welcome. Sending the Welcome first can activate the new member at an epoch existing members have not
+seen yet.
+
+Initial one-member group creation is the exception: there are no existing peers that can be forked by a missing creation
+Commit.
+
+## Delivery
+
+The active transport binding owns the Welcome delivery envelope, recipient addressing, and transport-specific metadata.
+Protocol core requires that the receiver can recover the serialized MLSMessage whose wire format is `mls_welcome` and
+can identify which local KeyPackage was consumed.
+
+The Welcome delivery envelope must not by itself choose group state. It supplies bytes and delivery evidence. MLS and
+Marmot validation decide whether the receiver joins.
+
+## Receiving flow
+
+After unwrapping a Welcome, the receiver:
+
+1. verifies that the Welcome is addressed to its account identity;
+2. verifies that the referenced KeyPackage belongs to this account/device;
+3. decodes the transport-carried content as an MLSMessage with `mls_welcome` wire format;
+4. processes the MLS Welcome;
+5. validates the resulting Marmot group state and required components;
+6. stores the group state and routing information;
+7. rotates the consumed published KeyPackage when appropriate;
+8. deletes consumed `init_key` material according to the KeyPackage lifecycle rules;
+9. catches up on outstanding Commits as best it can;
+10. performs a self-update as soon as practical.
+
+The current MIP-era rule recommends doing the post-join self-update before sending application payloads when feasible
+and requires it within 24 hours of joining.
+
+## Failure behavior
+
+If Welcome processing fails, the receiver must not rotate away the KeyPackage that was referenced by the failed Welcome.
+The inviter may retry or choose another KeyPackage.
+
+A receiver rejects the Welcome if:
+
+- transport unwrapping fails;
+- the Welcome is not addressed to the local account identity;
+- the MLSMessage is not an MLS Welcome;
+- the referenced KeyPackage is not local to this account/device;
+- the resulting group state lacks required Marmot state or unsupported required capabilities are active.

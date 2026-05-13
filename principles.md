@@ -1,8 +1,8 @@
 # Principles for writing Marmot specs
 
-Status: sketch.
+Status: draft for internal review.
 
-These principles are for the spec rewrite. They explain how we decide where rules belong and how much detail a spec
+These principles are for the Marmot v2 draft. They explain how we decide where rules belong and how much detail a spec
 document needs before another implementation could build from it.
 
 They are intentionally more prescriptive than style notes. When a principle starts defining exact client behavior, move
@@ -17,6 +17,7 @@ Foundation docs own the choices that make Marmot Marmot:
 - MLS is the current continuous group key agreement layer.
 - Marmot transports must support redundant delivery so a group does not depend on one server, relay, or endpoint.
 - Marmot specs should avoid new metadata leaks unless the feature cannot work without them.
+- Encodings that are commonly used across multiple surfaces.
 
 Do not restate these rules in every feature doc. Point to the foundation doc and describe only what the feature adds.
 
@@ -32,7 +33,7 @@ A clean implementation should be able to find each rule by the surface it is imp
 - identity and credentials in foundation;
 - byte encoding and registries in foundation;
 - MLS protocol choices in foundation;
-- group-state transitions in state-machine docs;
+- group flows and group-state transitions in protocol-core docs;
 - feature state in app component docs;
 - transport-specific delivery in transport docs;
 - local implementation advice in `implementation-model.md` or crate docs.
@@ -105,16 +106,16 @@ such as credential validation.
 
 Transport input is evidence that bytes exist. It is not consensus.
 
-Transport arrival order, relay timestamps, event ids, subscription order, fetch order, and local receive order must not
-choose the canonical group branch. State-machine docs own convergence, publish-before-apply, retained history, duplicate
-handling, and stale-input handling.
+Transport arrival order, transport timestamps, event ids, subscription order, fetch order, and local receive order must
+not choose the canonical group branch. Protocol-core docs own convergence, publish-before-apply, retained history,
+duplicate handling, and stale-input handling.
 
 A transport doc can say how to find and deliver bytes. It should not define which commit branch wins.
 
 ## Keep feature state small and owned
 
 Feature state should live in small versioned app components unless the feature changes a shared foundation or
-state-machine surface.
+protocol-core surface.
 
 Each component should own:
 

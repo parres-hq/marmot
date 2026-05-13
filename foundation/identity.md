@@ -1,6 +1,6 @@
 # Identity, credentials, and capabilities
 
-Status: sketch.
+Status: draft for internal review.
 
 Marmot account identity is a Nostr public key.
 
@@ -32,18 +32,7 @@ says which Marmot account that leaf belongs to.
 
 ## KeyPackages
 
-A Marmot KeyPackage belongs to the account named by its credential identity.
-
-The KeyPackage bytes are the standard MLS wire encoding of a KeyPackage carried in an MLS message. The MLS
-`KeyPackageRef` calculation is the standard MLS calculation.
-
-If a KeyPackage is distributed through a signed transport object, the transport binding defines how that outer signature
-is checked. For example, with the Nostr binding the publishing event's author is expected to match the KeyPackage
-credential identity.
-
-Foundation defines what a Marmot KeyPackage means. Transport docs define how KeyPackages are published and discovered.
-For the Nostr transport, KeyPackage relay discovery and publication are account-transport rules. They do not change the
-MLS KeyPackage bytes or the credential rules above.
+KeyPackage meaning, discovery requirements, and lifecycle are defined in [key-packages.md](./key-packages.md).
 
 ## Capability negotiation
 
@@ -65,7 +54,7 @@ app component id, or a combination named by the feature. Marmot-owned ids are re
 
 Optional features should not block basic messaging. If a feature is not supported by every member, the group can still
 exist without that feature. When all current members later support it, the group may upgrade its required feature set
-through the state-machine rules for capability upgrades.
+through the protocol-core rules for capability upgrades.
 
 ## Delivery addressing is separate
 

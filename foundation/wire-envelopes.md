@@ -1,6 +1,6 @@
 # Wire envelopes
 
-Status: sketch.
+Status: draft for internal review.
 
 Marmot separates application payloads, MLS security bytes, and transport delivery.
 
@@ -24,8 +24,8 @@ sender to the group.
 
 MLS messages and MLS Welcomes are the transport-independent security bytes.
 
-State-machine docs decide which MLS bytes become canonical group state. Transport arrival order, relay timestamps, relay
-event ids, subscription order, and local receive order do not choose the canonical branch.
+Protocol-core docs decide which MLS bytes become canonical group state. Transport arrival order, transport timestamps,
+outer transport ids, subscription order, and local receive order do not choose the canonical branch.
 
 ## Transport envelopes
 

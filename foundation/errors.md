@@ -1,6 +1,6 @@
 # Results and rejections
 
-Status: sketch.
+Status: draft for internal review.
 
 Marmot clients should be able to describe why an input did not produce application content.
 
@@ -23,7 +23,7 @@ An input that does not produce application content should map to one of these ca
 - `missing_history`: the client would need retained state it no longer has.
 - `transport_rejected`: publication or delivery failed at the transport layer.
 
-State-machine docs can split these into more detailed outcomes when needed.
+Protocol-core docs can split these into more detailed outcomes when needed.
 
 ## Protocol and local errors
 

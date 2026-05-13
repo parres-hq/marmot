@@ -1,16 +1,16 @@
 # Self-remove
 
-Status: sketch.
+Status: draft for internal review.
 
-Self-remove lets a current member leave a group without asking an admin to remove them.
+Member departure covers voluntary SelfRemove and ordinary member removal.
 
-This feature uses the MLS SelfRemove proposal from the MLS extensions work. It does not define a Marmot custom proposal
-type.
+SelfRemove lets a current member leave a group without asking an admin to remove them. It uses the MLS SelfRemove
+proposal from the MLS extensions work and does not define a Marmot custom proposal type.
 
 ## Surfaces
 
 - MLS proposal: SelfRemove.
-- State machine: proposal ingest, deterministic commit, convergence, retained history.
+- Protocol core: proposal ingest, deterministic commit, convergence, retained history.
 - App component: `marmot.group.admin-policy.v1` for admin leave constraints.
 - Transport: whichever transport carries the proposal and commit.
 
@@ -20,8 +20,8 @@ A current member may create a SelfRemove proposal for itself.
 
 A non-admin may self-remove if the MLS proposal is valid.
 
-An admin may self-remove only if at least one other admin remains after the removal. The admin check uses the prior
-epoch state.
+An admin must leave the admin set before using SelfRemove. The admin-policy update is an ordinary admin-gated
+group-state change. If the departing admin is the last active admin, another admin must be designated first.
 
 The leaving member MUST NOT commit its own SelfRemove proposal. A remaining authorized member commits it.
 
@@ -46,12 +46,13 @@ does not define an automatic fallback timer.
 A SelfRemove flow is invalid if:
 
 - the proposal does not target the sender;
+- the proposal sender is still listed as an active admin in the prior epoch;
 - the leaving member commits the proposal;
-- the proposal would remove the last admin;
+- applying the commit would leave the group with no active admin;
 - the committer is not a current member;
 - the commit fails the normal MLS and Marmot convergence checks.
 
 ## Migration notes
 
-MIP-era Marmot treated SelfRemove as part of group messaging behavior. In this rewrite, SelfRemove is a feature doc
-because it touches MLS proposals, admin policy, deterministic commit behavior, and transport delivery.
+MIP-era Marmot treated SelfRemove as part of group messaging behavior. In the v2 draft it lives in protocol core because
+SelfRemove affects the required group-state flow.

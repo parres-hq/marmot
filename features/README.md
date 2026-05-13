@@ -1,11 +1,22 @@
 # Feature specs
 
-Status: sketch.
+Status: draft for internal review.
 
 Feature specs describe user-visible Marmot behavior that spans several surfaces.
 
 A feature doc should explain the flow, name the protocol surfaces involved, and point to the documents that own exact
 bytes. It should avoid copying component schemas, MLS structures, transport event shapes, or foundation rules.
+
+Features are optional or user-visible behavior built from foundation, protocol core, transports, and app components.
+
+Mandatory protocol flows belong in [../protocol-core/](../protocol-core/) or [../foundation/](../foundation/), even when
+they used to be described in a MIP. The old-to-new MIP map lives in [../mip-coverage.md](../mip-coverage.md).
+
+## Current feature docs
+
+- [encrypted-media.md](./encrypted-media.md) - message-attached encrypted blobs.
+- [push-notifications.md](./push-notifications.md) - optional native push notification flow.
+- [multi-device.md](./multi-device.md) - branch-draft multi-device support.
 
 ## Relationship to app components
 
@@ -27,7 +38,7 @@ Each feature document should define:
 - creation or activation flow;
 - update flow;
 - authorization;
-- interaction with convergence and retained history;
+- interaction with protocol-core convergence and retained history;
 - failure behavior that affects interop;
 - migration from MIP-era behavior, if any.
 

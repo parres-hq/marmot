@@ -1,10 +1,10 @@
 # Transport specs
 
-Status: sketch.
+Status: draft for internal review.
 
 Transport specs describe how a network carries Marmot MLS bytes.
 
-Foundation docs own identity, app payload shape, MLS choices, and shared wire rules. State-machine docs own group-state
+Foundation docs own identity, app payload shape, MLS choices, and shared wire rules. Protocol-core docs own group-state
 convergence. App components own signed group routing state. A transport doc owns the outer envelope, delivery addresses,
 publish and fetch rules, and transport-specific validation.
 

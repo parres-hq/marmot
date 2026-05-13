@@ -1,6 +1,6 @@
 # Nostr transport
 
-Status: sketch.
+Status: draft for internal review.
 
 This document defines the first Marmot transport binding: MLS bytes carried over Nostr relays.
 
@@ -27,8 +27,7 @@ URLs, or Nostr event ids.
 
 Nostr group messages use Nostr kind `445`.
 
-A kind `445` event MUST include an `h` tag whose value is the lowercase hex encoding of the group's
-`nostr_group_id`.
+A kind `445` event MUST include an `h` tag whose value is the lowercase hex encoding of the group's `nostr_group_id`.
 
 The event `pubkey` MUST be a fresh ephemeral Nostr public key generated for that event. The kind `445` event MUST be
 signed by the matching ephemeral key. The ephemeral key MUST NOT be the sender's Marmot account identity, and it MUST
@@ -87,7 +86,7 @@ identity that owns the KeyPackage. The event MUST be signed as a normal Nostr ev
 
 The current tag set is:
 
-- `d`: random non-empty KeyPackage slot id;
+- `d`: random non-empty KeyPackage slot id, currently a random 32-byte hex value;
 - `mls_protocol_version`: `1.0`;
 - `i`: lowercase hex KeyPackageRef;
 - `mls_ciphersuite`: MLS ciphersuite id;
@@ -104,6 +103,9 @@ state.
 KeyPackage relay discovery uses kind `10051` events. A kind `10051` event lists relays with `relay` tags and an empty
 content field.
 
+Legacy kind `443` KeyPackages may exist during migration windows. Implementations that still support that migration may
+query both kinds, but valid kind `30443` events are preferred. New publications should use kind `30443`.
+
 ## Subscriptions and fetch rules
 
 A Nostr transport client subscribes to:
@@ -111,7 +113,8 @@ A Nostr transport client subscribes to:
 - account inbox gift wraps: kind `1059`, `p` tag equal to the local account pubkey;
 - group messages: kind `445`, `h` tag equal to the group's `nostr_group_id`;
 - KeyPackage relay lists: kind `10051`, author equal to the account being queried;
-- KeyPackage events: kind `30443`, using the account lookup rules defined by the identity and account-transport docs.
+- KeyPackage events: kind `30443`, using the account lookup rules defined by
+  [../foundation/key-packages.md](../foundation/key-packages.md).
 
 Clients SHOULD use a `since` value when resubscribing if they have a retained transport timestamp. The timestamp is a
 fetch hint only.
@@ -126,7 +129,7 @@ Welcome messages are published to the recipient's inbox relay set.
 KeyPackage events are published to the account's KeyPackage relay set.
 
 The transport may report endpoint-level acceptances and failures. Publish acknowledgement is not group consensus. The
-state-machine publish lifecycle defines when locally created MLS work may be applied.
+protocol-core publish lifecycle defines when locally created MLS work may be applied.
 
 ## Validation before peeling
 
@@ -139,5 +142,5 @@ A Nostr transport client MUST validate the outer event enough to classify it bef
 - fields that claim to be hex or base64 must decode successfully;
 - unsupported Nostr kinds are ignored or reported as malformed transport input.
 
-The peeler validates transport encryption, welcome recipient binding, and MLS bytes. The state machine validates group
+The peeler validates transport encryption, welcome recipient binding, and MLS bytes. Protocol core validates group
 state.

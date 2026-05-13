@@ -1,9 +1,9 @@
 # Spec layout
 
-Status: sketch.
+Status: draft for internal review.
 
-The current MIP set mixes stable protocol surfaces with feature behavior. The rewrite organizes docs around the surface
-an implementer is building.
+The current MIP set mixes stable protocol surfaces with feature behavior. The
+v2 draft organizes docs around the surface an implementer is building.
 
 MIPs remain useful history. They should point to the stable docs they changed.
 
@@ -13,16 +13,22 @@ MIPs remain useful history. They should point to the stable docs they changed.
 spec/
   README.md
   principles.md
+  mip-coverage.md
   foundation/
     identity.md
+    key-packages.md
     canonical-encoding.md
     wire-envelopes.md
     application-messages.md
     mls-protocol.md
     errors.md
     registries.md
-  state-machine/
+  protocol-core/
     README.md
+    group-setup.md
+    joining.md
+    group-messaging.md
+    member-departure.md
     group-state.md
     publish-lifecycle.md
     inbound-processing.md
@@ -40,13 +46,9 @@ spec/
     nostr.md
   features/
     README.md
-    self-remove.md
     encrypted-media.md
     push-notifications.md
     multi-device.md
-  mips/
-    mip-0000-history.md
-    mip-0001-history.md
   implementation-model.md
 ```
 
@@ -65,10 +67,14 @@ Foundation documents define shared surfaces:
 Foundation documents should change rarely. They carry stable Marmot invariants: Nostr identity, unsigned Nostr-shaped
 app payloads, MLS group security, canonical byte rules, capability advertisement, and Marmot-owned registries.
 
-## State Machine
+## Protocol Core
 
-State-machine documents define protocol behavior that every transport and feature relies on:
+Protocol-core documents define protocol behavior that every transport and feature relies on:
 
+- group setup
+- joining through MLS Welcomes
+- group messaging
+- member departure
 - local publish lifecycle
 - inbound message processing
 - group lifecycle states
@@ -108,9 +114,9 @@ rules, and app components. They should not define generic group semantics.
 
 ## Features
 
-Feature documents describe behavior that spans components or user-facing operations.
+Feature documents describe optional or user-facing behavior that spans components or protocol surfaces.
 
-A feature document should mostly reference foundation, state-machine, and component documents. It should not duplicate
+A feature document should mostly reference foundation, protocol-core, and component documents. It should not duplicate
 their rules.
 
 Feature documents stay separate from app components. The feature doc explains the flow. The app component doc owns the
@@ -124,9 +130,9 @@ proposal id, event kind, or feature document. Git history is useful, but it is n
 The implementation model is non-normative. It can map the protocol to local terms used by this repository, including
 engine APIs, queues, storage choices, and diagnostics.
 
-## MIPs
+## MIP Coverage
 
-MIPs become change records.
+The v2 draft keeps MIP history separate from normative organization.
 
-After the rewrite, a MIP should say what changed, why it changed, and which canonical spec documents were updated. The
-stable spec should be readable without replaying the MIP history.
+Use [mip-coverage.md](./mip-coverage.md) to see where current MIP-era concerns moved. The stable spec should be readable
+without replaying the MIP history.

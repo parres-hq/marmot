@@ -1,6 +1,6 @@
 # marmot.group.blossom.image.v1
 
-Status: sketch.
+Status: draft for internal review.
 
 ## Registry
 

@@ -1,6 +1,6 @@
 # Publish lifecycle
 
-Status: sketch.
+Status: draft for internal review.
 
 This document states the publish-before-apply rule for locally generated group-state changes.
 

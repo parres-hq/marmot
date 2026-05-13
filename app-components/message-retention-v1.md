@@ -1,6 +1,6 @@
 # marmot.group.message-retention.v1
 
-Status: sketch.
+Status: draft for internal review.
 
 ## Registry
 

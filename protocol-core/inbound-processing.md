@@ -1,6 +1,6 @@
 # Inbound processing
 
-Status: sketch.
+Status: draft for internal review.
 
 Inbound processing accepts bytes from a transport, turns them into Marmot protocol input, and gives each input a
 disposition.
@@ -26,7 +26,7 @@ The exact local API is implementation-defined. The protocol-visible result is th
 Each inbound message has a message id used for deduplication. A client MUST deduplicate before applying state changes.
 
 The message id used for deduplication must be stable for the carried protocol bytes. It must not depend on local receive
-order, relay order, subscription id, or database row id.
+order, transport source order, subscription id, or database row id.
 
 Duplicate input MUST receive an `AlreadySeen` disposition and MUST NOT be applied twice.
 

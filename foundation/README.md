@@ -1,15 +1,16 @@
 # Marmot foundation
 
-Status: sketch.
+Status: draft for internal review.
 
-These files define the shared choices that make a Marmot implementation a Marmot implementation. Feature docs, transport
-docs, and state-machine docs should point here instead of restating these rules.
+These files define the shared choices that make a Marmot implementation a Marmot implementation. Feature docs,
+transport docs, and protocol-core docs should point here instead of restating these rules.
 
 Foundation docs should change slowly. A change here usually means the whole protocol has changed, not just one feature.
 
 ## Files
 
-- [identity.md](./identity.md) - Marmot account identity, MLS credentials, KeyPackages, and capability negotiation.
+- [identity.md](./identity.md) - Marmot account identity, MLS credentials, and capability negotiation.
+- [key-packages.md](./key-packages.md) - KeyPackage meaning, discovery requirements, and lifecycle.
 - [canonical-encoding.md](./canonical-encoding.md) - byte encoding rules used across Marmot-owned structures.
 - [application-messages.md](./application-messages.md) - the unsigned Nostr-shaped payload inside MLS messages.
 - [wire-envelopes.md](./wire-envelopes.md) - the split between application payloads, MLS bytes, and transport envelopes.

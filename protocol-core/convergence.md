@@ -1,6 +1,6 @@
 # Convergence
 
-Status: sketch.
+Status: draft for internal review.
 
 Convergence chooses one canonical branch from unordered group input.
 
@@ -121,8 +121,8 @@ Lower digest means lexicographic order over the 32 digest bytes.
 Every value in this comparison must come from MLS-valid bytes, retained state, decrypted app payloads, or the group's
 convergence policy.
 
-Transport arrival order, relay timestamps, outer transport event ids, and local receive order MUST NOT participate in
-branch selection.
+Transport arrival order, transport timestamps, outer transport event ids, and local receive order MUST NOT participate
+in branch selection.
 
 ## Same-epoch races
 
