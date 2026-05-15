@@ -147,6 +147,7 @@ Assigned component ids are registered in [../foundation/registries.md](../founda
 - [marmot.group.admin-policy.v1](./admin-policy-v1.md)
 - [marmot.transport.nostr.routing.v1](./nostr-routing-v1.md)
 - [marmot.group.message-retention.v1](./message-retention-v1.md)
+- [marmot.group.agent-text-stream.quic.v1](./agent-text-stream-quic-v1.md)
 
 ## Current Split
 

@@ -10,13 +10,14 @@ The owning document defines the bytes and validation rules. This registry only n
 
 Marmot app components use MLS private-use component ids.
 
-| Component id | Name                                | Document                                           |
-| ------------ | ----------------------------------- | -------------------------------------------------- |
-| `0x8001`     | `marmot.group.profile.v1`           | [doc](../app-components/group-profile-v1.md)       |
-| `0x8002`     | `marmot.group.blossom.image.v1`     | [doc](../app-components/group-blossom-image-v1.md) |
-| `0x8003`     | `marmot.group.admin-policy.v1`      | [doc](../app-components/admin-policy-v1.md)        |
-| `0x8004`     | `marmot.transport.nostr.routing.v1` | [doc](../app-components/nostr-routing-v1.md)       |
-| `0x8005`     | `marmot.group.message-retention.v1` | [doc](../app-components/message-retention-v1.md)   |
+| Component id | Name                                     | Document                                              |
+| ------------ | ---------------------------------------- | ----------------------------------------------------- |
+| `0x8001`     | `marmot.group.profile.v1`                | [doc](../app-components/group-profile-v1.md)          |
+| `0x8002`     | `marmot.group.blossom.image.v1`          | [doc](../app-components/group-blossom-image-v1.md)    |
+| `0x8003`     | `marmot.group.admin-policy.v1`           | [doc](../app-components/admin-policy-v1.md)           |
+| `0x8004`     | `marmot.transport.nostr.routing.v1`      | [doc](../app-components/nostr-routing-v1.md)          |
+| `0x8005`     | `marmot.group.message-retention.v1`      | [doc](../app-components/message-retention-v1.md)      |
+| `0x8006`     | `marmot.group.agent-text-stream.quic.v1` | [doc](../app-components/agent-text-stream-quic-v1.md) |
 
 ## Legacy MLS extension ids
 
