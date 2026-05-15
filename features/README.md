@@ -15,6 +15,7 @@ they used to be described in a MIP. The old-to-new MIP map lives in [../mip-cove
 ## Current feature docs
 
 - [encrypted-media.md](./encrypted-media.md) - message-attached encrypted blobs.
+- [agent-text-streams-quic.md](./agent-text-streams-quic.md) - experimental QUIC-backed live text streams for agents.
 - [push-notifications.md](./push-notifications.md) - optional native push notification flow.
 - [multi-device.md](./multi-device.md) - branch-draft multi-device support.
 
