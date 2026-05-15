@@ -71,6 +71,7 @@ Required MIPs must be implemented for Marmot compatibility. Implementations may 
 | [MIP-03](03.md) | Group Messages | 👀 Review | ✅ Yes |
 | [MIP-04](04.md) | Encrypted Media | 👀 Review | ❌ No |
 | [MIP-05](05.md) | Push Notifications | 🚧 Draft | ❌ No |
+| [MIP-06](06.md) | Ephemeral Live Streams | 🚧 Draft | ❌ No |
 
 
 ## Protocol Implementations

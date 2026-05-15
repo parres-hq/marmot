@@ -1054,6 +1054,20 @@ Despite strong encryption, metadata can leak information about users and groups.
   - Gift-wrapping still prevents identification of Welcome vs. other message types
 - **Residual Risk**: Some group size inference possible for sophisticated observers. Mitigation limited until light Welcome objects available.
 
+#### T.11.13 - Live Stream Timing and Size Leakage
+
+- **Description**: Optional [MIP-06](06.md) live streams reveal timing, cadence, duration, and approximate output size beyond the final durable Group Message.
+- **Prerequisites**: Observer can monitor the live transport, relay, or connection metadata.
+- **Impact**: Inference of typing/generation duration, relative message length, and interaction cadence even when final content remains encrypted.
+- **Affected Components**: [MIP-06](06.md) (Ephemeral Live Streams), transport-specific implementations such as QUIC or WebTransport
+- **Countermeasures**:
+  - Treat live frames as optional ephemeral preview state only
+  - Publish the final content as a normal [MIP-03](03.md) Group Message so durable history does not depend on streaming
+  - Use expiry, byte limits, duration limits, and frame-rate limits
+  - Coalesce deltas and optionally pad frames for sensitive contexts
+  - Provide user/application policy to disable live streams
+- **Residual Risk**: Live streaming inherently leaks more timing metadata than a single final message. Users with strong traffic-analysis concerns should disable live streams.
+
 ### 2.12 Cryptographic Attacks
 
 The protocol relies on cryptographic primitives that could be targets for attack.
