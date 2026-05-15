@@ -14,6 +14,9 @@ Status: experimental draft.
 
 This component records the group-level policy for raw QUIC agent text streams.
 
+It does not store stream transcripts, endpoint candidates, relay URLs, or app-event kinds. Live stream records stay
+transient, and final content is carried by normal Marmot app payloads.
+
 ```text
 uint8 MarmotAgentTextStreamQuicRoleMaskV1;
 
