@@ -19,17 +19,6 @@ Marmot app components use MLS private-use component ids.
 | `0x8005`     | `marmot.group.message-retention.v1`      | [doc](../app-components/message-retention-v1.md)      |
 | `0x8006`     | `marmot.group.agent-text-stream.quic.v1` | [doc](../app-components/agent-text-stream-quic-v1.md) |
 
-## Legacy MLS extension ids
-
-These are existing or in-flight Marmot MLS extension ids from the MIP-era specs. The v2 draft may replace some of them
-with app components, but implementations still need to recognize them while migration is active.
-
-| Extension id | Name                    | Notes                                                       |
-| ------------ | ----------------------- | ----------------------------------------------------------- |
-| `0xF2EE`     | `marmot_group_data`     | Monolithic group metadata from the current MIP-era spec.    |
-| `0xF2EF`     | `encrypted_device_name` | Optional encrypted device label from the multi-device work. |
-| `0xF2F0`     | `marmot_multi_device`   | Multi-device signaling gate from the multi-device work.     |
-
 ## Marmot custom proposal types
 
 No Marmot-owned custom MLS proposal type is assigned in this draft yet.

@@ -8,7 +8,6 @@ Status: draft for internal review.
 - Name: `marmot.group.admin-policy.v1`
 - Location: GroupContext `app_data_dictionary`
 - Default requirement: optional
-- Replaces: `marmot_group_data.admin_pubkeys`
 
 ## State
 
@@ -80,8 +79,3 @@ This component MUST NOT be removed while listed as required in the GroupContext 
 
 If the component is absent, components and operations that require a current admin are invalid unless the active
 application profile defines another authorization component.
-
-## Migration
-
-Migration from `marmot_group_data` decodes `admin_pubkeys` as concatenated 32-byte keys, sorts them, rejects duplicates,
-and rejects an empty result.

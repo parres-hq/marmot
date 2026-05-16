@@ -8,7 +8,6 @@ Status: draft for internal review.
 - Name: `marmot.group.message-retention.v1`
 - Location: GroupContext `app_data_dictionary`
 - Default requirement: optional
-- Replaces: `marmot_group_data.disappearing_message_secs`
 
 ## State
 
@@ -53,8 +52,3 @@ are the same member.
 Removal is allowed if this component is not listed as required in the GroupContext `app_components` component.
 
 Removal is equivalent to `disappearing_message_secs = 0`.
-
-## Migration
-
-Migration from `marmot_group_data` reads `disappearing_message_secs` as an optional 8-byte big-endian integer. Empty
-means `0`.

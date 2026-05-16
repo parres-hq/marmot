@@ -102,16 +102,3 @@ When Marmot asks for a Nostr event signature or event id, the signing input is t
 
 Unsigned Nostr-shaped app payloads inside MLS are still encoded by the document that owns that message type. They are
 not relay-publishable Nostr events.
-
-## Legacy structures
-
-Current MIP-era Marmot groups still use the monolithic `marmot_group_data` MLS extension. Its structure follows the same
-Marmot binary profile:
-
-- `version` is a `uint16`;
-- `nostr_group_id` is exactly 32 bytes;
-- every variable-length field is encoded with a QUIC variable-length integer length prefix.
-
-Migration documents must say when bytes are copied exactly and when they are parsed into a new canonical form. For
-example, group profile strings can be copied byte-for-byte after UTF-8 validation, while relay lists need the ordering
-and duplicate rules from the Nostr routing component.

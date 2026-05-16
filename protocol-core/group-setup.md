@@ -26,8 +26,8 @@ by the group. A group must not be created with features that the initial members
 Group settings are authenticated group state. A client must not treat local UI preferences, locally observed delivery
 data, or cached transport data as group settings.
 
-The current MIP-era protocol requires `required_capabilities`, `ratchet_tree`, and `marmot_group_data` when creating a
-group. In the v2 draft, `marmot_group_data` is replaced by the app components required by the selected feature set.
+Group creation requires `required_capabilities`, `ratchet_tree`, `app_data_dictionary`, and the app components required
+by the selected feature set.
 
 ## Creation flow
 
@@ -71,8 +71,3 @@ duration is derived from the inner app payload timestamp plus the retention dura
 
 Retention is group state, not a sender preference. A sender-supplied expiration tag is replaced or removed according to
 the active retention component.
-
-## Migration notes
-
-The current MIP-era `marmot_group_data` extension id is `0xF2EE` and format version `3`. The MIP coverage map records
-how its fields project into v2 app components.

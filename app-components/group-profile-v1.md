@@ -8,7 +8,6 @@ Status: draft for internal review.
 - Name: `marmot.group.profile.v1`
 - Location: GroupContext `app_data_dictionary`
 - Default requirement: optional
-- Replaces: `marmot_group_data.name`, `marmot_group_data.description`
 
 ## State
 
@@ -62,8 +61,3 @@ The admin check is evaluated against the prior epoch state.
 This component MUST NOT be removed while listed as required in the GroupContext `app_components` component.
 
 If the component is not required, removal means the group has no signed Marmot display profile.
-
-## Migration
-
-Migration from `marmot_group_data` copies `name` and `description` byte-for-byte after validating UTF-8 and length
-limits.

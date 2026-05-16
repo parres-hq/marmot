@@ -13,7 +13,7 @@ inviter is online. Later, an inviter fetches one, adds that user to a group, and
 - MLS protocol: `BasicCredential`, KeyPackage, KeyPackageRef, capabilities, and `last_resort`.
 - Transport binding for KeyPackage publication and discovery.
 - Protocol-core joining flow for consuming a KeyPackage through a Welcome.
-- Registries for MLS extension ids, proposal ids, transport kinds, and migration notes.
+- Registries for app component ids, MLS proposal ids, and transport kinds.
 
 This document does not define new group state. It defines account/device readiness for future group joins.
 
@@ -38,15 +38,15 @@ expose a `KeyPackageBundle` type, only the public KeyPackage bytes belong in a t
 KeyPackages advertise what that client/device can support. Group creation and member addition use these capabilities to
 avoid creating a group that some member cannot process.
 
-In the current MIP-era protocol, Marmot KeyPackages advertise:
+Marmot KeyPackages advertise:
 
-- the `marmot_group_data` extension (`0xF2EE`);
+- the MLS `app_data_dictionary` extension;
+- the upstream `app_components` component listing supported Marmot component ids;
 - the `last_resort` extension (`0x000a`);
 - the `self_remove` proposal type (`0x000a`).
 
-The v2 draft is moving persistent group metadata from the monolithic `marmot_group_data` extension to app components.
-That does not remove the capability rule: a member can join only if its KeyPackage advertises support for every feature
-the group requires.
+A member can join only if its KeyPackage advertises support for every MLS primitive and app component the group
+requires.
 
 ## Selection and lifecycle
 
@@ -77,7 +77,4 @@ A client must reject a published KeyPackage when:
 - required capability tags are missing or incompatible;
 - a publication carries a KeyPackageRef hint and it does not match the decoded KeyPackageRef.
 
-## Migration notes
-
-Transport-specific migration details live in [../transports/nostr.md](../transports/nostr.md) and
-[../mip-coverage.md](../mip-coverage.md).
+Transport-specific KeyPackage publication details live in [../transports/nostr.md](../transports/nostr.md).

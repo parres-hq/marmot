@@ -8,7 +8,6 @@ Status: draft for internal review.
 - Name: `marmot.group.blossom.image.v1`
 - Location: GroupContext `app_data_dictionary`
 - Default requirement: optional
-- Replaces: `marmot_group_data.image_hash`, `image_key`, `image_nonce`, `image_upload_key`
 
 This component is for encrypted group images stored through Blossom. It is not the generic group-image model for every
 possible image reference.
@@ -71,8 +70,3 @@ member.
 Removal is allowed if this component is not listed as required in the GroupContext `app_components` component.
 
 Removal is equivalent to the empty image state for application rendering.
-
-## Migration
-
-Migration from `marmot_group_data` copies image fields byte-for-byte if the length checks pass. If every image field is
-empty, the component MAY be omitted.

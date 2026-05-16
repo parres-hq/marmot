@@ -37,11 +37,8 @@ The shared component model is defined in [../app-components/](../app-components/
 
 ## Custom extensions and proposals
 
-Existing Marmot groups may still use older Marmot-specific MLS extensions such as `marmot_group_data`. This draft moves
-the stable spec toward smaller app components.
-
-New persistent group state should prefer app components. A custom MLS proposal type is appropriate only when the feature
-needs proposal semantics that a component update cannot express.
+Persistent group state should use app components. A custom MLS proposal type is appropriate only when the feature needs
+proposal semantics that a component update cannot express.
 
 ## Authenticated data and exporters
 

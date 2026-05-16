@@ -8,7 +8,6 @@ Status: draft for internal review.
 - Name: `marmot.transport.nostr.routing.v1`
 - Location: GroupContext `app_data_dictionary`
 - Default requirement: required only for Nostr-routed Marmot groups
-- Replaces: `marmot_group_data.nostr_group_id`, `marmot_group_data.relays`
 
 ## State
 
@@ -76,10 +75,3 @@ This component MUST NOT be removed while Nostr routing is required by the GroupC
 
 If removed from a group that still exists over another transport, the Nostr transport can no longer route group messages
 from signed group state.
-
-## Migration
-
-Migration from `marmot_group_data` copies `nostr_group_id` and decodes `relays` into the sorted canonical relay list.
-
-If the old `nostr_group_id` is derived from identity material, migration SHOULD rotate the routing id by creating a new
-group or by a future component version that defines safe routing-id rotation.

@@ -80,8 +80,8 @@ The MIP-06 draft payload carries, per group:
 
 - `group_event_key`: the exact 32-byte current-epoch key used for Nostr kind `445` outer encryption;
 - `join_psk`: the current-epoch multi-device join PSK;
-- `group_info`: TLS-serialized MLS GroupInfo with `external_pub`, `ratchet_tree`, `marmot_group_data`, and
-  `marmot_multi_device` signaling.
+- `group_info`: TLS-serialized MLS GroupInfo with `external_pub`, `ratchet_tree`, `app_data_dictionary`, and any
+  multi-device signaling required by the active profile.
 
 The payload is encrypted with X25519, HKDF-SHA256, and ChaCha20-Poly1305. Pairing uses fresh ephemeral X25519 keys and
 rejects all-zero shared secrets.
