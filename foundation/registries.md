@@ -54,6 +54,10 @@ event shapes.
 | `10051` | KeyPackage relay list               | Nostr account transport             |
 | `30443` | Marmot KeyPackage event             | Nostr KeyPackage publication        |
 
+The experimental agent text stream QUIC feature does not claim a Nostr event kind in this draft. Live stream chunks are
+transient QUIC records, and any future durable start, final, abort, or fallback preview app-event kinds must be added to
+this registry before use.
+
 ## Exporter labels
 
 Existing Marmot exporter uses should be treated as registered until their owning docs move or replace them.
