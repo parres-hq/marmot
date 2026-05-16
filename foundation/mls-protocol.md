@@ -45,8 +45,9 @@ proposal semantics that a component update cannot express.
 Marmot documents that write MLS `authenticated_data` must own their byte contribution and define how it composes with
 other contributors.
 
-Marmot documents that use MLS exporter secrets must define the label, context, output length, and consuming feature. New
-exporter uses should prefer the MLS extensions Safe framework when the needed backend support exists.
+Marmot documents that use raw MLS exporter secrets must define the label, context, output length, and consuming feature.
+New app-component features should prefer the MLS extensions Safe framework's `SafeExportSecret(ComponentID)` path and
+define any post-export key context they use below the component secret.
 
 Registered Marmot exporter labels are listed in [registries.md](./registries.md).
 
@@ -59,5 +60,5 @@ The decision should cover:
 
 - which current exporter labels stay as legacy compatibility inputs;
 - which app component ids own `SafeExportSecret` calls;
-- how component ids, component names, or other namespaced values are used as label or context inputs;
+- how component ids, component names, or other namespaced values are used as post-export key context inputs;
 - migration rules for kind `445` group-event encryption, encrypted media, and multi-device join PSKs.

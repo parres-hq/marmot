@@ -52,6 +52,12 @@ For the first user-to-agent profile:
 requirement. A first profile should keep this low; this feature is not trying to hide token cadence at high bandwidth
 cost.
 
+The first application profile uses these maximums:
+
+- `max_plaintext_frame_len <= 65536`;
+- `replay_ttl_secs <= 300`;
+- `padding_bucket_bytes <= 4096`.
+
 This component does not store QUIC endpoints or relay URLs. Endpoint discovery, relay discovery, relay authentication,
 and direct-path probing belong in the raw QUIC transport binding. Per-stream candidates are carried by the start payload.
 

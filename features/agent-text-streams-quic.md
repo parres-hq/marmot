@@ -71,7 +71,7 @@ in group history. Local UI can also drop an unanchored stream without writing an
 This feature touches several surfaces:
 
 - Foundation: Marmot app payload shape for stream start, finish, abort, and optional control events.
-- MLS protocol: exporter-derived stream secrets, epoch pinning, and future Safe exporter migration.
+- MLS protocol: SafeExportSecret-derived stream secrets and epoch pinning.
 - Protocol core: convergence treatment of start and final app payloads.
 - App component: [`marmot.group.agent-text-stream.quic.v1`](../app-components/agent-text-stream-quic-v1.md) group
   configuration.
@@ -323,20 +323,17 @@ The stream key should be derived from the MLS epoch in which the start message i
 Candidate derivation:
 
 ```text
-stream_secret = MLS-Exporter(
-  "marmot.agent-text-stream.v1",
-  context = "v1" ||
-            group_id ||
-            stream_id ||
-            mls_epoch ||
-            sender_id ||
-            start_event_id,
-  32
-)
+component_secret = SafeExportSecret(0x8006)
+key_context      = len("v1") || "v1" ||
+                   len(group_id) || group_id ||
+                   len(stream_id) || stream_id ||
+                   mls_epoch ||
+                   len(sender_id) || sender_id ||
+                   len(start_event_id) || start_event_id
 
-record_key  = HKDF-Expand(stream_secret, "record key", 32)
-nonce_base  = HKDF-Expand(stream_secret, "record nonce", 12)
-signing_ctx = HKDF-Expand(stream_secret, "signing context", 32)
+record_key  = HKDF-Expand(component_secret, "record key" || key_context, 32)
+nonce_base  = HKDF-Expand(component_secret, "record nonce" || key_context, 12)
+signing_ctx = HKDF-Expand(component_secret, "signing context" || key_context, 32)
 ```
 
 Candidate AEAD:
@@ -350,12 +347,12 @@ ct    = AEAD_Encrypt(record_key, nonce, aad, plaintext_frame)
 ChaCha20-Poly1305 is a good first candidate because Marmot already uses it for MIP-era encrypted media. AES-GCM is also
 reasonable when a platform stack makes it easier or faster.
 
-The exact exporter label and context need to be registered if this feature becomes real. A future version should prefer
-the MLS Extensions Safe framework when the backend support exists.
+The component secret comes from the MLS Extensions Safe framework, keyed by the agent text stream app component id
+`0x8006`. The key context is versioned and length-delimited so adjacent variable fields cannot collide.
 
 ## Sender authentication
 
-The exporter secret is group shared. Every current member can derive the same `record_key`. That gives confidentiality
+The component secret is group shared. Every current member can derive the same `record_key`. That gives confidentiality
 against outsiders, but it does not prove which group member created a chunk.
 
 ### Preview mode is the first version
@@ -405,7 +402,9 @@ Each stream has a monotonically increasing `seq`. Receivers reject duplicate seq
 The transcript hash should commit to plaintext frame order:
 
 ```text
-H_0 = hash("marmot agent text stream transcript v1" || stream_id || start_event_id)
+H_0 = hash("marmot agent text stream transcript v1" ||
+           len(stream_id) || stream_id ||
+           len(start_event_id) || start_event_id)
 H_n = hash(H_{n-1} || seq || record_type || plaintext_frame)
 ```
 
@@ -659,7 +658,7 @@ A small first pass could do this:
 2. Add `marmot.group.agent-text-stream.quic.v1` as a required app component for agent-session groups.
 3. Define start and final Marmot app payloads.
 4. Pin each stream to one MLS epoch.
-5. Derive one record key from an MLS exporter.
+5. Derive one record key from the component's SafeExportSecret output.
 6. Send unsigned, ordered `TextDelta` records over one reliable QUIC stream.
 7. Publish the final transcript as a normal group message with `transcript_hash`.
 8. Treat all live chunks as transient preview.
