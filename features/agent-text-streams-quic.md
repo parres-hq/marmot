@@ -12,12 +12,13 @@ The working idea:
 - The group carries shared stream configuration in
   [`marmot.group.agent-text-stream.quic.v1`](../app-components/agent-text-stream-quic-v1.md).
 - Marmot application messages remain the durable group history.
+- A hidden Marmot app event starts and anchors a live stream.
 - QUIC carries short-lived encrypted stream records for live text deltas.
-- The final transcript, or a reference to it, lands back in the group as a normal Marmot app payload.
+- The final output lands back in the group as a normal Marmot app payload for that content type.
 
 This is for text-first agent output: assistant tokens, tool logs, planning notes, command output previews, and similar
-incremental data. Images, files, and rich media should normally stay in the encrypted media feature and be referenced from
-the stream or final transcript.
+incremental data. Images, files, and rich media should normally stay in the encrypted media feature and be referenced
+from the stream or final message.
 
 ## Core invariant
 
@@ -31,8 +32,9 @@ A client that stores conversation history, indexes content, triggers normal mess
 uses the final delivered app payload. Preview frames need an explicit provisional marker until they are verified or
 replaced.
 
-This draft does not allocate Nostr event kinds for stream chunks. Future app payload kinds for start, final, abort, or
-fallback preview updates must be registered in [registries.md](../foundation/registries.md) before use.
+This draft allocates kind `1200` for stream start app events. It does not allocate Nostr event kinds for stream chunks.
+Live stream chunks are transient QUIC records. Future durable abort, media-final, or fallback preview app-event kinds
+must be registered in [registries.md](../foundation/registries.md) before use.
 
 ## Why this exists
 
@@ -54,14 +56,18 @@ encryption on top because QUIC TLS protects only the hop between two QUIC endpoi
 
 ## User-visible shape
 
-A member starts an agent response in a group. Other online members see text appear as the agent produces it. They may see
-tool output, citations, status labels, or partial structured data as separate child streams if the client supports them.
+A member starts an agent response in a group. The start event is durable protocol state. The normal chat timeline does
+not render it by default. Other online members see text appear when QUIC preview records arrive. They may see tool
+output, citations, status labels, or partial structured data as separate child streams if the client supports them.
 
-When the response finishes, the sender posts a normal Marmot app payload containing the final answer, a transcript hash,
-or a media/blob reference. That final payload is the durable group message. Stream chunks are a live preview unless the
-feature later defines a retained-stream mode.
+When the response finishes, the sender posts a normal Marmot app payload for the completed content. For text streams,
+that payload is a kind `9` chat message whose `content` is the final text and whose tags link it to the stream. Other
+stream types can use another final kind if the start event declares that kind as compatible. Stream chunks are a live
+preview unless the feature later defines a retained-stream mode.
 
-If a recipient is offline, they miss the live stream and read the final group message when they sync.
+If a recipient is offline, they miss the live stream and read the final group message when they sync. Stream tags let a
+client understand that the message was produced by a stream, while clients that do not support this feature can still
+render a known final kind as ordinary content.
 
 If the stream is cancelled, the sender posts a final abort or replacement message if the cancellation should be visible
 in group history. Local UI can also drop an unanchored stream without writing anything durable.
@@ -139,34 +145,37 @@ KeyPackage reference, or another Marmot-approved invite path.
 
 ### 1. Start message
 
-The sender publishes a normal Marmot app payload through MLS:
+The sender publishes a hidden Marmot app event through MLS. The start event uses Nostr kind `1200`.
 
 ```text
-AgentTextStreamStartV1 {
-  stream_id,
-  sender_id,
-  agent_id,
-  group_id_hint,
-  mls_epoch,
-  transcript_policy,
-  direct_quic_candidates,
-  relay_candidates,
-  crypto_suite,
-  chunk_profile,
-  created_at,
-  optional_prompt_commitment,
-  optional_parent_message_id
-}
+kind: 1200
+tags:
+  ["stream", stream_id]
+  ["stream-type", "text"]
+  ["final-kind", "9"]
+  ["route", "quic"]
+  ["parent", prompt_event_id]
+  ["broker", broker_candidate_ref]
+content:
+  canonical JSON for metadata that does not fit a tag
 ```
 
-This message is durable. It tells the group that later QUIC stream records with `stream_id` belong to this group and
-sender.
+The `parent` and `broker` tags are optional. More route-specific tags can be defined by the raw QUIC transport binding.
+The feature doc owns `stream`, `stream-type`, and `final-kind`.
 
-It is a stream anchor, not the final response. Clients can use it to authorize preview rendering, allocate local UI state,
-and derive stream keys, but they should not treat the later QUIC chunks as group history.
+This message is durable. It tells the group that later QUIC stream records with `stream_id` belong to this group and
+sender. Clients can use it to authorize preview rendering, allocate local UI state, and derive stream keys. The chat
+timeline does not show the start event by default, and later QUIC chunks are not group history.
 
 The `stream_id` should be unguessable or derived from the start payload. A practical first rule is a 32-byte random
 identifier generated by the sender, with the MLS-delivered start event id as the durable anchor.
+
+`stream-type` names the live preview profile. The first profile is `text`.
+
+`final-kind` names the expected durable app-event kind for the final output. For text streams, `final-kind` is `9`.
+Future profiles can use another final kind, such as an audio message kind, without changing the start event shape.
+Receivers should reject or ignore a final event whose kind is incompatible with the start event's `stream-type` and
+`final-kind`.
 
 `direct_quic_candidates` are short-lived endpoints for this stream attempt. They can include LAN addresses, public
 addresses, or NAT-discovered candidates. They are not stable group state.
@@ -207,7 +216,7 @@ A first relay should have bounded behavior:
 - small per-recipient buffers;
 - hard quotas and rate limits;
 - no default retained replay;
-- final transcript storage through normal Marmot app payloads.
+- final output storage through normal Marmot app payloads.
 
 For one user's phone-to-desktop agent stream, this should be cheap to run. Large public fanout, retained replay, or media
 streaming changes the operating profile.
@@ -295,26 +304,27 @@ The app must keep the preview label clear in its own state:
 
 ### 4. Final group message
 
-When the agent finishes, the sender publishes a normal Marmot app payload:
+When the agent finishes a text stream, the sender publishes a normal kind `9` Marmot app event. Its `content` is the
+final text. Its tags link it to the preview stream:
 
 ```text
-AgentTextStreamFinalV1 {
-  stream_id,
-  final_text_or_reference,
-  transcript_hash,
-  chunk_count,
-  finished_at,
-  optional_usage,
-  optional_model_info,
-  optional_media_refs
-}
+kind: 9
+tags:
+  ["stream", stream_id]
+  ["stream-start", start_event_id]
+  ["stream-hash", transcript_hash]
+  ["stream-chunks", chunk_count]
+content:
+  final text
 ```
 
-This final payload is the group history item and authoritative completion. The default timeline behavior is to replace
-the live preview with this final message. A client may keep preview chunks only as local provisional or diagnostic state,
-or use the final message to mark the preview as verified.
+The default timeline behavior is to replace the live preview with this final message when `stream_id` matches. A client
+may keep preview chunks only as local provisional or diagnostic state, or use the final message to mark the preview as
+verified.
 
-If the final response is large, it can use encrypted media/blob storage and put the reference in the final message.
+If the completed content is not plain text, the final payload should use the normal Marmot app-event kind for that
+content type. For example, a future audio-stream profile can start with kind `1200`, declare `stream-type=audio` and an
+audio `final-kind`, then finish with the audio message kind that carries encrypted media references and audio metadata.
 
 ## Key derivation sketch
 
@@ -408,8 +418,8 @@ H_0 = hash("marmot agent text stream transcript v1" ||
 H_n = hash(H_{n-1} || seq || record_type || plaintext_frame)
 ```
 
-The final group message includes `H_final`. A receiver that saw the live stream can compare its local transcript hash to
-the final message.
+The final group message includes `H_final` in its stream tags. A receiver that saw the live stream can compare its local
+transcript hash to the final message.
 
 Open questions:
 
@@ -467,8 +477,8 @@ Deferred browser questions:
 
 ## QUIC transport binding boundary
 
-The feature doc owns stream semantics: start payload, preview frames, final transcript anchoring, epoch behavior, and
-which data is durable.
+The feature doc owns stream semantics: start payload, preview frames, final message anchoring, epoch behavior, and which
+data is durable.
 
 A future raw QUIC transport binding should own:
 
@@ -488,13 +498,17 @@ authoritative, and it does not replace MLS membership or the final MLS app paylo
 
 Nostr can still carry the durable start and final app messages through the normal Marmot MLS path.
 
+The stream start is an unsigned Nostr-shaped Marmot app event using kind `1200`. The final output is also an unsigned
+Nostr-shaped Marmot app event. Its kind is the normal kind for the completed content. For text streams, the final output
+is a kind `9` chat message with stream tags.
+
 The QUIC stream chunks do not need to be Nostr events. They are transient transport records. Making every chunk a Nostr
 event would put pressure on relays, leak more timing metadata into relay history, and blur the difference between live
 preview and durable group state.
 
 This feature should not claim low-numbered MIP-era notification or multi-device values for stream traffic. If another
 MIP has already claimed a kind that is not yet listed in the registry, that claim wins; this feature should not use
-`450` or `451` for QUIC stream chunks, start/final payloads, or fallback previews.
+`450` or `451` for QUIC stream chunks, start payloads, final payloads, or fallback previews.
 
 Possible Nostr-related side ideas:
 
@@ -521,7 +535,7 @@ Deferred questions:
 
 - Which agent profile fields belong in the KeyPackage, a profile event, or an app payload?
 - Can a hosted agent service participate without becoming a full group member?
-- How does the final transcript show which local process, model, or tool produced the output?
+- How does the final message show which local process, model, or tool produced the output?
 
 ## Images and other media
 
@@ -607,10 +621,11 @@ Potential failures and first-pass behavior:
 Useful test vectors later:
 
 - start event id to stream key derivation;
+- kind `1200` start tags to expected final kind;
 - record encryption and decryption for several sequence numbers;
 - duplicate sequence rejection;
 - transcript hash update;
-- unsigned preview replacement by final message;
+- unsigned preview replacement by a final kind `9` message with a matching `stream` tag;
 - final hash mismatch;
 - epoch restart link;
 - relay replay within a TTL;
@@ -647,6 +662,7 @@ Useful simulation scenarios:
   provisional marker?
 - Should retained replay exist in v1, or should late observers always wait for the final message?
 - What minimal padding rule gives enough confidentiality without wasting mobile bandwidth?
+- Which final kinds are compatible with each future `stream-type` value?
 - Which agent profile fields belong in KeyPackages, profile events, or app payloads?
 - What is the exact boundary between this feature and the raw QUIC transport binding once the transport doc exists?
 
@@ -656,11 +672,11 @@ A small first pass could do this:
 
 1. Add a feature capability for receiving QUIC text streams.
 2. Add `marmot.group.agent-text-stream.quic.v1` as a required app component for agent-session groups.
-3. Define start and final Marmot app payloads.
+3. Define a hidden kind `1200` start app event with `stream`, `stream-type`, and `final-kind` tags.
 4. Pin each stream to one MLS epoch.
 5. Derive one record key from the component's SafeExportSecret output.
 6. Send unsigned, ordered `TextDelta` records over one reliable QUIC stream.
-7. Publish the final transcript as a normal group message with `transcript_hash`.
+7. Publish the final text as a normal kind `9` group message with stream tags.
 8. Treat all live chunks as transient preview.
 
 That gives the product the main UX win while leaving retained replay, child streams, datagrams, hosted-agent delegation,

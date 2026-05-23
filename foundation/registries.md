@@ -39,13 +39,14 @@ event shapes.
 | `448`   | Push token list response            | Marmot app payload                  |
 | `449`   | Push token removal                  | Marmot app payload                  |
 | `450`   | Multi-device identity proof event   | Local signing template, not relayed |
+| `1200`  | Agent text stream start             | Marmot app payload                  |
 | `10050` | Push notification server relay list | Nostr account transport             |
 | `10051` | KeyPackage relay list               | Nostr account transport             |
 | `30443` | Marmot KeyPackage event             | Nostr KeyPackage publication        |
 
-The experimental agent text stream QUIC feature does not claim a Nostr event kind in this draft. Live stream chunks are
-transient QUIC records, and any future durable start, final, abort, or fallback preview app-event kinds must be added to
-this registry before use.
+The experimental agent text stream QUIC feature claims kind `1200` for durable stream start app events. Live stream
+chunks are transient QUIC records. Future durable abort, media-final, or fallback preview app-event kinds must be added
+to this registry before use.
 
 ## Exporter labels
 
