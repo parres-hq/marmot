@@ -10,6 +10,8 @@ Foundation docs should change slowly. A change here usually means the whole prot
 ## Files
 
 - [identity.md](./identity.md) - Marmot account identity, MLS credentials, and capability negotiation.
+- [account-identity-proof-v1.md](./account-identity-proof-v1.md) - LeafNode proof binding account identity to the MLS
+  leaf signature key.
 - [key-packages.md](./key-packages.md) - KeyPackage meaning, discovery requirements, and lifecycle.
 - [canonical-encoding.md](./canonical-encoding.md) - byte encoding rules used across Marmot-owned structures.
 - [application-messages.md](./application-messages.md) - the unsigned Nostr-shaped payload inside MLS messages.

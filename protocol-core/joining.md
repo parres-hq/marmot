@@ -41,12 +41,13 @@ After unwrapping a Welcome, the receiver:
 2. verifies that the referenced KeyPackage belongs to this account/device;
 3. decodes the transport-carried content as an MLSMessage with `mls_welcome` wire format;
 4. processes the MLS Welcome;
-5. validates the resulting Marmot group state and required components;
-6. stores the group state and routing information;
-7. rotates the consumed published KeyPackage when appropriate;
-8. deletes consumed `init_key` material according to the KeyPackage lifecycle rules;
-9. catches up on outstanding Commits as best it can;
-10. performs a self-update as soon as practical.
+5. validates every resulting member identity and account identity proof;
+6. validates the resulting Marmot group state and required components;
+7. stores the group state and routing information;
+8. rotates the consumed published KeyPackage when appropriate;
+9. deletes consumed `init_key` material according to the KeyPackage lifecycle rules;
+10. catches up on outstanding Commits as best it can;
+11. performs a self-update as soon as practical.
 
 The current MIP-era rule recommends doing the post-join self-update before sending application payloads when feasible
 and requires it within 24 hours of joining.
@@ -62,4 +63,5 @@ A receiver rejects the Welcome if:
 - the Welcome is not addressed to the local account identity;
 - the MLSMessage is not an MLS Welcome;
 - the referenced KeyPackage is not local to this account/device;
+- any resulting member leaf is missing a valid account identity proof;
 - the resulting group state lacks required Marmot state or unsupported required capabilities are active.

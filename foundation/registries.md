@@ -19,6 +19,12 @@ Marmot app components use MLS private-use component ids.
 | `0x8005`     | `marmot.group.message-retention.v1`      | [doc](../app-components/message-retention-v1.md)      |
 | `0x8006`     | `marmot.group.agent-text-stream.quic.v1` | [doc](../app-components/agent-text-stream-quic-v1.md) |
 
+## Marmot custom MLS extension types
+
+| Extension type | Name                                | Document                                                    |
+| -------------- | ----------------------------------- | ----------------------------------------------------------- |
+| `0xf2f1`       | `marmot.account-identity-proof.v1`  | [doc](./account-identity-proof-v1.md)                       |
+
 ## Marmot custom proposal types
 
 No Marmot-owned custom MLS proposal type is assigned in this draft yet.

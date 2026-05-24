@@ -27,6 +27,10 @@ identity in the credential.
 
 A KeyPackage belongs to the account named by its credential identity.
 
+Every Marmot KeyPackage carries `marmot.account-identity-proof.v1` in its LeafNode extensions. The proof binds the
+credential identity to the KeyPackage LeafNode's MLS signature public key. A KeyPackage without a valid proof is
+malformed.
+
 When a KeyPackage is published through a transport object, the transport binding defines how the outer author or sender
 is checked against the credential identity.
 
@@ -41,6 +45,7 @@ avoid creating a group that some member cannot process.
 Marmot KeyPackages advertise:
 
 - the MLS `app_data_dictionary` extension;
+- the `marmot.account-identity-proof.v1` LeafNode extension (`0xf2f1`);
 - the upstream `app_components` component listing supported Marmot component ids;
 - the `last_resort` extension (`0x000a`);
 - the `self_remove` proposal type (`0x000a`).
@@ -72,6 +77,7 @@ A client must reject a published KeyPackage when:
 
 - the decoded content is not a valid MLS KeyPackage;
 - the credential identity is not a valid Marmot account identity;
+- the account identity proof extension is missing or invalid;
 - the transport author or sender does not match the credential identity under the active transport binding;
 - the transport publication encoding is invalid;
 - required capability tags are missing or incompatible;

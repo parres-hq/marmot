@@ -23,9 +23,12 @@ Marmot builds on:
 - MLS Commits, Proposals, application-message content, and Welcomes;
 - MLS KeyPackages and KeyPackage references;
 - MLS `BasicCredential` for member credentials;
+- the Marmot account identity proof LeafNode extension;
 - MLS capability advertisement and required capabilities.
 
-The Marmot account identity carried in credentials is defined in [identity.md](./identity.md).
+The Marmot account identity carried in credentials is defined in [identity.md](./identity.md). The LeafNode extension
+that binds that identity to the MLS leaf signature key is defined in
+[account-identity-proof-v1.md](./account-identity-proof-v1.md).
 
 ## App components and group state
 
@@ -39,6 +42,9 @@ The shared component model is defined in [../app-components/](../app-components/
 
 Persistent group state should use app components. A custom MLS proposal type is appropriate only when the feature needs
 proposal semantics that a component update cannot express.
+
+`marmot.account-identity-proof.v1` is the required custom LeafNode extension used to authenticate Marmot account
+ownership of MLS leaf signature keys. New custom extensions must be registered in [registries.md](./registries.md).
 
 ## Authenticated data and exporters
 

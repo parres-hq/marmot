@@ -30,6 +30,17 @@ For a Marmot member leaf:
 The MLS signature key for a leaf is not the Marmot account identity. It proves the MLS leaf. The credential identity
 says which Marmot account that leaf belongs to.
 
+## Account identity proof
+
+Every Marmot member LeafNode MUST carry `marmot.account-identity-proof.v1`, an MLS LeafNode extension that proves the
+account named by the `BasicCredential` authorized the leaf's MLS signature public key.
+
+Clients MUST reject a member leaf or KeyPackage if the proof is missing, malformed, does not match the credential
+identity, does not match the MLS leaf signature key, or does not verify under the account identity.
+
+The extension bytes and validation rules are defined in
+[account-identity-proof-v1.md](./account-identity-proof-v1.md).
+
 ## KeyPackages
 
 KeyPackage meaning, discovery requirements, and lifecycle are defined in [key-packages.md](./key-packages.md).

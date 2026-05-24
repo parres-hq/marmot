@@ -97,6 +97,9 @@ The current tag set is:
 
 The `i` tag is the KeyPackageRef, not the account identity. Receivers SHOULD verify it against the decoded KeyPackage.
 
+The `mls_extensions` tags MUST include `0xf2f1` for `marmot.account-identity-proof.v1`. Receivers MUST still validate
+the decoded KeyPackage LeafNode proof; the tag is only an advertisement and fetch filter.
+
 KeyPackage publication is account transport. It helps other users find fresh KeyPackages. It does not create group
 state.
 
