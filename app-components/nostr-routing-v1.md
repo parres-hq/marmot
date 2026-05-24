@@ -50,13 +50,12 @@ There is no v1 update that changes `nostr_group_id`.
 A Nostr routing state is valid if:
 
 - `nostr_group_id` is exactly 32 bytes
-- every relay URL is valid UTF-8
-- every relay URL is at most 512 bytes
+- every relay URL satisfies the Nostr relay URL profile in [../transports/nostr.md](../transports/nostr.md)
 - relay URLs are sorted lexicographically by byte value
 - relay URLs have no duplicates
 
-The transport document defines URL scheme and normalization rules. Until that document exists, clients compare relay URL
-bytes exactly.
+Clients compare relay URL bytes exactly after validation. Producers should normalize before proposing a group-state
+update, but a client must not rewrite relay URL bytes while applying signed group state.
 
 ## Authorization
 

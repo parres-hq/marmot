@@ -44,10 +44,11 @@ avoid creating a group that some member cannot process.
 
 Marmot KeyPackages advertise:
 
-- the MLS `app_data_dictionary` extension;
+- the MLS `app_data_dictionary` extension (`0x0006`);
 - the `marmot.account-identity-proof.v1` LeafNode extension (`0xf2f1`);
-- the upstream `app_components` component listing supported Marmot component ids;
+- the upstream `app_components` component (`0x0001`) listing supported Marmot component ids;
 - the `last_resort` extension (`0x000a`);
+- the upstream `app_data_update` proposal type (`0x0008`);
 - the `self_remove` proposal type (`0x000a`).
 
 A member can join only if its KeyPackage advertises support for every MLS primitive and app component the group
@@ -60,6 +61,15 @@ before selecting one.
 
 The MIP-era selection policy prefers valid non-`last_resort` candidates when available, then prefers the freshest valid
 candidate. A transport binding owns any transport-specific replacement, address, and tie-breaking rules.
+
+Before ranking candidates, an inviter MUST perform the validation listed below and any additional checks required by the
+active transport binding. Candidate freshness is only a KeyPackage selection input. It MUST NOT create group state and
+MUST NOT override decoded KeyPackage validity, account identity proof validity, capability compatibility, or transport
+author binding.
+
+When a transport exposes a publication timestamp or replacement rule, clients SHOULD use it to avoid consuming stale
+single-use KeyPackages. If two otherwise equivalent candidates remain, clients SHOULD use a deterministic
+content-derived tie-breaker defined by the transport binding.
 
 After a client successfully processes a Welcome that consumed a published KeyPackage, it should publish a fresh
 replacement according to the active transport binding.

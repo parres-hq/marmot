@@ -19,10 +19,23 @@ Marmot app components use MLS private-use component ids.
 | `0x8005`     | `marmot.group.message-retention.v1`      | [doc](../app-components/message-retention-v1.md)      |
 | `0x8006`     | `marmot.group.agent-text-stream.quic.v1` | [doc](../app-components/agent-text-stream-quic-v1.md) |
 
+## Upstream MLS extension draft ids
+
+These values are pinned for the MLS extensions draft profile currently used by Marmot. If the upstream draft changes
+these assignments, Marmot needs an explicit compatibility plan before changing wire behavior.
+
+| Value    | Name                  | Upstream source                      |
+| -------- | --------------------- | ------------------------------------ |
+| `0x0001` | `app_components`      | MLS extensions draft `ComponentID`   |
+| `0x0006` | `app_data_dictionary` | MLS extensions draft extension type  |
+| `0x0008` | `app_data_update`     | MLS extensions draft proposal type   |
+
 ## Marmot custom MLS extension types
 
 | Extension type | Name                                | Document                                                    |
 | -------------- | ----------------------------------- | ----------------------------------------------------------- |
+| `0xf2ef`       | `marmot.encrypted-device-name.v1`   | [doc](../features/multi-device.md)                         |
+| `0xf2f0`       | `marmot.multi-device.v1`            | [doc](../features/multi-device.md)                         |
 | `0xf2f1`       | `marmot.account-identity-proof.v1`  | [doc](./account-identity-proof-v1.md)                       |
 
 ## Marmot custom proposal types
@@ -63,3 +76,9 @@ Existing Marmot exporter uses should be treated as registered until their owning
 | `"marmot" / "group-event"`     | Nostr group transport | kind `445` outer encryption key |
 | `"marmot" / "encrypted-media"` | encrypted media       | MIP-04 media key input          |
 | `"marmot-mip06-join-psk-v1"`   | multi-device join     | external PSK material           |
+
+## Safe exporter component ids
+
+| Component id | Consumer                              | Output                    |
+| ------------ | ------------------------------------- | ------------------------- |
+| `0x8006`     | Agent text stream QUIC record crypto  | 32-byte component secret  |

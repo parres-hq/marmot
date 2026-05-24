@@ -41,6 +41,7 @@ spec/
     admin-policy-v1.md
     nostr-routing-v1.md
     message-retention-v1.md
+    agent-text-stream-quic-v1.md
   transports/
     README.md
     nostr.md
@@ -49,6 +50,7 @@ spec/
     encrypted-media.md
     push-notifications.md
     multi-device.md
+    agent-text-streams-quic.md
   implementation-model.md
 ```
 

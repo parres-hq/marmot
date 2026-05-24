@@ -35,6 +35,15 @@ This draft follows:
 
 OpenMLS exposes this support behind the `extensions-draft-08` feature.
 
+For the profile Marmot currently implements, the pinned upstream ids are:
+
+- `app_components` component id: `0x0001`;
+- `app_data_dictionary` extension type: `0x0006`;
+- `app_data_update` proposal type: `0x0008`.
+
+These are listed in [../foundation/registries.md](../foundation/registries.md). Changing them is a wire-compatibility
+change, not a local implementation detail.
+
 ## Component IDs
 
 Marmot uses private MLS component ids in the `0x8000..0xffff` range.
@@ -60,10 +69,10 @@ Assigned component ids are registered in [../foundation/registries.md](../founda
 
 Groups that use Marmot app components require MLS support for:
 
-- the `app_data_dictionary` extension;
-- the `app_data_update` proposal.
+- the `app_data_dictionary` extension (`0x0006`);
+- the `app_data_update` proposal (`0x0008`).
 
-Marmot uses the upstream `app_components` component to advertise supported and required component ids:
+Marmot uses the upstream `app_components` component (`0x0001`) to advertise supported and required component ids:
 
 - In a LeafNode, `app_components` lists the component ids supported by that member.
 - In the GroupContext, `app_components` lists the component ids required by the group.

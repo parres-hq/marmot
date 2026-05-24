@@ -78,8 +78,9 @@ The kind `446` rumor contains:
 
 - `content`: one standard-base64 string with one or more concatenated 1084-byte `EncryptedToken` values;
 - `v`: `mip05-v1`;
-- `encoding`: `base64`;
 - `pubkey`: a fresh ephemeral key.
+
+The content field follows the Nostr transport byte-encoding rule: standard base64 with padding and no `encoding` tag.
 
 The seal is signed by the same ephemeral key used as the rumor `pubkey`. The gift wrap uses a separate ephemeral key
 and is addressed to the notification server.
@@ -103,7 +104,7 @@ because a related push hint was missing, delayed, duplicated, or malformed.
 
 Notification servers MUST reject or ignore malformed notification triggers, including:
 
-- missing or unsupported `v` or `encoding` tags;
+- missing or unsupported `v` tags;
 - invalid base64 content;
 - decoded content whose length is not a multiple of 1084 bytes;
 - token chunks with invalid ephemeral keys, failed ECDH/HKDF, failed AEAD authentication, invalid platform bytes, or

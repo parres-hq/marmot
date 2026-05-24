@@ -81,8 +81,12 @@ A branch that needs a retained state older than the retained anchor MUST NOT be 
 
 An app-payload witness is an MLS application message whose Marmot app payload decrypts against a candidate branch state.
 
-Witnesses are counted by distinct sender per branch epoch. One sender cannot increase a branch score by sending many
-messages in the same epoch.
+Witnesses are counted by distinct Marmot sender identity per branch epoch. The sender identity is the account identity
+authenticated by the MLS leaf credential for the application message, not an outer transport public key, Nostr event
+author, relay, local device id, or transient leaf index.
+
+One sender identity cannot increase a branch score by sending many messages in the same epoch. In a multi-device group,
+multiple MLS leaves for the same Marmot account count as one sender identity for witness quorum.
 
 For each branch epoch:
 

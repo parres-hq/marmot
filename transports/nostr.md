@@ -23,11 +23,35 @@ That component owns:
 The Nostr transport uses those values. It does not derive them from account ids, MLS group ids, KeyPackage ids, relay
 URLs, or Nostr event ids.
 
+## Transport byte encoding
+
+Fields in this binding that carry Marmot, MLS, or AEAD bytes use standard base64 with padding unless the field is
+explicitly defined as lowercase hex.
+
+This binding does not use `encoding` tags to negotiate byte encoding. A sender MUST NOT add an `encoding` tag for any
+event shape in this document. A receiver MUST NOT switch decoders based on an `encoding` tag; each field is decoded by
+the rule that defines that field.
+
+## Relay URL profile
+
+Relay URL fields and `relay`/`relays` tag values use the Nostr relay URL profile:
+
+- the value MUST be valid UTF-8 and no more than 512 bytes;
+- the URL MUST be absolute;
+- the scheme MUST be `wss` or `ws`;
+- the host MUST be present;
+- username, password, and fragment components MUST be absent.
+
+Producers SHOULD use `wss`, lowercase DNS hostnames, omit default ports, and avoid redundant path spelling. Receivers
+compare relay URL byte strings exactly after validation. Local safety policy MAY refuse to connect or publish to a
+valid relay URL, but it does not rewrite signed group state.
+
 ## Group message delivery
 
 Nostr group messages use Nostr kind `445`.
 
-A kind `445` event MUST include an `h` tag whose value is the lowercase hex encoding of the group's `nostr_group_id`.
+A kind `445` event MUST include exactly one `h` tag whose value is the lowercase hex encoding of the group's
+`nostr_group_id`.
 
 The event `pubkey` MUST be a fresh ephemeral Nostr public key generated for that event. The kind `445` event MUST be
 signed by the matching ephemeral key. The ephemeral key MUST NOT be the sender's Marmot account identity, and it MUST
@@ -48,6 +72,13 @@ The base64 encoding is standard base64 with padding.
 The `ciphertext` value is the full AEAD output and includes the authentication tag. The 12-byte nonce is prepended to
 the ciphertext before base64 encoding. The AAD is the empty byte string and is not serialized into the event.
 
+The Nostr event id, event `pubkey`, tags, relay timestamp, and relay URL are not AEAD AAD for kind `445`. They are
+validated as the transport envelope and then treated as transport evidence only.
+
+Receivers MUST verify the kind `445` event id and Nostr signature before attempting to decrypt its content. That
+signature proves only integrity of the ephemeral transport envelope. Marmot sender identity still comes from the MLS
+message after decryption.
+
 Receivers MUST reject kind `445` content that is not valid base64 or that decodes to fewer than 28 bytes. The minimum is
 12 nonce bytes plus the 16-byte ChaCha20-Poly1305 tag.
 
@@ -67,7 +98,7 @@ The inner kind `444` rumor MUST include:
 
 - `content`: serialized MLSMessage bytes whose wire format is `mls_welcome`, encoded as base64;
 - `e` tag: the Nostr event id of the KeyPackage event used for the invite;
-- `relays` tag: relay URLs where the new member should fetch group messages.
+- `relays` tag: relay URLs, using the relay URL profile above, where the new member should fetch group messages.
 
 The inner kind `444` rumor MUST NOT have a `sig` field. The kind `13` seal and kind `1059` gift wrap are signed by
 NIP-59.
@@ -94,7 +125,7 @@ The current tag set is:
 - `mls_proposals`: supported MLS proposal ids;
 - `app_components`: supported Marmot app-component ids.
 
-The `i` tag is the KeyPackageRef, not the account identity. Receivers SHOULD verify it against the decoded KeyPackage.
+The `i` tag is the KeyPackageRef, not the account identity. Receivers MUST verify it against the decoded KeyPackage.
 
 The `mls_extensions` tags MUST include `0xf2f1` for `marmot.account-identity-proof.v1`. Receivers MUST still validate
 the decoded KeyPackage LeafNode proof; the tag is only an advertisement and fetch filter.
@@ -107,6 +138,11 @@ content field. KeyPackage kind `30443` events do not repeat those relays.
 
 Legacy kind `443` KeyPackages may exist during migration windows. Implementations that still support that migration may
 query both kinds, but valid kind `30443` events are preferred. New publications should use kind `30443`.
+
+Kind `30443` is a Nostr addressable event. For one `(author, kind, d)` slot, clients SHOULD keep the newest valid event
+by `created_at`, with lower event id as the deterministic tie-breaker when timestamps are equal. Across different `d`
+slots, each valid event is a separate candidate KeyPackage. Candidate ranking then follows
+[../foundation/key-packages.md](../foundation/key-packages.md).
 
 ## Subscriptions and fetch rules
 
@@ -137,7 +173,8 @@ protocol-core publish lifecycle defines when locally created MLS work may be app
 
 A Nostr transport client MUST validate the outer event enough to classify it before passing bytes to the MLS peeler:
 
-- kind `445` group messages must have an `h` tag;
+- kind `445` group messages must be signed Nostr events with a valid id/signature, must have exactly one `h` tag, and
+  must have base64 content whose decoded length is at least 28 bytes;
 - kind `1059` welcomes must be signed Nostr events and must have a `p` tag;
 - kind `444` welcome rumors must have `e` and `relays` tags after NIP-59 unwrapping;
 - kind `30443` KeyPackage event content must be base64-encoded MLS KeyPackage bytes;

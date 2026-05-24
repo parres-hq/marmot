@@ -12,8 +12,8 @@ This feature is based on MIP-06 branch draft work. It is not part of the merged 
 
 - Foundation identity and credentials.
 - MLS External Commit.
-- MLS extension `marmot_multi_device` (`0xF2F0`) as the group-level signaling gate.
-- Optional LeafNode extension `encrypted_device_name` (`0xF2EF`).
+- MLS extension `marmot.multi-device.v1` (`0xf2f0`) as the group-level signaling gate.
+- Optional LeafNode extension `marmot.encrypted-device-name.v1` (`0xf2ef`).
 - MLS authenticated data for the Nostr identity proof.
 - Exporter label: `"marmot-mip06-join-psk-v1"`.
 - Future custom proposal candidate: `IdentityRemove`.
@@ -29,9 +29,9 @@ History synchronization is out of scope. A newly added device cannot decrypt epo
 
 External Commit behavior for multi-device support is active only when all signaling requirements are met:
 
-- `GroupContext.extensions` contains a valid `marmot_multi_device` extension (`0xF2F0`);
-- `GroupContext.required_capabilities` requires `0xF2F0`;
-- every current non-blank leaf advertises `0xF2F0` in `LeafNode.capabilities.extensions`.
+- `GroupContext.extensions` contains a valid `marmot.multi-device.v1` extension (`0xf2f0`);
+- `GroupContext.required_capabilities` requires `0xf2f0`;
+- every current non-blank leaf advertises `0xf2f0` in `LeafNode.capabilities.extensions`.
 
 If any of those checks fail, a client rejects a `new_member_commit` External Commit instead of applying the multi-device
 authorization carve-out.
@@ -43,7 +43,7 @@ A multi-device External Commit is valid only when:
 - the signaling gate is active;
 - the joining LeafNode credential identity matches at least one existing group member's credential identity;
 - the Commit contains the required `ExternalInit` proposal;
-- the Commit contains exactly one MIP-06 External PSK proposal;
+- the Commit contains exactly one MLS PreSharedKey proposal carrying the Marmot multi-device External PSK id;
 - the Commit contains no unrelated proposals;
 - `FramedContent.authenticated_data` contains a valid Nostr identity proof;
 - ordinary MLS External Commit validation succeeds.
@@ -90,7 +90,7 @@ Group entries are epoch-specific. A failed stale-epoch join must be retried with
 
 ## Device labels
 
-`encrypted_device_name` is an optional LeafNode extension for an encrypted device label. It is display metadata. It must
+`marmot.encrypted-device-name.v1` is an optional LeafNode extension for an encrypted device label. It is display metadata. It must
 not be used as identity or authorization input.
 
 The current branch draft encrypts the device name with NIP-44 to the user's own Nostr identity. Other users should not
@@ -111,7 +111,7 @@ A multi-device join is invalid if:
 - the identity proof is missing or invalid;
 - the proof does not bind to the joining account identity;
 - the external PSK id or PSK value is wrong for the current group context;
-- the Commit includes any proposal beyond the required ExternalInit and MIP-06 External PSK;
+- the Commit includes any proposal beyond the required ExternalInit and Marmot multi-device External PSK;
 - the External Commit fails normal MLS validation.
 
 ## Migration notes
