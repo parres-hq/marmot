@@ -61,5 +61,5 @@ Existing Marmot exporter uses should be treated as registered until their owning
 | Label                          | Context owner         | Output                          |
 | ------------------------------ | --------------------- | ------------------------------- |
 | `"marmot" / "group-event"`     | Nostr group transport | kind `445` outer encryption key |
-| `"marmot" / "encrypted-media"` | encrypted media       | media key material              |
+| `"marmot" / "encrypted-media"` | encrypted media       | MIP-04 media key input          |
 | `"marmot-mip06-join-psk-v1"`   | multi-device join     | external PSK material           |

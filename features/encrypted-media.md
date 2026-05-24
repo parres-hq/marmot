@@ -10,11 +10,12 @@ Blossom-backed group image component is `marmot.group.blossom.image.v1`.
 ## Surfaces
 
 - Foundation: Marmot app payload shape.
-- MLS protocol: exporter-derived secret or a future component-scoped safe exporter.
+- MLS protocol: raw MLS exporter label.
 - App payload: media reference event kind and tags.
 - Blob storage: upload and fetch backend.
 
-No persistent group app component is required for encrypted media.
+Encrypted media does not currently allocate an app component. The current design intentionally follows the audited
+MIP-04 shape and derives media keys from a raw MLS exporter label.
 
 ## Behavior
 
@@ -46,25 +47,24 @@ reference includes:
 
 ## Key derivation
 
-The MIP-era feature derives media key material from the MLS exporter label registered as `"marmot" / "encrypted-media"`.
+The current feature derives media key material from the registered MIP-04 MLS exporter label.
 
 For `mip04-v2`:
 
 ```text
-exporter_secret = MLS-Exporter("marmot", "encrypted-media", 32)
-file_key        = HKDF-Expand(exporter_secret,
-                              "mip04-v2" || 0x00 || file_hash ||
-                              0x00 || mime_type || 0x00 || filename ||
-                              0x00 || "key",
-                              32)
-nonce           = random(12)
+media_secret = MLS-Exporter("marmot", "encrypted-media", 32)
+file_key     = HKDF-Expand(media_secret,
+                           "mip04-v2" || 0x00 || file_hash ||
+                           0x00 || mime_type || 0x00 || filename ||
+                           0x00 || "key",
+                           32)
+nonce        = random(12)
 ```
 
 The MIME type is lowercased, trimmed, stripped of parameters, and normalized to its canonical form before key
 derivation.
 
-This draft needs to settle whether encrypted media continues to use that raw exporter label or moves to an MLS
-component-scoped safe exporter.
+The media exporter output is key material. Clients MUST NOT publish, transmit, log, or surface it in diagnostics.
 
 ## Encryption
 
@@ -104,3 +104,6 @@ A receiver MUST reject an encrypted media reference if:
 
 MIP-04 should become this feature doc plus one or more exact app-payload schemas. Blob-backend-specific details should
 live in the payload reference format or a blob-backend subsection.
+
+A migration from raw MLS exporter labels to `SafeExportSecret(ComponentID)` is deferred until the protocol specifies
+durable download behavior across app restarts and group epoch changes.
