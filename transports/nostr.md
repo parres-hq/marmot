@@ -66,7 +66,6 @@ The gift-wrap recipient is the invitee's Nostr public key.
 The inner kind `444` rumor MUST include:
 
 - `content`: serialized MLSMessage bytes whose wire format is `mls_welcome`, encoded as base64;
-- `encoding` tag: `["encoding", "base64"]`;
 - `e` tag: the Nostr event id of the KeyPackage event used for the invite;
 - `relays` tag: relay URLs where the new member should fetch group messages.
 
@@ -75,7 +74,8 @@ NIP-59.
 
 A receiver MUST reject a welcome that is not addressed to its own account identity.
 
-A receiver MUST reject a kind `444` rumor whose `encoding` tag is missing or names any encoding other than `base64`.
+A receiver MUST reject a kind `444` rumor whose content is not valid base64, whose `e` tag is missing or not a
+32-byte hex Nostr event id, or whose `relays` tag is missing or empty.
 
 ## KeyPackage publication
 
@@ -92,8 +92,7 @@ The current tag set is:
 - `mls_ciphersuite`: MLS ciphersuite id;
 - `mls_extensions`: supported MLS extension ids;
 - `mls_proposals`: supported MLS proposal ids;
-- `encoding`: `base64`;
-- `relays`: relay URLs where the account can receive KeyPackage-related traffic.
+- `app_components`: supported Marmot app-component ids.
 
 The `i` tag is the KeyPackageRef, not the account identity. Receivers SHOULD verify it against the decoded KeyPackage.
 
@@ -104,7 +103,7 @@ KeyPackage publication is account transport. It helps other users find fresh Key
 state.
 
 KeyPackage relay discovery uses kind `10051` events. A kind `10051` event lists relays with `relay` tags and an empty
-content field.
+content field. KeyPackage kind `30443` events do not repeat those relays.
 
 Legacy kind `443` KeyPackages may exist during migration windows. Implementations that still support that migration may
 query both kinds, but valid kind `30443` events are preferred. New publications should use kind `30443`.
@@ -140,8 +139,8 @@ A Nostr transport client MUST validate the outer event enough to classify it bef
 
 - kind `445` group messages must have an `h` tag;
 - kind `1059` welcomes must be signed Nostr events and must have a `p` tag;
-- kind `444` welcome rumors must have `["encoding", "base64"]` after NIP-59 unwrapping;
-- kind `30443` KeyPackage events must have `["encoding", "base64"]`;
+- kind `444` welcome rumors must have `e` and `relays` tags after NIP-59 unwrapping;
+- kind `30443` KeyPackage event content must be base64-encoded MLS KeyPackage bytes;
 - fields that claim to be hex or base64 must decode successfully;
 - unsupported Nostr kinds are ignored or reported as malformed transport input.
 
