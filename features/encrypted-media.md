@@ -10,12 +10,12 @@ Blossom-backed group image component is `marmot.group.blossom.image.v1`.
 ## Surfaces
 
 - Foundation: Marmot app payload shape.
-- MLS protocol: raw MLS exporter label.
+- MLS protocol: registered MLS exporter label.
 - App payload: media reference event kind and tags.
 - Blob storage: upload and fetch backend.
 
-Encrypted media does not currently allocate an app component. The current design intentionally follows the audited
-MIP-04 shape and derives media keys from a raw MLS exporter label.
+Encrypted media does not currently allocate an app component. The current design follows the audited MIP-04 shape and
+derives media keys from a registered MLS exporter label.
 
 ## Behavior
 
@@ -47,7 +47,7 @@ reference includes:
 
 ## Key derivation
 
-The current feature derives media key material from the registered MIP-04 MLS exporter label.
+The current feature derives media key material from the registered MIP-04 MLS exporter label/context pair.
 
 For `mip04-v2`:
 
@@ -73,6 +73,8 @@ Sender and receiver MUST apply this identical algorithm. Any divergence changes 
 decryption fail, so adding an alias or normalization step is a breaking media-version change, not a compatible tweak.
 
 The media exporter output is key material. Clients MUST NOT publish, transmit, log, or surface it in diagnostics.
+The exporter output MUST be used only as HKDF input for this media key schedule. Clients MUST NOT use `media_secret`
+directly as an AEAD key.
 
 ## Encryption
 
@@ -111,7 +113,5 @@ A receiver MUST reject an encrypted media reference if:
 ## Migration notes
 
 MIP-04 SHOULD become this feature doc plus one or more exact app-payload schemas. Blob-backend-specific details SHOULD
-live in the payload reference format or a blob-backend subsection.
-
-A migration from raw MLS exporter labels to `SafeExportSecret(ComponentID)` is deferred until the protocol specifies
-durable download behavior across app restarts and group epoch changes.
+live in the payload reference format or a blob-backend subsection. Any incompatible media key-schedule change MUST name
+a new media version and register a new exporter label or context shape.

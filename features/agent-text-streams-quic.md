@@ -24,9 +24,9 @@ stores history, indexes content, sends notifications, exports data, or runs auto
 - First final kind: `9`
 - Exporter: `MLS-Exporter("marmot", "agent-text-stream-quic", 32)`
 
-The app component carries group policy and capability requirements. It does not own a `SafeExportSecret` leaf. The stream
-secret MUST be derivable more than once in the same epoch, so v1 uses a registered raw MLS exporter label and then
-domain-separates each stream with the key context below.
+The app component carries group policy and capability requirements. The stream secret MUST be derivable more than once
+in the same epoch, so v1 uses a registered MLS exporter label and then domain-separates each stream with the key context
+below.
 
 ## Capabilities
 
@@ -128,9 +128,10 @@ record_key  = HKDF-Expand(stream_secret, len("record key") || "record key" || ke
 nonce_base  = HKDF-Expand(stream_secret, len("record nonce") || "record nonce" || key_context, 12)
 ```
 
-`stream_secret` is reusable inside the epoch. Implementations MAY derive it more than once for send, watch, retry, or
-daemon resume paths. They MUST NOT use `SafeExportSecret(0x8006)` for this v1 stream key because that primitive consumes
-the component leaf after one derivation per epoch.
+The exporter label/context pair is registered for agent text stream QUIC record crypto only. `stream_secret` is reusable
+inside the epoch. Implementations MAY derive it more than once for send, watch, retry, or daemon resume paths. Per-stream
+keys MUST be derived through `AgentTextStreamKeyContextV1`; implementations MUST NOT use `stream_secret` directly as an
+AEAD key.
 
 `AgentTextStreamKeyContextV1` uses Marmot canonical length encoding:
 

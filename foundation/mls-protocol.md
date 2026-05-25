@@ -51,22 +51,21 @@ ownership of MLS leaf signature keys. New custom extensions MUST be registered i
 Marmot documents that write MLS `authenticated_data` MUST own their byte contribution and define how it composes with
 other contributors.
 
-Marmot documents that use raw MLS exporter secrets MUST define the label, context, output length, and consuming feature.
-New app-component features SHOULD prefer the MLS extensions Safe framework's `SafeExportSecret(ComponentID)` path and
-define any post-export key context they use below the component secret. Features that need the same epoch secret more
-than once, such as live stream send/watch/resume paths, MUST say so and use a registered raw exporter label until Marmot
-defines a reusable Safe framework profile.
+Marmot documents that use MLS exporter secrets MUST define:
+
+- the exporter label;
+- the exporter context;
+- the output length;
+- the consuming feature;
+- any post-export key schedule or application key context.
+
+Exporter labels and contexts MUST be domain-separated from every other Marmot exporter use. A feature that needs a
+reusable epoch secret MUST say so in its owning document and MUST derive per-use keys with a feature-owned context below
+the exporter output.
 
 Registered Marmot exporter labels are listed in [registries.md](./registries.md).
 
-## Open decision: Safe exporter migration
+## Exporter research
 
-Before this draft becomes normative, decide how Marmot exporter-derived secrets move to the MLS Extensions Safe
-framework.
-
-The decision SHOULD cover:
-
-- which current exporter labels stay as legacy compatibility inputs;
-- which app component ids own `SafeExportSecret` calls;
-- how component ids, component names, or other namespaced values are used as post-export key context inputs;
-- migration rules for kind `445` group-event encryption, encrypted media, and multi-device join PSKs.
+Before this draft becomes normative, research whether the MLS Extensions Safe framework's exporter APIs are useful for
+any Marmot secret derivation. This draft does not assign one.

@@ -15,7 +15,7 @@ This feature is based on MIP-06 branch draft work. It is not part of the merged 
 - MLS extension `marmot.multi-device.v1` (`0xf2f0`) as the group-level signaling gate.
 - Optional LeafNode extension `marmot.encrypted-device-name.v1` (`0xf2ef`).
 - MLS authenticated data for the Nostr identity proof.
-- Exporter label: `"marmot-mip06-join-psk-v1"`.
+- Exporter: `MLS-Exporter("marmot", join_psk_id, KDF.Nh)`.
 - Future custom proposal candidate: `IdentityRemove`.
 
 ## Behavior
@@ -61,15 +61,19 @@ The External Commit includes an External PSK bound to the current GroupContext.
 
 ```text
 join_psk_id = TLS-serialize(MarmotMultiDeviceJoinPskId(
-  label = ASCII("marmot-mip06-join-psk-v1"),
+  label = ASCII("marmot.multi-device.join-psk.v1"),
   group_context_hash = SHA-256(TLS-serialize(GroupContext)),
 ))
 
-join_psk = MLS-Exporter("marmot-mip06-join-psk-v1", join_psk_id, KDF.Nh)
+join_psk = MLS-Exporter("marmot", join_psk_id, KDF.Nh)
 ```
 
 Existing members recompute the same PSK from current group state before processing the External Commit. If the new
 device used stale state, confirmation-tag validation fails.
+
+The exporter context is the serialized `MarmotMultiDeviceJoinPskId`; its label field is the purpose and version for this
+PSK. `KDF.Nh` is the output size of the MLS ciphersuite KDF's `Extract` function in bytes. Clients MUST NOT reuse this
+exporter output for any other PSK, app component, media, or transport key.
 
 ## Pairing payload
 

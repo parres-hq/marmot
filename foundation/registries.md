@@ -81,20 +81,18 @@ Existing Marmot exporter uses SHOULD be treated as registered until their owning
 Each entry is an `MLS-Exporter(label, context, length)` invocation: the first column is the exporter `label`, the second
 is the `context`, and the third is the output length in bytes.
 
-| Label                        | Context                    | Length   | Consumer                            |
-| ---------------------------- | -------------------------- | -------- | ----------------------------------- |
-| `"marmot"`                   | `"group-event"`            | `32`     | kind `445` outer encryption key     |
-| `"marmot"`                   | `"encrypted-media"`        | `32`     | MIP-04 media key input              |
-| `"marmot"`                   | `"agent-text-stream-quic"` | `32`     | Agent text stream QUIC record crypto |
-| `"marmot-mip06-join-psk-v1"` | `join_psk_id`              | `KDF.Nh` | multi-device external PSK material  |
+The `label` and `context` pair is the top-level domain separator. Owning documents define any additional key context
+used below the exporter output.
 
-The multi-device join entry is the one label that does not follow the `label = "marmot"`, `context = <feature>`
-convention used by the other entries. Aligning it is tracked in [multi-device.md](../features/multi-device.md).
+| Label      | Context                    | Length   | Consumer                            |
+| ---------- | -------------------------- | -------- | ----------------------------------- |
+| `"marmot"` | `"group-event"`            | `32`     | kind `445` outer encryption key     |
+| `"marmot"` | `"encrypted-media"`        | `32`     | MIP-04 media key input              |
+| `"marmot"` | `"agent-text-stream-quic"` | `32`     | Agent text stream QUIC record crypto |
+| `"marmot"` | `join_psk_id`              | `KDF.Nh` | multi-device external PSK material  |
 
-## Safe exporter component ids
+Fixed `32`-byte outputs are used where the owning document feeds a 32-byte AEAD key or feature key schedule.
+`KDF.Nh` is used for the multi-device join PSK because that output is external PSK material for the MLS ciphersuite KDF.
 
-Safe-exporter rows are for components that derive crypto from `SafeExportSecret(ComponentID)` through the MLS
-Extensions Safe framework. Ordinary app component ids and raw `MLS-Exporter(label, context, length)` uses are listed in
-their own tables above.
-
-No v1 component currently claims a `SafeExportSecret(ComponentID)` output.
+The multi-device join entry is versioned inside the structured `join_psk_id` context. A future incompatible join-PSK
+design MUST register a new exporter label or context shape.
