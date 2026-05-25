@@ -96,6 +96,15 @@ epoch_witness_score =
       witness_quorum_senders_per_epoch)
 ```
 
+For the candidate branch as a whole:
+
+```text
+app_witness_score =
+  sum over branch epochs:
+    min(distinct_valid_app_senders_at_epoch,
+        witness_quorum_senders_per_epoch)
+```
+
 A branch meets witness quorum when at least `witness_quorum_senders_per_epoch` distinct senders witnessed at least
 `witness_quorum_epochs` branch epochs.
 
