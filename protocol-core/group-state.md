@@ -48,7 +48,14 @@ A client MUST reject a local group-state commit while the group is in `PendingPu
 `Unrecoverable`.
 
 Inbound group messages MAY be retained during `PendingPublish`, `Merging`, `Recovering`, or `Unrecoverable`. They MUST
-be processed or reprocessed only after the group returns to `Stable`.
+NOT be applied to canonical group state during `PendingPublish` or `Merging`.
+
+While a group is in `Recovering`, a client MAY process or reprocess retained input to build candidate branches, score
+them, and select a canonical branch. That processing MUST NOT release outbound work or emit delivered app payloads until
+the selected branch has been applied and the lifecycle returns to `Stable`.
+
+While a group is in `Unrecoverable`, a client MUST NOT process retained input for canonical application until a
+verified repair path restores, repairs, or replaces the local group state.
 
 ## Unrecoverable cases
 
@@ -67,22 +74,26 @@ MUST stop applying group-state changes until it has a verified repair path.
 A repair path may restore retained state, import a verified current snapshot, rejoin through MLS, or use another
 recovery method defined by a future protocol-core document.
 
-## Sync states
+## Convergence status
 
-Convergence has a separate sync result:
+Convergence has a separate derived status:
 
 - `Syncing`: convergence-relevant input is still arriving or the quiescence window has not elapsed.
-- `Canonicalizing`: the client is building candidate branches and assigning dispositions.
-- `Stable`: candidate processing reached a fixed point and the selected branch, if any, has been applied.
+- `Resolving`: the quiescence window has elapsed, but the client still has unresolved convergence work, such as a child
+  commit whose parent has not been retained or fetched yet.
+- `Settled`: candidate processing reached a fixed point and the selected branch, if any, has been applied.
+- `Blocked`: candidate processing cannot safely continue without a repair path or missing retained material.
 
-Sync state is derived from stored input and policy. It is not a claim made by the transport.
+Convergence status is derived from stored input and policy. It is not a claim made by the transport.
 
-## Local actions during sync
+## Local actions during convergence
 
-When a group is syncing, a client SHOULD queue local outbound intents instead of preparing them against a state that may
-lose branch selection.
+When convergence status is `Syncing`, `Resolving`, or `Blocked`, a client SHOULD queue local outbound intents instead
+of preparing them against a state that may lose branch selection or require repair.
 
-Queued app-payload sends are encrypted after the selected branch is stable.
+Queued app-payload sends are encrypted after convergence status reaches `Settled` and the lifecycle state allows
+outbound work.
 
-Queued group-state changes are regenerated after the selected branch is stable. A staged commit created before branch
-selection MUST NOT be reused after convergence changes the canonical state.
+Queued group-state changes are regenerated after convergence status reaches `Settled` and the lifecycle state allows
+outbound work. A staged commit created before branch selection MUST NOT be reused after convergence changes the
+canonical state.

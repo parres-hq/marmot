@@ -27,14 +27,14 @@ The active convergence policy contains:
 - `max_rewind_commits`: how far back from the current tip a branch may fork and still be eligible.
 - `app_payload_past_epoch_limit`: how many past MLS epochs may still produce delivered app payloads or app-payload
   witnesses.
-- `stable_quiescence_ms`: the minimum time without new convergence-relevant input before a client may treat a sync pass
-  as stable and release queued outbound work.
+- `settlement_quiescence_ms`: the minimum time without new convergence-relevant input before a client may treat a
+  convergence pass as settled and release queued outbound work.
 - `witness_quorum_senders_per_epoch`: the number of distinct senders needed for one branch epoch to count toward witness
   quorum.
 - `witness_quorum_epochs`: the number of branch epochs that must meet sender quorum.
 - `max_witness_override_depth`: the maximum commit-depth boost a branch may receive from witness quorum.
 
-`stable_quiescence_ms` gates when a client decides it has waited long enough to run or finish convergence. It MUST NOT
+`settlement_quiescence_ms` gates when a client decides it has waited long enough to run or finish convergence. It MUST NOT
 enter the branch score.
 
 Group policy MUST be encoded canonically and authenticated as group state. It MUST NOT depend on transport arrival

@@ -41,7 +41,7 @@ decrypt its Marmot app payload or until the message expires.
 
 ## Pruning
 
-After convergence reaches a stable selected branch, a client SHOULD prune retained states older than the group's
+After convergence reaches a settled selected branch, a client SHOULD prune retained states older than the group's
 rollback horizon.
 
 Pruning MUST NOT remove retained state that is still needed to resolve an active `PendingPublish`, `Merging`,
