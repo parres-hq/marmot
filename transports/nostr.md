@@ -156,9 +156,6 @@ state.
 KeyPackage relay discovery uses kind `10051` events. A kind `10051` event lists relays with `relay` tags and an empty
 content field. KeyPackage kind `30443` events do not repeat those relays.
 
-Legacy kind `443` KeyPackages may exist during migration windows. Implementations that still support that migration may
-query both kinds, but valid kind `30443` events are preferred. New publications should use kind `30443`.
-
 Kind `30443` is a Nostr addressable event. For one `(author, kind, d)` slot, clients SHOULD keep the newest valid event
 by `created_at`, with lower event id as the deterministic tie-breaker when timestamps are equal. Across different `d`
 slots, each valid event is a separate candidate KeyPackage. Candidate ranking then follows
