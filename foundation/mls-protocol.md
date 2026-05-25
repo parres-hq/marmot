@@ -53,7 +53,9 @@ other contributors.
 
 Marmot documents that use raw MLS exporter secrets must define the label, context, output length, and consuming feature.
 New app-component features should prefer the MLS extensions Safe framework's `SafeExportSecret(ComponentID)` path and
-define any post-export key context they use below the component secret.
+define any post-export key context they use below the component secret. Features that need the same epoch secret more
+than once, such as live stream send/watch/resume paths, MUST say so and use a registered raw exporter label until Marmot
+defines a reusable Safe framework profile.
 
 Registered Marmot exporter labels are listed in [registries.md](./registries.md).
 

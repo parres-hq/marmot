@@ -17,6 +17,10 @@ This component records the group-level policy for raw QUIC agent text streams.
 It does not store stream transcripts, endpoint candidates, relay URLs, or app-event kinds. Live stream records stay
 transient, and final content is carried by normal Marmot app payloads.
 
+It also does not own a `SafeExportSecret` leaf. Stream record keys use the reusable
+`MLS-Exporter("marmot", "agent-text-stream-quic", 32)` secret defined by the feature document because send, watch,
+retry, and resume paths may need the same epoch secret more than once.
+
 ```text
 uint8 MarmotAgentTextStreamQuicRoleMaskV1;
 
