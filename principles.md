@@ -15,20 +15,20 @@ Foundation docs own the choices that make Marmot Marmot:
 - Nostr public keys are Marmot account identity.
 - Marmot app payloads use an unsigned Nostr event shape inside MLS.
 - MLS is the current continuous group key agreement layer.
-- Marmot transports must support redundant delivery so a group does not depend on one server, relay, or endpoint.
-- Marmot specs should avoid new metadata leaks unless the feature cannot work without them.
+- Marmot transports MUST support redundant delivery so a group does not depend on one server, relay, or endpoint.
+- Marmot specs SHOULD avoid new metadata leaks unless the feature cannot work without them.
 - Encodings that are commonly used across multiple surfaces.
 
 Do not restate these rules in every feature doc. Point to the foundation doc and describe only what the feature adds.
 
-If one of these invariants changes, treat it as a protocol-level change. It should not be hidden inside a feature or
+If one of these invariants changes, treat it as a protocol-level change. It SHOULD NOT be hidden inside a feature or
 transport document.
 
 ## Organize the spec by surfaces, not by MIP history
 
-MIPs are useful historical change records. They should not be the only way to understand the protocol.
+MIPs are useful historical change records. They SHOULD NOT be the only way to understand the protocol.
 
-A clean implementation should be able to find each rule by the surface it is implementing:
+A clean implementation SHOULD be able to find each rule by the surface it is implementing:
 
 - identity and credentials in foundation;
 - byte encoding and registries in foundation;
@@ -46,7 +46,7 @@ owning document.
 Anything signed, hashed, referenced, stored for replay, compared for equality, or used to choose state needs a canonical
 byte encoding.
 
-The owning document must say:
+The owning document MUST say:
 
 - which encoding is used;
 - field lengths and bounds;
@@ -55,17 +55,17 @@ The owning document must say:
 - whether text is raw UTF-8 bytes or has a normalization rule;
 - which bytes are preserved when a client does not understand an optional value.
 
-If two human-readable values can look equivalent, the spec must say whether they are the same protocol value. The
-default is byte equality.
+If two human-readable values can look equivalent, the owning document MUST say whether they are the same protocol value.
+The default is byte equality.
 
 ## Keep implementation details out of protocol documents
 
 Protocol docs describe bytes, validation, authorization, state changes, and interop-visible results.
 
-They should not describe Rust crate names, database tables, queue shapes, retry workers, local API names, test harness
+They SHOULD NOT describe Rust crate names, database tables, queue shapes, retry workers, local API names, test harness
 helpers, or logging implementations. Those belong in `implementation-model.md`, architecture notes, or crate docs.
 
-It is fine for a protocol doc to say that a client must retain enough material to reproduce a decision. It should not
+It is fine for a protocol doc to say that a client MUST retain enough material to reproduce a decision. It SHOULD NOT
 say which table stores that material.
 
 ## Keep identity, delivery addressing, and transport separate
@@ -86,7 +86,7 @@ relay URLs, pubkeys, tag shapes, or any other transport-specific address shape.
 
 ## Describe state changes completely
 
-When a document defines a state change, it must include enough information for another implementation to apply or reject
+When a document defines a state change, it MUST include enough information for another implementation to apply or reject
 the change the same way.
 
 That means naming:
@@ -106,18 +106,18 @@ such as credential validation.
 
 Transport input is evidence that bytes exist. It is not consensus.
 
-Transport arrival order, transport timestamps, event ids, subscription order, fetch order, and local receive order must
+Transport arrival order, transport timestamps, event ids, subscription order, fetch order, and local receive order MUST
 not choose the canonical group branch. Protocol-core docs own convergence, publish-before-apply, retained history,
 duplicate handling, and stale-input handling.
 
-A transport doc can say how to find and deliver bytes. It should not define which commit branch wins.
+A transport doc can say how to find and deliver bytes. It SHOULD NOT define which commit branch wins.
 
 ## Keep feature state small and owned
 
-Feature state should live in small versioned app components unless the feature changes a shared foundation or
+Feature state SHOULD live in small versioned app components unless the feature changes a shared foundation or
 protocol-core surface.
 
-Each component should own:
+Each component SHOULD own:
 
 - its component id;
 - state bytes;
@@ -128,17 +128,17 @@ Each component should own:
 - migration rules;
 - compatible and breaking change rules.
 
-Large objects should not be stored directly in GroupContext component data. Store hashes, content ids, encrypted media
+Large objects SHOULD NOT be stored directly in GroupContext component data. Store hashes, content ids, encrypted media
 references, or application-layer records when the data belongs elsewhere.
 
 ## Make errors part of interop when they affect behavior
 
-When different clients need to react the same way to a failure, the owning document should name the result.
+When different clients need to react the same way to a failure, the owning document SHOULD name the result.
 
 Examples include duplicate input, wrong recipient, stale epoch, invalid encoding, missing history, unsupported required
 feature, authorization failure, and publish-before-apply failure.
 
-Local error objects can vary. Interop-visible outcomes should be stable enough for conformance tests and for another
+Local error objects can vary. Interop-visible outcomes SHOULD be stable enough for conformance tests and for another
 implementation to understand what happened.
 
 ## Write for implementation and tests
@@ -149,9 +149,9 @@ test could check it.
 For every new surface, ask:
 
 - what bytes would a fixture contain?
-- what valid case should pass?
-- what malformed case should fail?
-- what authorization case should fail?
+- what valid case SHOULD pass?
+- what malformed case SHOULD fail?
+- what authorization case SHOULD fail?
 - what backward or migration case matters?
 
 If the answer is unclear, the spec needs more detail in the owning document.

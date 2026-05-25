@@ -15,9 +15,9 @@ This document describes the member join flow built around MLS Welcomes.
 ## Behavior
 
 An inviter adds a new member by committing an MLS Add that uses the invitee's KeyPackage. The resulting group-state
-change must be published before the inviter sends the Welcome.
+change MUST be published before the inviter sends the Welcome.
 
-For member additions after initial group creation, the inviter must wait for the Commit publish obligation to succeed
+For member additions after initial group creation, the inviter MUST wait for the Commit publish obligation to succeed
 before sending the Welcome. Sending the Welcome first can activate the new member at an epoch existing members have not
 seen yet.
 
@@ -30,7 +30,7 @@ The active transport binding owns the Welcome delivery envelope, recipient addre
 Protocol core requires that the receiver can recover the serialized MLSMessage whose wire format is `mls_welcome` and
 can identify which local KeyPackage was consumed.
 
-The Welcome delivery envelope must not by itself choose group state. It supplies bytes and delivery evidence. MLS and
+The Welcome delivery envelope MUST NOT by itself choose group state. It supplies bytes and delivery evidence. MLS and
 Marmot validation decide whether the receiver joins.
 
 ## Receiving flow
@@ -54,8 +54,8 @@ and requires it within 24 hours of joining.
 
 ## Failure behavior
 
-If Welcome processing fails, the receiver must not rotate away the KeyPackage that was referenced by the failed Welcome.
-The inviter may retry or choose another KeyPackage.
+If Welcome processing fails, the receiver MUST NOT rotate away the KeyPackage that was referenced by the failed Welcome.
+The inviter MAY retry or choose another KeyPackage.
 
 A receiver rejects the Welcome if:
 

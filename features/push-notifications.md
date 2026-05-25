@@ -4,7 +4,7 @@ Status: draft for internal review.
 
 Push notifications let a sender give a recipient a delivery hint outside the normal group-message fetch path.
 
-Push notification support is optional. A group must still work when no client supports push notifications.
+Push notification support is optional. A group MUST still work when no client supports push notifications.
 
 ## Surfaces
 
@@ -17,7 +17,7 @@ No persistent group app component is required for push notifications v1.
 
 ## Behavior
 
-A push notification hint may tell a recipient that new encrypted group content is available. It MUST NOT carry message
+A push notification hint MAY tell a recipient that new encrypted group content is available. It MUST NOT carry message
 plaintext, media plaintext, MLS secrets, exporter output, or group-state-changing bytes.
 
 Receiving or missing a push notification does not affect group state. The recipient still fetches and processes the
@@ -52,7 +52,7 @@ no hashing before HKDF. `ephemeral_privkey` is a fresh secp256k1 scalar; its x-o
 The token is encrypted with ChaCha20-Poly1305, a random 12-byte nonce, and empty AAD.
 
 `platform` is `0x01` for APNs or `0x02` for FCM. Native platform tokens are required; iOS clients use APNs directly and
-must not use FCM as an iOS proxy.
+MUST NOT use FCM as an iOS proxy.
 
 ## Token gossip
 
@@ -95,16 +95,16 @@ inbox relay.
 
 ## Decoys and batching
 
-Clients should batch notifications for a short period and include decoy tokens when possible. Decoys are valid encrypted
+Clients SHOULD batch notifications for a short period and include decoy tokens when possible. Decoys are valid encrypted
 tokens from other groups or the sender's own token, not random bytes. Random bytes are distinguishable because they fail
 curve or AEAD validation.
 
-Silent wakes that lead to no new messages are expected. Clients should fetch, find nothing, and return to sleep without
+Silent wakes that lead to no new messages are expected. Clients SHOULD fetch, find nothing, and return to sleep without
 showing user-facing errors.
 
 ## Validation
 
-A client MUST treat malformed push notification data as advisory failure. It must not reject valid group messages
+A client MUST treat malformed push notification data as advisory failure. It MUST NOT reject valid group messages
 because a related push hint was missing, delayed, duplicated, or malformed.
 
 Notification servers MUST reject or ignore malformed notification triggers, including:
@@ -117,4 +117,4 @@ Notification servers MUST reject or ignore malformed notification triggers, incl
 
 ## Migration notes
 
-MIP-05 is still Draft in the merged MIP set. This feature should stay optional and must not change group state.
+MIP-05 is still Draft in the merged MIP set. This feature SHOULD stay optional and MUST NOT change group state.

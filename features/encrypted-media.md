@@ -31,7 +31,7 @@ Blob upload and download are outside MLS group state. A failed upload or failed 
 
 The current MIP-era media version is `mip04-v2`.
 
-New media references MUST use `mip04-v2`. Version `mip04-v1` used deterministic nonce derivation and must not be used
+New media references MUST use `mip04-v2`. Version `mip04-v1` used deterministic nonce derivation and MUST NOT be used
 for new media.
 
 The media reference is currently carried in NIP-92-style `imeta` tags inside an inner Marmot app event. A `mip04-v2`
@@ -83,7 +83,7 @@ aad = "mip04-v2" || 0x00 || file_hash || 0x00 || mime_type || 0x00 || filename
 encrypted_content = ChaCha20-Poly1305.encrypt(file_key, nonce, plaintext, aad)
 ```
 
-The `x` field is the hash of the original plaintext file. Storage systems may address the encrypted blob by
+The `x` field is the hash of the original plaintext file. Storage systems MAY address the encrypted blob by
 `SHA-256(encrypted_content)`.
 
 ## Blob-store boundary
@@ -91,7 +91,7 @@ The `x` field is the hash of the original plaintext file. Storage systems may ad
 Blossom is the current reference blob backend. The encrypted media feature defines encrypted blob behavior and media
 metadata, while the blob backend defines upload, fetch, deletion, and URL rules.
 
-A Blossom-specific reference can be one supported reference type. It should not be the only possible media reference
+A Blossom-specific reference can be one supported reference type. It SHOULD NOT be the only possible media reference
 model.
 
 ## Validation
@@ -110,7 +110,7 @@ A receiver MUST reject an encrypted media reference if:
 
 ## Migration notes
 
-MIP-04 should become this feature doc plus one or more exact app-payload schemas. Blob-backend-specific details should
+MIP-04 SHOULD become this feature doc plus one or more exact app-payload schemas. Blob-backend-specific details SHOULD
 live in the payload reference format or a blob-backend subsection.
 
 A migration from raw MLS exporter labels to `SafeExportSecret(ComponentID)` is deferred until the protocol specifies

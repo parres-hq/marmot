@@ -2,7 +2,7 @@
 
 Status: draft for internal review.
 
-This document describes group creation and the signed settings every member must agree on.
+This document describes group creation and the signed settings every member MUST agree on.
 
 A Marmot group is an MLS group plus Marmot group state. The exact byte formats for Marmot group state live in app
 component docs.
@@ -17,13 +17,13 @@ component docs.
 
 ## Behavior
 
-Every Marmot group has an MLS group id. That id is private group security state and must not be published through a
+Every Marmot group has an MLS group id. That id is private group security state and MUST NOT be published through a
 transport envelope unless a future document explicitly changes that rule.
 
 Before creating a group or adding a member, clients check that the target KeyPackages support the capabilities required
-by the group. A group must not be created with features that the initial members cannot process.
+by the group. A group MUST NOT be created with features that the initial members cannot process.
 
-Group settings are authenticated group state. A client must not treat local UI preferences, locally observed delivery
+Group settings are authenticated group state. A client MUST NOT treat local UI preferences, locally observed delivery
 data, or cached transport data as group settings.
 
 Group creation requires `required_capabilities`, `ratchet_tree`, `app_data_dictionary`, and the app components required
@@ -49,7 +49,7 @@ If the group has disappearing messages, creation includes `marmot.group.message-
 Group settings change through MLS group-state updates. The client prepares the update, publishes the required bytes,
 and applies the pending state only after the publish obligation succeeds.
 
-Settings updates are admin-gated by default. A component may define a looser rule, but it must say so explicitly.
+Settings updates are admin-gated by default. A component MAY define a looser rule, but it MUST say so explicitly.
 
 Self-update Commits and dedicated SelfRemove-only Commits do not change group settings and do not require admin
 authorization.
@@ -61,7 +61,7 @@ the admin policy applies to each current leaf with that account identity.
 
 A settings update that would leave the group with no active admin is invalid.
 
-Admins who want to use SelfRemove must first leave the admin set through an admin-policy update. The member-departure
+Admins who want to use SelfRemove MUST first leave the admin set through an admin-policy update. The member-departure
 doc owns the detailed leave flow.
 
 ## Message retention

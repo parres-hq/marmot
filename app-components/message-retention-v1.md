@@ -47,15 +47,10 @@ to be discarded.
 
 ## Authorization
 
-Any current member may send a standalone message-retention proposal.
+Any current member MAY send a standalone message-retention proposal.
 
-Only a current admin may commit a message-retention update.
-
-An inline message-retention update requires the sender to be a current admin because the proposal sender and committer
-are the same member.
+Only a current admin MAY commit a message-retention update.
 
 ## Removal
-
-Removal is allowed if this component is not listed as required in the GroupContext `app_components` component.
 
 Removal is equivalent to `disappearing_message_secs = 0`.

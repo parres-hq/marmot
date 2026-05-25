@@ -4,33 +4,20 @@ Agent map for the Marmot v2 protocol draft.
 
 ## Scope
 
-This directory is internal draft spec text. It is for Marmot protocol surfaces that a clean-room implementation would
-need:
+This directory is internal draft spec text for protocol surfaces a clean-room implementation would need. The canonical
+directory tree, surface ownership model, and feature/component split live in `layout.md`.
 
-- principles for organizing and writing the spec;
-- foundation rules for identity, message payloads, encoding, MLS, wire bytes, and registries;
-- proposed spec layout by stable surface;
-- protocol-core flows for group setup, joining, messaging, lifecycle, convergence, and retained history;
-- MLS app component rules;
-- versioned Marmot component payloads;
-- transport bindings;
-- feature-level flows.
-
-It is not the place for darkmatter module names, database schemas, queue mechanics, local API shapes, or crate-specific
-test plans. Put those in `implementation-model.md`, `docs/marmot-architecture/`, or crate docs.
+Do not put darkmatter module names, database schemas, queue mechanics, local API shapes, or crate-specific test plans in
+normative spec files. Put those in `implementation-model.md`, `docs/marmot-architecture/`, or crate docs.
 
 ## Read Order
 
 1. `README.md`
-2. `principles.md`
-3. `foundation/README.md`
-4. `protocol-core/README.md`
-5. `layout.md`
-6. `app-components/README.md`
-7. `transports/README.md`
-8. `features/README.md`
-9. `mip-coverage.md`
-10. `implementation-model.md` only when local implementation guidance matters.
+2. `layout.md`
+3. `principles.md`
+4. The README for the surface you are changing.
+5. `mip-coverage.md` only when mapping from current MIPs.
+6. `implementation-model.md` only when local implementation guidance matters.
 
 ## Rules
 

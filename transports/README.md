@@ -10,7 +10,7 @@ publish and fetch rules, and transport-specific validation.
 
 ## Transport document checklist
 
-Each transport document must define:
+Each transport document MUST define:
 
 - transport name and version;
 - transport-specific group delivery address;
@@ -25,10 +25,10 @@ Each transport document must define:
 - required app components or capabilities;
 - privacy constraints for metadata exposed to the transport.
 
-Transport documents may define transport-specific Nostr kinds, HTTP routes, relay filters, mailbox topics, endpoint
+Transport documents MAY define transport-specific Nostr kinds, HTTP routes, relay filters, mailbox topics, endpoint
 sets, or other delivery mechanics.
 
-Transport documents must not define Marmot account identity, inner Marmot app payload shape, MLS credential binding,
+Transport documents MUST NOT define Marmot account identity, inner Marmot app payload shape, MLS credential binding,
 group-state branch selection, or app component payload bytes.
 
 ## Versioning
@@ -41,4 +41,4 @@ Use the narrowest hook that fits the change:
 - a new envelope version for a compatible outer-envelope change;
 - a new Nostr kind, route, topic, or frame type for an incompatible transport envelope;
 - a new app component id when signed transport state changes incompatibly;
-- a new required capability when clients must negotiate support before using the change.
+- a new required capability when clients MUST negotiate support before using the change.

@@ -2,7 +2,7 @@
 
 Status: draft for internal review.
 
-When Marmot signs, hashes, stores, compares, or names protocol values by bytes, those bytes must have one encoding.
+When Marmot signs, hashes, stores, compares, or names protocol values by bytes, those bytes MUST have one encoding.
 
 ## Scope
 
@@ -30,15 +30,13 @@ That means:
 - `opaque name[N]` is exactly `N` bytes and has no length prefix;
 - `opaque name<min..max>` is a QUIC variable-length integer length prefix followed by that many bytes;
 - `Type items<V>` is a QUIC variable-length integer byte length followed by the concatenated encodings of the items;
-- the decoded length must satisfy the bounds written in the structure;
-- a decoder must consume the full byte string when a document says a value is decoded exactly.
+- the decoded length MUST satisfy the bounds written in the structure;
+- a decoder MUST consume the full byte string when a document says a value is decoded exactly.
 
-Use this phrase in Marmot docs: "TLS Presentation Language syntax with QUIC variable-length vector prefixes." Avoid
-"QUIC Presentation Language"; that sounds like a second grammar. The grammar is TLS Presentation Language. The length
-prefix on Marmot-owned variable-length fields is the QUIC part.
-
-The short phrase "TLS encoding" is too easy to misread because ordinary TLS vectors use fixed-width length prefixes
-selected from the vector bounds.
+`Type items<V>` denotes a list whose byte length is encoded as a QUIC variable-length integer, followed by the
+concatenated encoded items. The maximum byte length is `2^62 - 1`. A decoder MUST reject the value unless the vector
+body decodes to a whole number of items with no trailing bytes. Owning documents SHOULD give a tighter bound when one
+applies. An unbounded `<V>` means only the QUIC variable-length integer maximum applies.
 
 ## QUIC length prefixes
 
@@ -54,7 +52,7 @@ length:
 
 The remaining bits, together with any following length bytes, carry the length in network byte order.
 
-Canonical Marmot encoders must use the shortest prefix size that can hold the length. Canonical Marmot decoders must
+Canonical Marmot encoders MUST use the shortest prefix size that can hold the length. Canonical Marmot decoders MUST
 reject a longer prefix for the same value.
 
 Examples:
@@ -70,7 +68,7 @@ Examples:
 Marmot uses MLS, and MLS uses TLS Presentation Language. Marmot does not rewrite MLS-owned structures into the Marmot
 binary profile.
 
-For example, an MLS KeyPackage inside Marmot is still an MLS KeyPackage. A Marmot document may carry the serialized
+For example, an MLS KeyPackage inside Marmot is still an MLS KeyPackage. A Marmot document MAY carry the serialized
 KeyPackage bytes, hash them, or bind them into a credential, but the KeyPackage's internal encoding comes from MLS.
 
 The Marmot binary profile applies when this spec defines the structure.
@@ -79,7 +77,7 @@ The Marmot binary profile applies when this spec defines the structure.
 
 Text fields are UTF-8 byte strings.
 
-Protocol equality is byte equality. Clients must not normalize Unicode, trim whitespace, case-fold, or otherwise rewrite
+Protocol equality is byte equality. Clients MUST NOT normalize Unicode, trim whitespace, case-fold, or otherwise rewrite
 text before signing, hashing, comparing, storing, or replaying it unless the owning document defines that rule.
 
 ## Sorting and duplicates
@@ -92,9 +90,9 @@ validation rules have run.
 
 ## Unknown bytes
 
-Unknown optional data that a client is required to preserve must be copied byte-for-byte.
+Unknown optional data that a client is required to preserve MUST be copied byte-for-byte.
 
-A client must not parse, normalize, sort inside, partially copy, or re-encode unknown preserved bytes.
+A client MUST NOT parse, normalize, sort inside, partially copy, or re-encode unknown preserved bytes.
 
 ## Nostr-shaped values
 

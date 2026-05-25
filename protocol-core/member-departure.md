@@ -16,12 +16,12 @@ proposal from the MLS extensions work and does not define a Marmot custom propos
 
 ## Behavior
 
-A current member may create a SelfRemove proposal for itself.
+A current member MAY create a SelfRemove proposal for itself.
 
-A non-admin may self-remove if the MLS proposal is valid.
+A non-admin MAY self-remove if the MLS proposal is valid.
 
-An admin must leave the admin set before using SelfRemove. The admin-policy update is an ordinary admin-gated
-group-state change. If the departing admin is the last active admin, another admin must be designated first.
+An admin MUST leave the admin set before using SelfRemove. The admin-policy update is an ordinary admin-gated
+group-state change. If the departing admin is the last active admin, another admin MUST be designated first.
 
 The leaving member MUST NOT commit its own SelfRemove proposal. A remaining authorized member commits it.
 

@@ -13,7 +13,7 @@ This component is for encrypted group images stored through Blossom. It is not t
 possible image reference.
 
 A group that wants to reference a plain URL, an IPFS object, an application-owned CDN object, or another blob store
-should use a different component.
+SHOULD use a different component.
 
 ## State
 
@@ -58,15 +58,10 @@ Mixed partial states are invalid. For example, a state with `image_hash` set and
 
 ## Authorization
 
-Any current member may send a standalone image update proposal.
+Any current member MAY send a standalone image update proposal.
 
-Only a current admin may commit an image update.
-
-An inline image update requires the sender to be a current admin because the proposal sender and committer are the same
-member.
+Only a current admin MAY commit an image update.
 
 ## Removal
-
-Removal is allowed if this component is not listed as required in the GroupContext `app_components` component.
 
 Removal is equivalent to the empty image state for application rendering.

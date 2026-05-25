@@ -11,10 +11,10 @@ formats and do not appear in Marmot protocol bytes unless a document says so.
 
 A Marmot account is identified by one Nostr public key.
 
-An MLS leaf represents one account-device membership in one group. Multiple MLS leaves may have the same Marmot account
+An MLS leaf represents one account-device membership in one group. Multiple MLS leaves MAY have the same Marmot account
 identity when the account has multiple devices in the group.
 
-Group policy may talk about accounts or leaves. A rule that targets an account applies to every current leaf whose
+Group policy MAY talk about accounts or leaves. A rule that targets an account applies to every current leaf whose
 credential identity is that account. A rule that targets a leaf applies only to that leaf.
 
 ## MLS credential identity
@@ -49,29 +49,29 @@ KeyPackage meaning, discovery requirements, and lifecycle are defined in [key-pa
 
 To ensure interoperability, capability negotiation is part of the Marmot protocol.
 
-Different clients may support different features. A group must be created with the strongest feature set that every
-intended member can support, and later members must support the group's required feature set before they can join.
+Different clients MAY support different features. A group MUST be created with the strongest feature set that every
+intended member can support, and later members MUST support the group's required feature set before they can join.
 
 Marmot uses MLS capabilities for this:
 
 - each KeyPackage advertises the MLS extensions, app components, and proposal types the client supports;
-- group state records the features every current and future member must support;
+- group state records the features every current and future member MUST support;
 - adding a member fails if the new member's KeyPackage does not cover the group's required features;
 - group state cannot be mutated into a state that not all members support.
 
-Feature docs must say which capability they require. That may be an MLS extension type, an MLS proposal type, a Marmot
+Feature docs MUST say which capability they require. This can be an MLS extension type, an MLS proposal type, a Marmot
 app component id, or a combination named by the feature. Marmot-owned ids are registered in
 [registries.md](./registries.md).
 
-Optional features should not block basic messaging. If a feature is not supported by every member, the group can still
-exist without that feature. When all current members later support it, the group may upgrade its required feature set
+Optional features SHOULD NOT block basic messaging. If a feature is not supported by every member, the group can still
+exist without that feature. When all current members later support it, the group MAY upgrade its required feature set
 through the protocol-core rules for capability upgrades.
 
 ## Delivery addressing is separate
 
 Delivery addresses are not identities.
 
-A group or conversation delivery address must not be derived from an account id, member id, public key, MLS group id,
+A group or conversation delivery address MUST NOT be derived from an account id, member id, public key, MLS group id,
 KeyPackage id, message id, relay URL, or other stable identity material. For example, the Nostr group `h` tag is the
 random `nostr_group_id`, not a value derived from any member key.
 

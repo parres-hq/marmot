@@ -35,11 +35,11 @@ For example, the Nostr transport docs define the current relay shapes, including
 KeyPackage publication, and NIP-59 welcome delivery. A future transport can carry the same MLS and application bytes in
 a different outer envelope.
 
-Transport docs may define routing ids, relay lists, publish targets, fetch rules, and transport-specific validation.
-They should not redefine Marmot account identity or inner app payload shape.
+Transport docs MAY define routing ids, relay lists, publish targets, fetch rules, and transport-specific validation.
+They SHOULD NOT redefine Marmot account identity or inner app payload shape.
 
 ## Message ids
 
-Any message id used for duplicate detection, replay, or branch selection must be defined over Marmot or MLS bytes.
+Any message id used for duplicate detection, replay, or branch selection MUST be defined over Marmot or MLS bytes.
 
 A Nostr event id is transport evidence. It is not a Marmot consensus id.

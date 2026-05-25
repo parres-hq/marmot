@@ -3,9 +3,9 @@
 Status: draft for internal review.
 
 These files define the shared choices that make a Marmot implementation a Marmot implementation. Feature docs,
-transport docs, and protocol-core docs should point here instead of restating these rules.
+transport docs, and protocol-core docs SHOULD point here instead of restating these rules.
 
-Foundation docs should change slowly. A change here usually means the whole protocol has changed, not just one feature.
+Foundation docs SHOULD change slowly. A change here usually means the whole protocol has changed, not just one feature.
 
 ## Files
 

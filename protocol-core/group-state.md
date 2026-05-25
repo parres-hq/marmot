@@ -2,26 +2,26 @@
 
 Status: draft for internal review.
 
-Each Marmot group has one canonical MLS state at a time. A client may temporarily hold candidate or pending state, but
+Each Marmot group has one canonical MLS state at a time. A client MAY temporarily hold candidate or pending state, but
 only one state is visible as the group's canonical state.
 
 ## Lifecycle states
 
 The group lifecycle has five states:
 
-- `Stable`: the group has a canonical MLS epoch. Normal inbound processing and outbound work may proceed.
+- `Stable`: the group has a canonical MLS epoch. Normal inbound processing and outbound work MAY proceed.
 - `PendingPublish`: the client has prepared a local group-state commit, but has not confirmed that the required bytes
   were published.
 - `Merging`: publication was confirmed, and the client is applying the staged commit to its local canonical state.
 - `Recovering`: the client detected a fork-shaped conflict and is trying to select a safe branch from retained state.
 - `Unrecoverable`: the client cannot safely select a branch from its retained local material.
 
-`Unrecoverable` is local to one client. It does not mean the Marmot group is dead. It means that this client must repair
+`Unrecoverable` is local to one client. It does not mean the Marmot group is dead. It means that this client MUST repair
 its group state, restore retained material, rejoin, or discard the local group copy before it can safely send or apply
 more group traffic.
 
-`Stable` is the only state where a client may prepare a new local group-state commit. Outbound app payloads are also
-held while convergence input is unresolved, because they must be encrypted against the selected canonical state.
+`Stable` is the only state where a client MAY prepare a new local group-state commit. Outbound app payloads are also
+held while convergence input is unresolved, because they MUST be encrypted against the selected canonical state.
 
 ## Legal transitions
 
@@ -71,7 +71,7 @@ Examples include:
 A client in `Unrecoverable` MUST NOT choose the current local state merely because it is the only state available. It
 MUST stop applying group-state changes until it has a verified repair path.
 
-A repair path may restore retained state, import a verified current snapshot, rejoin through MLS, or use another
+A repair path MAY restore retained state, import a verified current snapshot, rejoin through MLS, or use another
 recovery method defined by a future protocol-core document.
 
 ## Convergence status
@@ -89,7 +89,7 @@ Convergence status is derived from stored input and policy. It is not a claim ma
 ## Local actions during convergence
 
 When convergence status is `Syncing`, `Resolving`, or `Blocked`, a client SHOULD queue local outbound intents instead
-of preparing them against a state that may lose branch selection or require repair.
+of preparing them against a state that MAY lose branch selection or require repair.
 
 Queued app-payload sends are encrypted after convergence status reaches `Settled` and the lifecycle state allows
 outbound work.

@@ -25,7 +25,7 @@ The exact local API is implementation-defined. The protocol-visible result is th
 
 Each inbound message has a message id used for deduplication. A client MUST deduplicate before applying state changes.
 
-The message id used for deduplication must be stable for the carried protocol bytes. It must not depend on local receive
+The message id used for deduplication MUST be stable for the carried protocol bytes. It MUST NOT depend on local receive
 order, transport source order, subscription id, or database row id.
 
 Duplicate input MUST receive an `AlreadySeen` disposition and MUST NOT be applied twice.
@@ -47,7 +47,8 @@ that input (e.g. a welcome requires capabilities the client does not support).
 
 ## Deferred input
 
-A client MAY defer an input when it cannot yet be processed but may become processable after more protocol bytes arrive.
+A client MAY defer an input when it cannot yet be processed but could become processable after more protocol bytes
+arrive.
 
 Common deferred cases:
 
@@ -65,7 +66,7 @@ Input that cannot affect the group MUST receive a stale or dropped disposition. 
 - duplicate messages;
 - messages for unknown groups;
 - welcomes addressed to another member;
-- own echoes;
+- own echoes (`own_echo` per [../foundation/errors.md](../foundation/errors.md));
 - commits older than the retained anchor;
 - MLS application messages older than the retained app-payload window;
 - commits outside the rollback horizon.

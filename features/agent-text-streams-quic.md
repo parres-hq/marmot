@@ -25,7 +25,7 @@ stores history, indexes content, sends notifications, exports data, or runs auto
 - Exporter: `MLS-Exporter("marmot", "agent-text-stream-quic", 32)`
 
 The app component carries group policy and capability requirements. It does not own a `SafeExportSecret` leaf. The stream
-secret must be derivable more than once in the same epoch, so v1 uses a registered raw MLS exporter label and then
+secret MUST be derivable more than once in the same epoch, so v1 uses a registered raw MLS exporter label and then
 domain-separates each stream with the key context below.
 
 ## Capabilities
@@ -45,7 +45,7 @@ For the first user-to-agent profile:
 
 - every member supports `receive`;
 - the agent member supports `send`;
-- `fanout` is optional and may be advertised by a member or relay helper.
+- `fanout` is optional and MAY be advertised by a member or relay helper.
 
 ## Flow
 
@@ -205,7 +205,7 @@ local diagnostic state.
 ## Epoch behavior
 
 A v1 stream is pinned to one MLS epoch. If an accepted Commit changes the sender's current epoch while a stream is
-active, the sender closes the old stream. The sender may publish a new start payload in the new epoch and link it to the
+active, the sender closes the old stream. The sender MAY publish a new start payload in the new epoch and link it to the
 previous stream in local UI or a future extension.
 
 This keeps stream access aligned with MLS membership changes.

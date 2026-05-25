@@ -86,14 +86,14 @@ The MIP-06 draft payload carries, per group:
 The payload is encrypted with X25519, HKDF-SHA256, and ChaCha20-Poly1305. Pairing uses fresh ephemeral X25519 keys and
 rejects all-zero shared secrets.
 
-Group entries are epoch-specific. A failed stale-epoch join must be retried with fresh current-epoch material.
+Group entries are epoch-specific. A failed stale-epoch join MUST be retried with fresh current-epoch material.
 
 ## Device labels
 
-`marmot.encrypted-device-name.v1` is an optional LeafNode extension for an encrypted device label. It is display metadata. It must
-not be used as identity or authorization input.
+`marmot.encrypted-device-name.v1` is an optional LeafNode extension for an encrypted device label. It is display
+metadata. It MUST NOT be used as identity or authorization input.
 
-The current branch draft encrypts the device name with NIP-44 to the user's own Nostr identity. Other users should not
+The current branch draft encrypts the device name with NIP-44 to the user's own Nostr identity. Other users SHOULD NOT
 be able to read it.
 
 ## Removing an account identity
@@ -116,5 +116,5 @@ A multi-device join is invalid if:
 
 ## Migration notes
 
-MIP-06 should become this feature doc plus exact identity-proof bytes, PSK derivation bytes, pairing payload bytes,
+MIP-06 SHOULD become this feature doc plus exact identity-proof bytes, PSK derivation bytes, pairing payload bytes,
 capability rules, and legacy extension migration rules.

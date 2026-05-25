@@ -11,7 +11,8 @@ work and is tracked here because it affects the likely v2 design.
 
 - MIP-00, Credentials & Key Packages: Review and required.
   - Foundation: [foundation/identity.md](./foundation/identity.md) and
-    [foundation/key-packages.md](./foundation/key-packages.md)
+    [foundation/key-packages.md](./foundation/key-packages.md);
+    [foundation/account-identity-proof-v1.md](./foundation/account-identity-proof-v1.md) is new in v2 and breaking
   - Transport binding: [transports/nostr.md](./transports/nostr.md)
   - Protocol flow: [protocol-core/joining.md](./protocol-core/joining.md)
 - MIP-01, Group Construction & Marmot Group Data Extension: Review and required.
@@ -66,4 +67,4 @@ Nostr-specific MIP details stay in [transports/nostr.md](./transports/nostr.md).
 - the `h` tag and Nostr group routing id;
 - NIP-40 `expiration` tags for message retention.
 
-Protocol-core docs may refer to the active transport binding, but they should not duplicate these Nostr event shapes.
+Protocol-core docs MAY refer to the active transport binding, but they SHOULD NOT duplicate these Nostr event shapes.

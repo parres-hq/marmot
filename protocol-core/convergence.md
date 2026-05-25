@@ -11,8 +11,8 @@ epochs and they do not replace MLS commit validation.
 
 Group policy is the signed group-state value that tells clients how to run convergence for this group.
 
-A client may choose policy values when it creates a group. Members may change policy values through a group-state
-update. Once a policy is active, it is not a local preference: every member processing the same group epoch must use the
+A client MAY choose policy values when it creates a group. Members MAY change policy values through a group-state
+update. Once a policy is active, it is not a local preference: every member processing the same group epoch MUST use the
 same policy bytes.
 
 A client that cannot apply the active group policy MUST NOT join the group.
@@ -24,15 +24,15 @@ client MUST reject any commit that would make the active policy unsupported by a
 The active convergence policy contains:
 
 - `policy_version`: the version of the convergence policy format.
-- `max_rewind_commits`: how far back from the current tip a branch may fork and still be eligible.
-- `app_payload_past_epoch_limit`: how many past MLS epochs may still produce delivered app payloads or app-payload
+- `max_rewind_commits`: how far back from the current tip a branch MAY fork and still be eligible.
+- `app_payload_past_epoch_limit`: how many past MLS epochs MAY still produce delivered app payloads or app-payload
   witnesses.
-- `settlement_quiescence_ms`: the minimum time without new convergence-relevant input before a client may treat a
+- `settlement_quiescence_ms`: the minimum time without new convergence-relevant input before a client MAY treat a
   convergence pass as settled and release queued outbound work.
 - `witness_quorum_senders_per_epoch`: the number of distinct senders needed for one branch epoch to count toward witness
   quorum.
-- `witness_quorum_epochs`: the number of branch epochs that must meet sender quorum.
-- `max_witness_override_depth`: the maximum commit-depth boost a branch may receive from witness quorum.
+- `witness_quorum_epochs`: the number of branch epochs that MUST meet sender quorum.
+- `max_witness_override_depth`: the maximum commit-depth boost a branch MAY receive from witness quorum.
 
 `settlement_quiescence_ms` gates when a client decides it has waited long enough to run or finish convergence. It MUST NOT
 enter the branch score.
@@ -131,7 +131,7 @@ Eligible branches are compared in this order:
 
 Lower digest means lexicographic order over the 32 digest bytes.
 
-Every value in this comparison must come from MLS-valid bytes, retained state, decrypted app payloads, or the group's
+Every value in this comparison MUST come from MLS-valid bytes, retained state, decrypted app payloads, or the group's
 convergence policy.
 
 Transport arrival order, transport timestamps, outer transport event ids, and local receive order MUST NOT participate
@@ -168,7 +168,7 @@ The client then assigns dispositions:
 - app payloads from MLS application messages that decrypt only on losing branches are invalidated;
 - commits and MLS application messages beyond retained history are dropped.
 
-Applying the selected branch also produces application-visible state notifications for changes the application may need
+Applying the selected branch also produces application-visible state notifications for changes the application MAY need
 to render or act on. Examples include epoch advancement, member additions, member removals, app component changes,
 branch recovery, and app payload invalidation.
 
@@ -176,4 +176,4 @@ If the required retained state is missing, the client MUST report the missing re
 canonical group state. If the missing state is inside the rollback horizon, the client enters `Unrecoverable` until it
 has a verified repair path.
 
-After applying the selected branch, the client may release retained states older than the rollback horizon.
+After applying the selected branch, the client MAY release retained states older than the rollback horizon.

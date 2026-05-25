@@ -2,13 +2,13 @@
 
 Status: draft for internal review.
 
-Marmot clients should be able to describe why an input did not produce application content.
+Marmot clients SHOULD be able to describe why an input did not produce application content.
 
 This file names shared categories. It does not require local APIs to use these exact enum names.
 
 ## Input categories
 
-An input that does not produce application content should map to one of these categories:
+An input that does not produce application content SHOULD map to one of these categories:
 
 - `duplicate`: the same protocol input was already seen.
 - `own_echo`: the input is the client's own already-accounted-for output.
@@ -34,5 +34,5 @@ transport publish failure matters to publish-before-apply, but the exact retry q
 
 ## Privacy
 
-Diagnostics for these outcomes must avoid account ids, group ids, message ids, relay URLs, pubkeys, payloads,
+Diagnostics for these outcomes MUST avoid account ids, group ids, message ids, relay URLs, pubkeys, payloads,
 ciphertext, plaintext, and key material unless a document defines a safe redaction rule.

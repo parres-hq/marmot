@@ -88,7 +88,7 @@ Receivers MUST reject kind `445` content that is not valid base64 or that decode
 12 nonce bytes plus the 16-byte ChaCha20-Poly1305 tag.
 
 Kind `445` Nostr event ids, relay timestamps, relay arrival order, and subscription order are transport evidence. They
-must not choose group state.
+MUST NOT choose group state.
 
 ## Outer decryption and epoch selection
 
@@ -118,7 +118,7 @@ The inner kind `444` rumor MUST include:
 
 - `content`: serialized MLSMessage bytes whose wire format is `mls_welcome`, encoded as base64;
 - `e` tag: the Nostr event id of the KeyPackage event used for the invite;
-- `relays` tag: relay URLs, using the relay URL profile above, where the new member should fetch group messages.
+- `relays` tag: relay URLs, using the relay URL profile above, where the new member SHOULD fetch group messages.
 
 The inner kind `444` rumor MUST NOT have a `sig` field. The kind `13` seal and kind `1059` gift wrap are signed by
 NIP-59.
@@ -161,6 +161,10 @@ by `created_at`, with lower event id as the deterministic tie-breaker when times
 slots, each valid event is a separate candidate KeyPackage. Candidate ranking then follows
 [../foundation/key-packages.md](../foundation/key-packages.md).
 
+When candidates from different `(author, kind, d)` slots are otherwise equivalent after foundation ranking, clients
+SHOULD select the candidate with the lexicographically lower decoded KeyPackageRef from the `i` tag. The `i` tag is
+hex-decoded before comparison.
+
 ## Subscriptions and fetch rules
 
 A Nostr transport client subscribes to:
@@ -183,19 +187,19 @@ Welcome messages are published to the recipient's inbox relay set.
 
 KeyPackage events are published to the account's KeyPackage relay set.
 
-The transport may report endpoint-level acceptances and failures. Publish acknowledgement is not group consensus. The
-protocol-core publish lifecycle defines when locally created MLS work may be applied.
+The transport MAY report endpoint-level acceptances and failures. Publish acknowledgement is not group consensus. The
+protocol-core publish lifecycle defines when locally created MLS work MAY be applied.
 
 ## Validation before peeling
 
 A Nostr transport client MUST validate the outer event enough to classify it before passing bytes to the MLS peeler:
 
-- kind `445` group messages must be signed Nostr events with a valid id/signature, must have exactly one `h` tag, and
-  must have base64 content whose decoded length is at least 28 bytes;
-- kind `1059` welcomes must be signed Nostr events and must have a `p` tag;
-- kind `444` welcome rumors must have `e` and `relays` tags after NIP-59 unwrapping;
-- kind `30443` KeyPackage event content must be base64-encoded MLS KeyPackage bytes;
-- fields that claim to be hex or base64 must decode successfully;
+- kind `445` group messages MUST be signed Nostr events with a valid id/signature, MUST have exactly one `h` tag, and
+  MUST have base64 content whose decoded length is at least 28 bytes;
+- kind `1059` welcomes MUST be signed Nostr events and MUST have a `p` tag;
+- kind `444` welcome rumors MUST have `e` and `relays` tags after NIP-59 unwrapping;
+- kind `30443` KeyPackage event content MUST be base64-encoded MLS KeyPackage bytes;
+- fields that claim to be hex or base64 MUST decode successfully;
 - unsupported Nostr kinds are ignored or reported as malformed transport input.
 
 The peeler validates transport encryption, welcome recipient binding, and MLS bytes. Protocol core validates group

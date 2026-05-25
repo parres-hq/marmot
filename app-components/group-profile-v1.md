@@ -31,9 +31,6 @@ The update payload is a full replacement state:
 MarmotGroupProfileV1 MarmotGroupProfileUpdateV1;
 ```
 
-Partial updates are not defined in v1. A caller that wants to change only one field reads the current state, changes
-that field, and sends a full replacement.
-
 ## Validation
 
 A profile state is valid if:
@@ -47,17 +44,12 @@ empty.
 
 ## Authorization
 
-Any current member may send a standalone profile update proposal.
+Any current member MAY send a standalone profile update proposal.
 
-Only a current admin may commit a profile update.
-
-An inline profile update requires the sender to be a current admin because the proposal sender and committer are the
-same member.
+Only a current admin MAY commit a profile update.
 
 The admin check is evaluated against the prior epoch state.
 
 ## Removal
-
-This component MUST NOT be removed while listed as required in the GroupContext `app_components` component.
 
 If the component is not required, removal means the group has no signed Marmot display profile.

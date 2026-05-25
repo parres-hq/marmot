@@ -54,23 +54,18 @@ A Nostr routing state is valid if:
 - relay URLs are sorted lexicographically by byte value
 - relay URLs have no duplicates
 
-Clients compare relay URL bytes exactly after validation. Producers should normalize before proposing a group-state
-update, but a client must not rewrite relay URL bytes while applying signed group state.
+Clients compare relay URL bytes exactly after validation. Producers SHOULD normalize before proposing a group-state
+update, but a client MUST NOT rewrite relay URL bytes while applying signed group state.
 
 ## Authorization
 
-Any current member may send a standalone relay update proposal.
+Any current member MAY send a standalone relay update proposal.
 
-Only a current admin may commit a relay update.
+Only a current admin MAY commit a relay update.
 
-An inline relay update requires the sender to be a current admin because the proposal sender and committer are the same
-member.
-
-No member may propose or commit a `nostr_group_id` update in v1.
+No member MAY propose or commit a `nostr_group_id` update in v1.
 
 ## Removal
-
-This component MUST NOT be removed while Nostr routing is required by the GroupContext `app_components` component.
 
 If removed from a group that still exists over another transport, the Nostr transport can no longer route group messages
 from signed group state.

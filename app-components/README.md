@@ -87,7 +87,7 @@ A member that does not support every required component id MUST NOT join the gro
 
 All state and update payloads use the Marmot binary profile unless a component says otherwise.
 
-Each component document must define:
+Each component document MUST define:
 
 - component id
 - component name
@@ -99,6 +99,14 @@ Each component document must define:
 - commit authorization
 - removal rule
 - migration rule
+
+For v1 component documents, these defaults apply unless the component says otherwise:
+
+- If the update payload is a full replacement state, partial field updates are not defined. A caller that wants to
+  change one field reads the current state, changes that field, and sends a full replacement.
+- An inline AppDataUpdate requires the sender to satisfy the component's commit authorization because the proposal
+  sender and committer are the same member. For admin-gated components, the sender MUST be a current admin.
+- A component MUST NOT be removed while it is listed as required in the GroupContext `app_components` component.
 
 ## Update Processing
 
@@ -114,12 +122,12 @@ evaluates the prior state and ordered update bytes using that component's update
 
 The update rule returns new state bytes or rejects the Commit.
 
-Update rules must be deterministic. They must not read local wall-clock time, transport state, random numbers, local UI
+Update rules MUST be deterministic. They MUST NOT read local wall-clock time, transport state, random numbers, local UI
 state, or local storage order.
 
-AppDataUpdate proposals may appear inline in a Commit or as standalone MLS proposals later referenced by a Commit.
-Inline updates are the default when the committer is authorized. Standalone proposals are for cases where a member may
-request a component change but another member must commit it.
+AppDataUpdate proposals MAY appear inline in a Commit or as standalone MLS proposals later referenced by a Commit.
+Inline updates are the default when the committer is authorized. Standalone proposals are for cases where a member MAY
+request a component change but another member MUST commit it.
 
 For a Commit, a Marmot client evaluates all AppDataUpdate proposals for a component in commit order. The component
 validates the proposal sender, the committer, the prior state, and the ordered updates. It returns the new state bytes
@@ -137,18 +145,18 @@ Required components MUST NOT be removed while still listed in GroupContext `app_
 Unknown required components fail closed through negotiation.
 
 Unknown non-required component entries MUST be preserved byte-for-byte when a client rewrites `app_data_dictionary`. The
-client must not parse, normalize, sort inside, partially copy, or re-encode unknown component bytes.
+client MUST NOT parse, normalize, sort inside, partially copy, or re-encode unknown component bytes.
 
 ## Default Authorization
 
-The component validates authorization. OpenMLS validates the MLS message shape; Marmot validates whether the sender may
+The component validates authorization. OpenMLS validates the MLS message shape; Marmot validates whether the sender MAY
 make the requested semantic change.
 
-Each component document defines who may propose an update and who may commit an update. These may be different roles.
+Each component document defines who MAY propose an update and who MAY commit an update. These MAY be different roles.
 
 Group-level component commits are admin-gated by default.
 
-A component can define a looser rule, but it must do so explicitly. In v1, the admin set is defined by
+A component can define a looser rule, but it MUST do so explicitly. In v1, the admin set is defined by
 `marmot.group.admin-policy.v1`.
 
 ## Current Components
@@ -167,7 +175,11 @@ Assigned component ids are registered in [../foundation/registries.md](../founda
 - Marmot component ids stay in the private-use range for the foreseeable future.
 - Marmot component major versions are represented by component ids.
 - Marmot core components are optional unless a group profile, transport, or feature requires them.
-- `marmot.group.blossom.image.v1` is Blossom-specific. Other image-reference models should use separate components.
+- `marmot.group.blossom.image.v1` is Blossom-specific. Other image-reference models SHOULD use separate components.
 - `marmot.transport.nostr.routing.v1` is required for Nostr-routed Marmot groups.
 - Nostr relays in `marmot.transport.nostr.routing.v1` are canonical signed group state, not local hints.
-- AppDataUpdate proposals may be inline or standalone. Inline is the default path when the committer is authorized.
+- AppDataUpdate proposals MAY be inline or standalone. Inline is the default path when the committer is authorized.
+- MIP-04 encrypted media is an acknowledged current exception to the usual feature/component split. It is message media,
+  not persistent group state, and its v1 reference, key-derivation, and AEAD bytes stay in
+  [encrypted-media.md](../features/encrypted-media.md) until the draft assigns exact app-payload schemas or a later
+  component version.

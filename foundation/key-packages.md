@@ -56,7 +56,7 @@ requires.
 
 ## Selection and lifecycle
 
-An inviter may see several current KeyPackages for one account. It must reject malformed or incompatible candidates
+An inviter MAY see several current KeyPackages for one account. It MUST reject malformed or incompatible candidates
 before selecting one.
 
 The MIP-era selection policy prefers valid non-`last_resort` candidates when available, then prefers the freshest valid
@@ -71,19 +71,19 @@ When a transport exposes a publication timestamp or replacement rule, clients SH
 single-use KeyPackages. If two otherwise equivalent candidates remain, clients SHOULD use a deterministic
 content-derived tie-breaker defined by the transport binding.
 
-After a client successfully processes a Welcome that consumed a published KeyPackage, it should publish a fresh
+After a client successfully processes a Welcome that consumed a published KeyPackage, it SHOULD publish a fresh
 replacement according to the active transport binding.
 
-The private `init_key` material for a consumed non-`last_resort` KeyPackage must be deleted after successful Welcome
+The private `init_key` material for a consumed non-`last_resort` KeyPackage MUST be deleted after successful Welcome
 processing. A `last_resort` KeyPackage keeps its `init_key` until a replacement has been safely published or the local
 grace policy allows deletion.
 
 ## Failure behavior
 
-A client must not rotate or delete the consumed KeyPackage if Welcome processing fails. The existing KeyPackage remains
+A client MUST NOT rotate or delete the consumed KeyPackage if Welcome processing fails. The existing KeyPackage remains
 available so the inviter can retry or choose another candidate.
 
-A client must reject a published KeyPackage when:
+A client MUST reject a published KeyPackage when:
 
 - the decoded content is not a valid MLS KeyPackage;
 - the credential identity is not a valid Marmot account identity;

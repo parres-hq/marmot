@@ -34,7 +34,7 @@ Common app payload kinds include:
 - kind `7` for reactions;
 - feature-specific app events such as push-notification token events.
 
-The inner app event has an `id` but no `sig`. It must not include transport routing tags.
+The inner app event has an `id` but no `sig`. It MUST NOT include transport routing tags.
 
 Receivers validate that the inner app event `pubkey` matches the Marmot account identity authenticated by MLS.
 Unsupported app-event kinds do not change group state unless the owning feature says otherwise.
@@ -48,13 +48,13 @@ Non-admin members can commit only the narrow flows that the spec explicitly allo
 - a self-update Commit that updates only the sender's own LeafNode;
 - a dedicated SelfRemove-only Commit that processes valid pending SelfRemove proposals by reference.
 
-Those two non-admin commit shapes must not be combined with each other or with other proposal types.
+Those two non-admin commit shapes MUST NOT be combined with each other or with other proposal types.
 
 All other Commits from non-admins are invalid.
 
 ## Publish before apply
 
-A locally generated Commit must not become the sender's canonical local state until its publish obligation succeeds.
+A locally generated Commit MUST NOT become the sender's canonical local state until its publish obligation succeeds.
 
 The sender publishes the transport envelope required by the active transport binding and waits for the transport publish
 success required by the publish lifecycle.
@@ -63,7 +63,7 @@ If the Commit adds members, the associated Welcomes are sent only after the Comm
 
 ## Race handling
 
-Convergence uses content-derived commit ordering, retained MLS states, and group policy. Transport evidence must not
+Convergence uses content-derived commit ordering, retained MLS states, and group policy. Transport evidence MUST NOT
 choose the winning branch.
 
 ## Message retention

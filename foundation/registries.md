@@ -34,7 +34,7 @@ these assignments, Marmot needs an explicit compatibility plan before changing w
 
 The `app_components`, `app_data_dictionary`, `app_data_update`, and `self_remove` values match
 draft-ietf-mls-extensions-09. The `last_resort` value is the extension-type assignment Marmot currently implements
-through OpenMLS. Confirm `last_resort` against draft-09 before relying on it: the draft may track last-resort handling
+through OpenMLS. Confirm `last_resort` against draft-09 before relying on it: the draft MAY track last-resort handling
 in the component registry rather than as extension `0x000a`.
 
 ## Marmot custom MLS extension types
@@ -49,7 +49,7 @@ in the component registry rather than as extension `0x000a`.
 
 No Marmot-owned custom MLS proposal type is assigned in this draft yet.
 
-`IdentityRemove` is the first likely candidate. It must claim a proposal type here before becoming normative.
+`IdentityRemove` is the first likely candidate. It MUST claim a proposal type here before becoming normative.
 
 ## Nostr event kinds used by Marmot
 
@@ -71,27 +71,30 @@ event shapes.
 | `30443` | Marmot KeyPackage event             | Nostr KeyPackage publication        |
 
 The experimental agent text stream QUIC feature claims kind `1200` for durable stream start app events. Live stream
-chunks are transient QUIC records. Future durable abort, media-final, or fallback preview app-event kinds must be added
+chunks are transient QUIC records. Future durable abort, media-final, or fallback preview app-event kinds MUST be added
 to this registry before use.
 
 ## Exporter labels
 
-Existing Marmot exporter uses should be treated as registered until their owning docs move or replace them.
+Existing Marmot exporter uses SHOULD be treated as registered until their owning docs move or replace them.
 
 Each entry is an `MLS-Exporter(label, context, length)` invocation: the first column is the exporter `label`, the second
 is the `context`, and the third is the output length in bytes.
 
-| Label                        | Context             | Length   | Consumer                            |
-| ---------------------------- | ------------------- | -------- | ----------------------------------- |
-| `"marmot"`                   | `"group-event"`     | `32`     | kind `445` outer encryption key     |
-| `"marmot"`                   | `"encrypted-media"` | `32`     | MIP-04 media key input              |
-| `"marmot-mip06-join-psk-v1"` | `join_psk_id`       | `KDF.Nh` | multi-device external PSK material  |
+| Label                        | Context                    | Length   | Consumer                            |
+| ---------------------------- | -------------------------- | -------- | ----------------------------------- |
+| `"marmot"`                   | `"group-event"`            | `32`     | kind `445` outer encryption key     |
+| `"marmot"`                   | `"encrypted-media"`        | `32`     | MIP-04 media key input              |
+| `"marmot"`                   | `"agent-text-stream-quic"` | `32`     | Agent text stream QUIC record crypto |
+| `"marmot-mip06-join-psk-v1"` | `join_psk_id`              | `KDF.Nh` | multi-device external PSK material  |
 
 The multi-device join entry is the one label that does not follow the `label = "marmot"`, `context = <feature>`
 convention used by the other entries. Aligning it is tracked in [multi-device.md](../features/multi-device.md).
 
 ## Safe exporter component ids
 
-| Component id | Consumer                              | Output                    |
-| ------------ | ------------------------------------- | ------------------------- |
-| `0x8006`     | Agent text stream QUIC record crypto  | 32-byte component secret  |
+Safe-exporter rows are for components that derive crypto from `SafeExportSecret(ComponentID)` through the MLS
+Extensions Safe framework. Ordinary app component ids and raw `MLS-Exporter(label, context, length)` uses are listed in
+their own tables above.
+
+No v1 component currently claims a `SafeExportSecret(ComponentID)` output.

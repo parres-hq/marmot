@@ -5,7 +5,7 @@ Status: draft for internal review.
 The current MIP set mixes stable protocol surfaces with feature behavior. The
 v2 draft organizes docs around the surface an implementer is building.
 
-MIPs remain useful history. They should point to the stable docs they changed.
+MIPs remain useful history. They SHOULD point to the stable docs they changed.
 
 ## Top Level
 
@@ -66,7 +66,7 @@ Foundation documents define shared surfaces:
 - error and stale-result taxonomy
 - registries for component ids, proposal ids, and extension ids
 
-Foundation documents should change rarely. They carry stable Marmot invariants: Nostr identity, unsigned Nostr-shaped
+Foundation documents SHOULD change rarely. They carry stable Marmot invariants: Nostr identity, unsigned Nostr-shaped
 app payloads, MLS group security, canonical byte rules, capability advertisement, and Marmot-owned registries.
 
 ## Protocol Core
@@ -105,36 +105,42 @@ Each component document owns:
 - removal behavior
 - migration behavior
 
-Most feature-owned group state should land here.
+Most feature-owned group state SHOULD land here.
 
 ## Transports
 
 Transport documents define how Marmot bytes move over a network.
 
-Transport documents may define transport-specific delivery addresses, event shapes, relay or endpoint selection, fetch
-rules, and app components. They should not define generic group semantics.
+Transport documents MAY define transport-specific delivery addresses, event shapes, relay or endpoint selection, fetch
+rules, and app components. They SHOULD NOT define generic group semantics.
 
 ## Features
 
 Feature documents describe optional or user-facing behavior that spans components or protocol surfaces.
 
-A feature document should mostly reference foundation, protocol-core, and component documents. It should not duplicate
+A feature document SHOULD mostly reference foundation, protocol-core, and component documents. It SHOULD NOT duplicate
 their rules.
 
 Feature documents stay separate from app components. The feature doc explains the flow. The app component doc owns the
 bytes.
 
-When a feature has an interop-visible breaking change, the spec must name the new version in a capability, component id,
-proposal id, event kind, or feature document. Git history is useful, but it is not a version-negotiation mechanism.
+MIP-04 encrypted media is the current exception. It is message media, not persistent group state, and
+[features/encrypted-media.md](./features/encrypted-media.md) owns its v1 media reference, key-derivation, and AEAD bytes
+until the draft assigns exact app-payload schemas or a later app component. Do not model new feature documents on this
+exception without naming the exception explicitly.
+
+When a feature has an interop-visible breaking change, the owning document MUST name the new version in a capability,
+component id, proposal id, event kind, or feature document. Git history is useful, but it is not a version-negotiation
+mechanism.
 
 ## Implementation Model
 
 The implementation model is non-normative. It can map the protocol to local terms used by this repository, including
-engine APIs, queues, storage choices, and diagnostics.
+local APIs, queues, storage choices, and diagnostics.
 
 ## MIP Coverage
 
 The v2 draft keeps MIP history separate from normative organization.
 
-Use [mip-coverage.md](./mip-coverage.md) to see where current MIP-era concerns moved. The stable spec should be readable
+Use [mip-coverage.md](./mip-coverage.md) to see where current MIP-era concerns moved. The stable spec SHOULD be readable
 without replaying the MIP history.

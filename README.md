@@ -24,7 +24,7 @@ to several relays at once, so a relay that goes down, gets blocked, or turns mal
 future transport binding needs the same redundancy and failover properties.
 
 The protocol also tries to expose as little metadata as the design allows. Perfect metadata privacy is not possible in a
-decentralized messaging system, but Marmot should avoid new metadata leaks unless a feature cannot work without them.
+decentralized messaging system, but Marmot SHOULD avoid new metadata leaks unless a feature cannot work without them.
 
 ## Review Status
 
@@ -40,15 +40,9 @@ For review, focus on these questions:
 
 ## Draft Map
 
-- [principles.md](./principles.md) - principles for organizing and writing the spec.
-- [layout.md](./layout.md) - proposed shape for the Marmot v2 spec set.
-- [foundation/](./foundation/) - identity, app payload, encoding, MLS, wire, and registry rules.
-- [protocol-core/](./protocol-core/) - group setup, joining, messaging, lifecycle, convergence, and retained history.
-- [app-components/](./app-components/) - custom app component model and draft component payload schemas.
-- [transports/](./transports/) - transport bindings for moving Marmot MLS bytes over a network.
-- [features/](./features/) - optional and user-visible feature flows.
-- [mip-coverage.md](./mip-coverage.md) - map from current MIPs to the v2 draft surfaces.
-- [implementation-model.md](./implementation-model.md) - non-normative local implementation notes.
+The canonical directory tree and per-surface ownership rules live in [layout.md](./layout.md). Start there when deciding
+where new protocol text belongs. Use [mip-coverage.md](./mip-coverage.md) only as a historical map from current MIPs to
+the v2 surfaces.
 
 ## Working Rules
 
@@ -57,6 +51,6 @@ For review, focus on these questions:
 - Use `MUST`, `SHOULD`, and `MAY` only when the sentence is meant to become normative.
 - Put transport-specific fields in transport-specific components or transport docs.
 - Put group flow semantics in protocol-core docs or group app components.
-- A feature should usually point to one app component or add one component version.
-- A feature should name every surface it changes.
+- A feature SHOULD usually point to one app component or add one component version.
+- A feature SHOULD name every surface it changes.
 - App component docs own component bytes. Feature docs own user-visible flows and the surfaces those flows touch.

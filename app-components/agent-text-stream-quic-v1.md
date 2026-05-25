@@ -19,7 +19,7 @@ transient, and final content is carried by normal Marmot app payloads.
 
 It also does not own a `SafeExportSecret` leaf. Stream record keys use the reusable
 `MLS-Exporter("marmot", "agent-text-stream-quic", 32)` secret defined by the feature document because send, watch,
-retry, and resume paths may need the same epoch secret more than once.
+retry, and resume paths MAY need the same epoch secret more than once.
 
 ```text
 uint8 MarmotAgentTextStreamQuicRoleMaskV1;
@@ -37,9 +37,9 @@ struct {
 } MarmotAgentTextStreamQuicV1;
 ```
 
-`required_member_roles` is the set of role capabilities every member must advertise before joining the group.
+`required_member_roles` is the set of role capabilities every member MUST advertise before joining the group.
 
-`allowed_member_roles` is the set of role capabilities a member may advertise in this group.
+`allowed_member_roles` is the set of role capabilities a member MAY advertise in this group.
 
 For the first user-to-agent profile:
 
@@ -49,11 +49,11 @@ For the first user-to-agent profile:
 
 `max_plaintext_frame_len` caps the plaintext bytes in one stream frame before record encryption.
 
-`replay_ttl_secs` is the maximum time a group-approved relay may retain encrypted stream records for short replay.
+`replay_ttl_secs` is the maximum time a group-approved relay MAY retain encrypted stream records for short replay.
 `0` means no retained replay.
 
 `padding_bucket_bytes` is the maximum padding bucket size for stream records. `0` means no feature-level padding
-requirement. A first profile should keep this low; this feature is not trying to hide token cadence at high bandwidth
+requirement. A first profile SHOULD keep this low; this feature is not trying to hide token cadence at high bandwidth
 cost.
 
 The first application profile uses these maximums:
@@ -89,15 +89,11 @@ component version.
 
 ## Authorization
 
-Any current member may send a standalone agent text stream QUIC update proposal.
+Any current member MAY send a standalone agent text stream QUIC update proposal.
 
-Only a current admin may commit an update.
-
-An inline update requires the sender to be a current admin because the proposal sender and committer are the same member.
+Only a current admin MAY commit an update.
 
 ## Removal
-
-This component MUST NOT be removed while it is listed as required in the GroupContext `app_components` component.
 
 If removed from a group that no longer requires it, live QUIC text streams are disabled for that group. Existing durable
 Marmot messages remain valid.

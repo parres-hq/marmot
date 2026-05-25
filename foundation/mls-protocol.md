@@ -4,7 +4,7 @@ Status: draft for internal review.
 
 Marmot currently uses MLS as its continuous group key agreement (CGKA) protocol.
 
-Implementations may use any MLS library if they produce and validate the same protocol bytes.
+Implementations MAY use any MLS library if they produce and validate the same protocol bytes.
 
 ## Required ciphersuite
 
@@ -32,7 +32,7 @@ that binds that identity to the MLS leaf signature key is defined in
 
 ## App components and group state
 
-New group-level feature state should use MLS app components carried in `app_data_dictionary` when the backend supports
+New group-level feature state SHOULD use MLS app components carried in `app_data_dictionary` when the backend supports
 the MLS extensions draft features Marmot needs.
 
 The shared component model is defined in [../app-components/](../app-components/). Component ids are registered in
@@ -40,19 +40,19 @@ The shared component model is defined in [../app-components/](../app-components/
 
 ## Custom extensions and proposals
 
-Persistent group state should use app components. A custom MLS proposal type is appropriate only when the feature needs
+Persistent group state SHOULD use app components. A custom MLS proposal type is appropriate only when the feature needs
 proposal semantics that a component update cannot express.
 
 `marmot.account-identity-proof.v1` is the required custom LeafNode extension used to authenticate Marmot account
-ownership of MLS leaf signature keys. New custom extensions must be registered in [registries.md](./registries.md).
+ownership of MLS leaf signature keys. New custom extensions MUST be registered in [registries.md](./registries.md).
 
 ## Authenticated data and exporters
 
-Marmot documents that write MLS `authenticated_data` must own their byte contribution and define how it composes with
+Marmot documents that write MLS `authenticated_data` MUST own their byte contribution and define how it composes with
 other contributors.
 
-Marmot documents that use raw MLS exporter secrets must define the label, context, output length, and consuming feature.
-New app-component features should prefer the MLS extensions Safe framework's `SafeExportSecret(ComponentID)` path and
+Marmot documents that use raw MLS exporter secrets MUST define the label, context, output length, and consuming feature.
+New app-component features SHOULD prefer the MLS extensions Safe framework's `SafeExportSecret(ComponentID)` path and
 define any post-export key context they use below the component secret. Features that need the same epoch secret more
 than once, such as live stream send/watch/resume paths, MUST say so and use a registered raw exporter label until Marmot
 defines a reusable Safe framework profile.
@@ -64,7 +64,7 @@ Registered Marmot exporter labels are listed in [registries.md](./registries.md)
 Before this draft becomes normative, decide how Marmot exporter-derived secrets move to the MLS Extensions Safe
 framework.
 
-The decision should cover:
+The decision SHOULD cover:
 
 - which current exporter labels stay as legacy compatibility inputs;
 - which app component ids own `SafeExportSecret` calls;
