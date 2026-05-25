@@ -21,6 +21,13 @@ struct {
 
 Any nonzero value is a requested application retention duration in seconds.
 
+The retention duration is signed group state, but the transport-level expiry timestamp is computed from the sender's
+app-payload `created_at` plus this duration (see [../protocol-core/group-setup.md](../protocol-core/group-setup.md) and
+the active transport binding). The duration is authenticated; the base timestamp is the sender's own `created_at`, so a
+sender that backdates or forward-dates `created_at` shifts when its own message expires. Disappearing-message expiry is
+therefore advisory and inherits the trust already placed in the MLS-authenticated sender. It is not a deletion guarantee
+enforced against a hostile sender.
+
 ## Update
 
 The update payload is a full replacement state:

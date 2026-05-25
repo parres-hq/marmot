@@ -25,8 +25,9 @@ URLs, or Nostr event ids.
 
 ## Transport byte encoding
 
-Fields in this binding that carry Marmot, MLS, or AEAD bytes use standard base64 with padding unless the field is
-explicitly defined as lowercase hex.
+Fields in this binding that carry Marmot, MLS, or AEAD bytes use base64 with the standard alphabet and padding
+(RFC 4648, section 4) unless the field is explicitly defined as lowercase hex. "Standard" here distinguishes this
+alphabet from URL-safe base64 (RFC 4648, section 5), which this binding does not use.
 
 This binding does not use `encoding` tags to negotiate byte encoding. A sender MUST NOT add an `encoding` tag for any
 event shape in this document. A receiver MUST NOT switch decoders based on an `encoding` tag; each field is decoded by
@@ -72,6 +73,10 @@ The base64 encoding is standard base64 with padding.
 The `ciphertext` value is the full AEAD output and includes the authentication tag. The 12-byte nonce is prepended to
 the ciphertext before base64 encoding. The AAD is the empty byte string and is not serialized into the event.
 
+`group_event_key` is scoped to one group epoch, so nonce uniqueness for a given key rests entirely on the 12-byte random
+nonce. The number of kind `445` events in a single epoch is bounded by how often the group commits, which keeps random
+96-bit nonces well inside the safe birthday bound for this outer ChaCha20-Poly1305 layer.
+
 The Nostr event id, event `pubkey`, tags, relay timestamp, and relay URL are not AEAD AAD for kind `445`. They are
 validated as the transport envelope and then treated as transport evidence only.
 
@@ -84,6 +89,21 @@ Receivers MUST reject kind `445` content that is not valid base64 or that decode
 
 Kind `445` Nostr event ids, relay timestamps, relay arrival order, and subscription order are transport evidence. They
 must not choose group state.
+
+## Outer decryption and epoch selection
+
+`group_event_key` is derived from the MLS epoch's exporter secret, so it differs per group epoch. The kind `445`
+envelope carries no epoch hint and uses an empty AAD, so a receiver cannot read the target epoch before decrypting.
+
+A receiver decrypts the outer layer by trying the `group_event_key` of each retained candidate group state until one
+authenticates, then hands the recovered MLS message to the peeler. The candidate set is the retained states the
+convergence policy already requires: the current canonical epoch, any retained epoch inside the rollback horizon, and
+any staged-but-unmerged local commit. A receiver MUST NOT widen this set using transport evidence, and trial decryption
+MUST NOT by itself choose the canonical branch; it only recovers candidate MLS bytes for protocol-core convergence to
+judge.
+
+If no retained candidate key authenticates the content, the event is undecryptable transport input and is retained or
+dropped under the inbound-processing rules, not applied to group state.
 
 ## Welcome delivery
 

@@ -61,8 +61,16 @@ file_key     = HKDF-Expand(media_secret,
 nonce        = random(12)
 ```
 
-The MIME type is lowercased, trimmed, stripped of parameters, and normalized to its canonical form before key
-derivation.
+The MIME type is canonicalized before it is used in key derivation and as AAD, using these exact steps:
+
+1. take the substring before the first `;`, dropping any parameters;
+2. trim leading and trailing ASCII whitespace;
+3. lowercase using ASCII case folding only, never Unicode case folding;
+4. reject the reference if the result is empty or does not contain `/`;
+5. apply the canonical alias `image/jpg` -> `image/jpeg`; `mip04-v2` defines no other aliases.
+
+Sender and receiver MUST apply this identical algorithm. Any divergence changes `file_key` and `aad` and makes
+decryption fail, so adding an alias or normalization step is a breaking media-version change, not a compatible tweak.
 
 The media exporter output is key material. Clients MUST NOT publish, transmit, log, or surface it in diagnostics.
 

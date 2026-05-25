@@ -23,8 +23,11 @@ struct {
 
 `admins` is a sorted list of unique 32-byte x-only secp256k1 public keys.
 
-The admin key identifies an application authorization key. Binding this key to a member identity is defined by the
-identity spec, not by this component.
+Each admin key is a Marmot account identity: the same raw 32-byte x-only Nostr public key carried as a member's MLS
+`BasicCredential` identity (see [../foundation/identity.md](../foundation/identity.md)). It is not a separate
+authorization key. Admin authority is evaluated by matching a committer's MLS-authenticated account identity against
+this list. A device leaf is an admin when its account identity appears here, so a multi-device account shares one admin
+entry across all of its leaves.
 
 ## Update
 

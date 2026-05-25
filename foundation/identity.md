@@ -71,11 +71,16 @@ through the protocol-core rules for capability upgrades.
 
 Delivery addresses are not identities.
 
-A transport delivery address must not be derived from an account id, member id, public key, MLS group id, KeyPackage id,
-message id, relay URL, or other stable identity material.
+A group or conversation delivery address must not be derived from an account id, member id, public key, MLS group id,
+KeyPackage id, message id, relay URL, or other stable identity material. For example, the Nostr group `h` tag is the
+random `nostr_group_id`, not a value derived from any member key.
 
-Examples of delivery addresses include a Nostr group `h` tag, an inbox, a relay list, a topic, or an endpoint set. The
-owning transport document defines how those addresses are generated, updated, validated, and used.
+Account-level inbox addressing is the deliberate exception. A transport MAY address an account's own inbox by that
+account's public key, because reaching a specific account is the purpose of an inbox. The Nostr binding uses the account
+public key as the gift-wrap recipient and inbox filter for welcomes and other account-directed events.
+
+Examples of delivery addresses include a Nostr group `h` tag, an account inbox, a relay list, a topic, or an endpoint
+set. The owning transport document defines how those addresses are generated, updated, validated, and used.
 
 ## Application content
 

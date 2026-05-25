@@ -44,6 +44,11 @@ prk            = HKDF-Extract(salt = "mip05-v1", IKM = shared_x)
 encryption_key = HKDF-Expand(prk, "mip05-token-encryption", 32)
 ```
 
+`server_pubkey` is a 32-byte x-only secp256k1 key. ECDH lifts it to the curve point with even Y, following the BIP-340
+convention. `shared_x` is the 32-byte big-endian X coordinate of the resulting shared point, with no Y parity byte and
+no hashing before HKDF. `ephemeral_privkey` is a fresh secp256k1 scalar; its x-only public key is the
+`ephemeral_pubkey[32]` carried in `EncryptedToken`.
+
 The token is encrypted with ChaCha20-Poly1305, a random 12-byte nonce, and empty AAD.
 
 `platform` is `0x01` for APNs or `0x02` for FCM. Native platform tokens are required; iOS clients use APNs directly and

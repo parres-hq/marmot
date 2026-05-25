@@ -13,11 +13,16 @@ This rule applies to:
 
 - group creation
 - invite
-- leave
+- member removal by an admin
 - group profile update
 - capability upgrade
 - admin policy update
 - policy-generated commits, including SelfRemove auto-commits
+
+A member's own departure is a SelfRemove *proposal*, not a local commit. The leaver publishes the proposal and does not
+apply any pending state, because another authorized member commits it (see
+[member-departure.md](./member-departure.md)). Publish-before-apply binds the committer of that SelfRemove, which is
+covered by the auto-commit entry above, not the leaver.
 
 ## Shape
 

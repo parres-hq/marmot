@@ -22,9 +22,11 @@ struct {
 
 Dictionary entries are sorted by `component_id` and contain at most one entry for each component.
 
-Marmot defines the bytes inside `data` for Marmot-owned component ids using the canonical encoding profile in
-[../foundation/canonical-encoding.md](../foundation/canonical-encoding.md). Marmot does not wrap every entry in another
-generic component envelope.
+The `AppDataDictionary` and `ComponentData` structures are defined by the MLS extensions draft, not by Marmot. They are
+reproduced here only for reference and use MLS/TLS encoding. Per
+[../foundation/canonical-encoding.md](../foundation/canonical-encoding.md), Marmot treats these upstream structures as
+opaque-from-MLS and owns only the bytes inside each `data` field for Marmot component ids, encoded with the Marmot
+canonical encoding profile. Marmot does not wrap every entry in another generic component envelope.
 
 ## Upstream Basis
 
@@ -33,13 +35,15 @@ This draft follows:
 - [draft-ietf-mls-extensions-09](https://datatracker.ietf.org/doc/html/draft-ietf-mls-extensions-09)
 - [OpenMLS AppData handling](https://book.openmls.tech/user_manual/app_data_updates.html)
 
-OpenMLS exposes this support behind the `extensions-draft-08` feature.
+OpenMLS exposes this support behind its `extensions-draft-08` feature. Marmot targets the draft-09 code points; the
+pinned ids below match draft-ietf-mls-extensions-09. Where OpenMLS's draft-08 implementation emits a different code
+point or wire layout than draft-09, that gap MUST be reconciled before interop rather than papered over locally.
 
 For the profile Marmot currently implements, the pinned upstream ids are:
 
-- `app_components` component id: `0x0001`;
-- `app_data_dictionary` extension type: `0x0006`;
-- `app_data_update` proposal type: `0x0008`.
+- `app_components` component id: `0x0001` (draft-09 `ComponentID`);
+- `app_data_dictionary` extension type: `0x0006` (draft-09 extension type);
+- `app_data_update` proposal type: `0x0008` (draft-09 proposal type).
 
 These are listed in [../foundation/registries.md](../foundation/registries.md). Changing them is a wire-compatibility
 change, not a local implementation detail.

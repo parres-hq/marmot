@@ -377,7 +377,11 @@ ChaCha20-Poly1305 is a good first candidate because Marmot already uses it for M
 reasonable when a platform stack makes it easier or faster.
 
 The component secret comes from the MLS Extensions Safe framework, keyed by the agent text stream app component id
-`0x8006`. The key context is versioned and length-delimited so adjacent variable fields cannot collide.
+`0x8006`. The key context is versioned and length-delimited so adjacent variable fields cannot collide. The three HKDF
+labels (`"record key"`, `"record nonce"`, `"signing context"`) are distinct ASCII constants with no shared prefix, so
+the `label || key_context` inputs cannot collide; a normative version SHOULD still length-prefix the label. `group_id_hash`
+in the AAD is `SHA-256(group_id)`; it is redundant with the `record_key` binding above and is included only so the AAD
+commits to the group without carrying the raw MLS group id on the wire.
 
 ## Sender authentication
 

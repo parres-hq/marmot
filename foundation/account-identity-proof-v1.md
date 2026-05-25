@@ -53,6 +53,14 @@ opaque mls_signature_public_key[mls_signature_public_key_len]
 
 The signature is a 64-byte BIP-340 Schnorr signature over that digest, verified with `account_identity`.
 
+The signing input is a standalone, domain-separated preimage. It is not the extension payload re-serialized. It begins
+with the fixed 32-byte ASCII label `marmot.account-identity-proof.v1` (no length prefix) followed by a `0x00` separator,
+and it carries `account_identity` with an explicit `account_identity_len = 32` field. The extension payload instead
+stores `account_identity` as a fixed `opaque account_identity[32]` with no length prefix. Both representations cover the
+same 32 bytes; the `account_identity_len` field in the preimage is the constant `32` and exists only as an explicit field
+boundary. `mls_signature_scheme` is carried even though it is implied by `mls_ciphersuite`, so a verifier binds and
+checks it directly instead of first resolving the ciphersuite's signature scheme.
+
 ## Required capabilities
 
 Every Marmot KeyPackage and group member LeafNode MUST advertise support for extension type `0xf2f1` in MLS

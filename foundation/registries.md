@@ -29,6 +29,13 @@ these assignments, Marmot needs an explicit compatibility plan before changing w
 | `0x0001` | `app_components`      | MLS extensions draft `ComponentID`   |
 | `0x0006` | `app_data_dictionary` | MLS extensions draft extension type  |
 | `0x0008` | `app_data_update`     | MLS extensions draft proposal type   |
+| `0x000a` | `self_remove`         | MLS extensions draft proposal type   |
+| `0x000a` | `last_resort`         | MLS extensions draft extension type  |
+
+The `app_components`, `app_data_dictionary`, `app_data_update`, and `self_remove` values match
+draft-ietf-mls-extensions-09. The `last_resort` value is the extension-type assignment Marmot currently implements
+through OpenMLS. Confirm `last_resort` against draft-09 before relying on it: the draft may track last-resort handling
+in the component registry rather than as extension `0x000a`.
 
 ## Marmot custom MLS extension types
 
@@ -71,11 +78,17 @@ to this registry before use.
 
 Existing Marmot exporter uses should be treated as registered until their owning docs move or replace them.
 
-| Label                          | Context owner         | Output                          |
-| ------------------------------ | --------------------- | ------------------------------- |
-| `"marmot" / "group-event"`     | Nostr group transport | kind `445` outer encryption key |
-| `"marmot" / "encrypted-media"` | encrypted media       | MIP-04 media key input          |
-| `"marmot-mip06-join-psk-v1"`   | multi-device join     | external PSK material           |
+Each entry is an `MLS-Exporter(label, context, length)` invocation: the first column is the exporter `label`, the second
+is the `context`, and the third is the output length in bytes.
+
+| Label                        | Context             | Length   | Consumer                            |
+| ---------------------------- | ------------------- | -------- | ----------------------------------- |
+| `"marmot"`                   | `"group-event"`     | `32`     | kind `445` outer encryption key     |
+| `"marmot"`                   | `"encrypted-media"` | `32`     | MIP-04 media key input              |
+| `"marmot-mip06-join-psk-v1"` | `join_psk_id`       | `KDF.Nh` | multi-device external PSK material  |
+
+The multi-device join entry is the one label that does not follow the `label = "marmot"`, `context = <feature>`
+convention used by the other entries. Aligning it is tracked in [multi-device.md](../features/multi-device.md).
 
 ## Safe exporter component ids
 
