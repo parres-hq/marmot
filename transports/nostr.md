@@ -156,8 +156,9 @@ the decoded KeyPackage LeafNode proof; the tag is only an advertisement and fetc
 KeyPackage publication is account transport. It helps other users find fresh KeyPackages. It does not create group
 state.
 
-KeyPackage relay discovery uses kind `10051` events. A kind `10051` event lists relays with `relay` tags and an empty
-content field. KeyPackage kind `30443` events do not repeat those relays.
+KeyPackage relay discovery uses the account's kind `10002` NIP-65 relay list. KeyPackages are published to, and fetched
+from, the relays in that list. There is no dedicated KeyPackage relay list, and KeyPackage kind `30443` events do not
+repeat those relays.
 
 Kind `30443` is a Nostr addressable event. For one `(author, kind, d)` slot, clients SHOULD keep the newest valid event
 by `created_at`, with lower event id as the deterministic tie-breaker when timestamps are equal. Across different `d`
@@ -174,7 +175,8 @@ A Nostr transport client subscribes to:
 
 - account inbox gift wraps: kind `1059`, `p` tag equal to the local account pubkey;
 - group messages: kind `445`, `h` tag equal to the group's `nostr_group_id`;
-- KeyPackage relay lists: kind `10051`, author equal to the account being queried;
+- NIP-65 relay lists: kind `10002`, author equal to the account being queried, to discover where that account
+  publishes its KeyPackages;
 - KeyPackage events: kind `30443`, using the account lookup rules defined by
   [../foundation/key-packages.md](../foundation/key-packages.md).
 
@@ -188,7 +190,7 @@ policy.
 
 Welcome messages are published to the recipient's inbox relay set.
 
-KeyPackage events are published to the account's KeyPackage relay set.
+KeyPackage events are published to the account's NIP-65 (kind `10002`) relay set.
 
 The transport MAY report endpoint-level acceptances and failures. Publish acknowledgement is not group consensus. The
 protocol-core publish lifecycle defines when locally created MLS work MAY be applied.

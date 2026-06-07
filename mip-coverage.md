@@ -60,8 +60,7 @@ The component docs own the exact v2 bytes. This table only records where the old
 
 Nostr-specific MIP details stay in [transports/nostr.md](./transports/nostr.md). Examples include:
 
-- kind `30443` KeyPackage publication;
-- kind `10051` KeyPackage relay lists;
+- kind `30443` KeyPackage publication to the account's kind `10002` NIP-65 relays;
 - NIP-59 Welcome delivery with kind `444` rumors;
 - kind `445` group message envelopes;
 - the `h` tag and Nostr group routing id;
