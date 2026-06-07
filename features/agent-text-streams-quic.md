@@ -52,8 +52,8 @@ For the first user-to-agent profile:
 1. A user sends a prompt as an ordinary Marmot app payload.
 2. The agent publishes a hidden kind `1200` start payload through MLS.
 3. Online receivers watch the start payload's `quic://` candidates.
-4. The agent sends encrypted, ordered text records over QUIC.
-5. Receivers render the records as provisional preview text.
+4. The agent sends encrypted, ordered preview records over QUIC.
+5. Receivers render text deltas as provisional preview text and MAY surface stream status.
 6. The agent publishes the final kind `9` message through MLS.
 7. Clients replace or verify the preview with the final message.
 
@@ -114,7 +114,15 @@ The first text profile defines these plaintext frame types:
 0x06 FinalNotice
 ```
 
-Text deltas are UTF-8 after reassembly. Senders SHOULD batch output instead of sending one record per token.
+`TextDelta` records carry UTF-8 text fragments. Receivers concatenate `TextDelta` plaintext frames, in sequence order, to
+build the provisional preview text. Senders SHOULD batch output instead of sending one record per token.
+
+`Status` records carry UTF-8 provisional state labels such as `thinking`. Receivers MAY display, replace, or ignore the
+latest status for local UI. Receivers MUST NOT append `Status` plaintext to preview text, final message content,
+notifications, indexes, or automation input.
+
+Every record type consumes a `seq` value and contributes to the transcript. This includes `Status` records even when a
+receiver ignores them in UI.
 
 ## Key derivation
 
@@ -178,8 +186,9 @@ H_0 = hash("marmot agent text stream transcript v1" ||
 H_n = hash(H_{n-1} || seq || record_type || plaintext_frame)
 ```
 
-The final message carries `H_final`. A receiver that saw the live preview compares its local hash to the final message
-and marks the preview unverified on mismatch.
+The final message carries `H_final`. `H_final` covers every accepted transcript record, including records a receiver did
+not render as text. A receiver that saw the live preview compares its local hash to the final message and marks the
+preview unverified on mismatch.
 
 ## Final message
 
@@ -198,7 +207,9 @@ content:
 
 The final message `stream` tag MUST match the start payload's `stream` tag. `stream-start` is the lowercase hex event id
 of the kind `1200` start payload. `stream-hash` is the lowercase hex 32-byte transcript hash. `stream-chunks` is the
-unsigned decimal record count.
+unsigned decimal count of all transcript records, including `Status` records. The content is the final text only;
+`Status` plaintext MUST NOT appear in the final message content unless the agent deliberately includes similar text in
+the final answer.
 
 Clients SHOULD replace the preview row with the final message when `stream_id` matches. They MAY keep preview chunks as
 local diagnostic state.
