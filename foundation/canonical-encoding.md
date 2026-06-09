@@ -80,6 +80,10 @@ Text fields are UTF-8 byte strings.
 Protocol equality is byte equality. Clients MUST NOT normalize Unicode, trim whitespace, case-fold, or otherwise rewrite
 text before signing, hashing, comparing, storing, or replaying it unless the owning document defines that rule.
 
+This carve-out is what binds hex and base64 string encodings: a producer emits the case its owning document specifies
+(for example, the Nostr binding in `../transports/nostr.md` requires lowercase hex), and a decoder compares the decoded
+bytes, not the encoded characters.
+
 ## Sorting and duplicates
 
 When a Marmot structure says a list is sorted, the default sort order is lexicographic order over the encoded item

@@ -105,6 +105,11 @@ any staged-but-unmerged local commit. A receiver MUST NOT widen this set using t
 MUST NOT by itself choose the canonical branch; it only recovers candidate MLS bytes for protocol-core convergence to
 judge.
 
+Trying the staged-but-unmerged local commit's key here is candidate construction, not application. It does not conflict
+with the rule in `../protocol-core/group-state.md` that inbound MUST NOT be applied to canonical group state during
+`PendingPublish` or `Merging`: trial decryption only recovers bytes for convergence to judge, and the inbound message is
+not applied while the group is in those states.
+
 If no retained candidate key authenticates the content, the event is undecryptable transport input and is retained or
 dropped under the inbound-processing rules, not applied to group state.
 

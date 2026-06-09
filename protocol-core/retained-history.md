@@ -30,6 +30,13 @@ Late commits are judged by their source epoch:
 - If the source epoch is inside the rollback horizon but the required retained state is missing, convergence MUST report
   `MissingRetainedAnchor`, leave canonical group state unchanged, and move the local group to `Unrecoverable`.
 
+The third case is storage loss, not a transport gap. A commit whose parent state has not yet been replayed — because the
+parent commit has not arrived — is **deferred**, not `Unrecoverable`: it waits for the parent under
+[convergence.md](./convergence.md) ("Candidate branches") and [inbound-processing.md](./inbound-processing.md#deferred-input)
+("Deferred input"). `MissingRetainedAnchor` and the move to `Unrecoverable` apply only when retained state that a candidate
+branch requires inside the rollback horizon has been *lost from storage* (see [convergence.md](./convergence.md): "the
+client enters `Unrecoverable` until it has a verified repair path").
+
 ## App-payload retention
 
 MLS application messages have their own retained decryption window for app payloads.

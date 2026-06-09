@@ -18,6 +18,7 @@ Marmot app components use MLS private-use component ids.
 | `0x8004`     | `marmot.transport.nostr.routing.v1`      | [doc](../app-components/nostr-routing-v1.md)          |
 | `0x8005`     | `marmot.group.message-retention.v1`      | [doc](../app-components/message-retention-v1.md)      |
 | `0x8006`     | `marmot.group.agent-text-stream.quic.v1` | [doc](../app-components/agent-text-stream-quic-v1.md) |
+| `0x8007`     | `marmot.group.avatar-url.v1`             | [doc](../app-components/group-avatar-url-v1.md)       |
 
 ## Upstream MLS extension draft ids
 
@@ -31,6 +32,10 @@ these assignments, Marmot needs an explicit compatibility plan before changing w
 | `0x0008` | `app_data_update`     | MLS extensions draft proposal type   |
 | `0x000a` | `self_remove`         | MLS extensions draft proposal type   |
 | `0x000a` | `last_resort`         | MLS extensions draft extension type  |
+
+`self_remove` and `last_resort` share the value `0x000a` but this is not an id collision: they are assigned in different
+MLS registries — `self_remove` in the proposal-type namespace and `last_resort` in the extension-type namespace, as the
+Upstream source column shows. An MLS value is only unique within its own registry.
 
 The `app_components`, `app_data_dictionary`, `app_data_update`, and `self_remove` values match
 draft-ietf-mls-extensions-09. The `last_resort` value is the extension-type assignment Marmot currently implements

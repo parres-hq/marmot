@@ -34,6 +34,10 @@ The active convergence policy contains:
 - `witness_quorum_epochs`: the number of branch epochs that MUST meet sender quorum.
 - `max_witness_override_depth`: the maximum commit-depth boost a branch MAY receive from witness quorum.
 
+`max_witness_override_depth` MUST NOT exceed `max_rewind_commits`. The witness-quorum boost is bounded so it can never
+push a branch past the rollback horizon; allowing it to would let app-payload traffic beat an arbitrarily longer valid
+commit branch, violating the invariant below. A policy that violates this bound MUST be rejected rather than applied.
+
 `settlement_quiescence_ms` gates when a client decides it has waited long enough to run or finish convergence. It MUST NOT
 enter the branch score.
 
