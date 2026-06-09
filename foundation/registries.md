@@ -72,12 +72,18 @@ event shapes.
 | `449`   | Push token removal                  | Marmot app payload                  |
 | `450`   | Multi-device identity proof event   | Local signing template, not relayed |
 | `1200`  | Agent text stream start             | Marmot app payload                  |
+| `1201`  | Agent activity                      | Marmot app payload                  |
+| `1202`  | Agent operation event                    | Marmot app payload                  |
+| `1210`  | Group system event                  | Marmot app payload                  |
 | `10050` | Push notification server relay list | Nostr account transport             |
 | `30443` | Marmot KeyPackage event             | Nostr KeyPackage publication        |
 
-The experimental agent text stream QUIC feature claims kind `1200` for durable stream start app events. Live stream
-chunks are transient QUIC records. Future durable abort, media-final, or fallback preview app-event kinds MUST be added
-to this registry before use.
+The experimental agent text stream QUIC feature claims kind `1200` for durable stream start app events, kind `1201` for
+agent activity rows, and kind `1202` for agent operation rows. Live stream chunks are transient QUIC records. Future durable
+abort, media-final, or fallback preview app-event kinds MUST be added to this registry before use.
+
+Kind `1210` is reserved for durable group system rows, such as membership, name, avatar, or other group-lifecycle
+notices that clients render separately from human chat.
 
 ## Exporter labels
 

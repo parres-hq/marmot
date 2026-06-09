@@ -7,7 +7,7 @@ authentication, epoch, and durable-message layer. QUIC carries only transient pr
 
 ## Invariant
 
-A stream has two durable MLS app payloads:
+A text preview stream has two durable MLS app payloads:
 
 - a hidden kind `1200` start payload that authorizes one live preview stream;
 - a normal final payload, kind `9` for text, that becomes group history.
@@ -15,11 +15,24 @@ A stream has two durable MLS app payloads:
 QUIC records are renderable only when they match the MLS start payload. They are not durable group history. A client that
 stores history, indexes content, sends notifications, exports data, or runs automation uses the final MLS payload.
 
+Agent activity, operation progress, and group lifecycle rows are not chat text and are not preview text. They use separate
+durable inner app-event kinds when they need to survive reload or sync:
+
+- kind `1201`: agent activity/status;
+- kind `1202`: agent operation event;
+- kind `1210`: group system event.
+
+All of these are inner Marmot app-event kinds carried inside encrypted group messages. They do not change the outer
+Nostr group transport kind.
+
 ## Registered surfaces
 
 - App component: [`marmot.group.agent-text-stream.quic.v1`](../app-components/agent-text-stream-quic-v1.md), component
   id `0x8006`
 - Start app-event kind: `1200`
+- Agent activity app-event kind: `1201`
+- Agent operation app-event kind: `1202`
+- Group system app-event kind: `1210`
 - First stream type: `text`
 - First final kind: `9`
 - Exporter: `MLS-Exporter("marmot", "agent-text-stream-quic", 32)`
@@ -58,6 +71,11 @@ For the first user-to-agent profile:
 7. Clients replace or verify the preview with the final message.
 
 Offline members miss the live preview and read the final message when they sync.
+
+An agent turn SHOULD have at most one active Marmot text preview that represents the eventual kind `9` answer. Cursor-only
+frames, gateway notices, pre-operation chatter, and operation progress SHOULD NOT open their own kind `1200` starts. If
+the sender started a preview and later determines that the text was not part of the final answer, it SHOULD abort that
+preview and MAY publish a kind `1201` activity row instead.
 
 ## Start payload
 
@@ -107,7 +125,7 @@ The first text profile defines these plaintext frame types:
 
 ```text
 0x01 TextDelta
-0x02 ToolDelta
+0x02 ProgressDelta
 0x03 Status
 0x04 Checkpoint
 0x05 Abort
@@ -115,14 +133,91 @@ The first text profile defines these plaintext frame types:
 ```
 
 `TextDelta` records carry UTF-8 text fragments. Receivers concatenate `TextDelta` plaintext frames, in sequence order, to
-build the provisional preview text. Senders SHOULD batch output instead of sending one record per token.
+build the provisional preview text. Senders SHOULD batch output instead of sending one record per token. Only
+`TextDelta` changes the provisional answer text.
+
+`ProgressDelta` records carry UTF-8 operation-progress text or JSON. Receivers MAY display this as live non-chat agent
+progress chrome. Receivers MUST NOT append `ProgressDelta` plaintext to preview text, final message content,
+notifications, indexes, or automation input. Durable operation history uses kind `1202`.
 
 `Status` records carry UTF-8 provisional state labels such as `thinking`. Receivers MAY display, replace, or ignore the
 latest status for local UI. Receivers MUST NOT append `Status` plaintext to preview text, final message content,
 notifications, indexes, or automation input.
 
+`Checkpoint` records carry a UTF-8 full preview snapshot. Receivers that support checkpoints replace the provisional
+preview text with the checkpoint plaintext, then continue applying later `TextDelta` records. Receivers that do not
+support checkpoints MAY mark the preview unverifiable and wait for the final kind `9`.
+
+`Abort` records end the live preview without producing durable chat text. Receivers remove or mark the preview as
+cancelled and wait for later durable events.
+
+`FinalNotice` records announce that the sender is about to publish the durable final. They are advisory; the final kind
+`9` remains authoritative.
+
 Every record type consumes a `seq` value and contributes to the transcript. This includes `Status` records even when a
 receiver ignores them in UI.
+
+## Typed durable agent rows
+
+Kind `1201`, `1202`, and `1210` are normal Marmot app events. They are end-to-end encrypted with the group like any
+other inner app event. Clients render them separately from human chat bubbles and MUST NOT treat their `content` as a
+kind `9` chat body.
+
+Kind `1201` agent activity content is JSON:
+
+```json
+{
+  "v": 1,
+  "status": "thinking",
+  "text": "Thinking",
+  "extra": {}
+}
+```
+
+It SHOULD carry a `["status", status]` tag. If it relates to a user prompt or another event, it SHOULD carry an `e` tag.
+
+Kind `1202` agent operation content is JSON:
+
+```json
+{
+  "v": 1,
+  "event_type": "tool_call",
+  "status": "started",
+  "operation_id": "call-123",
+  "run_id": "run-456",
+  "turn_id": "turn-789",
+  "name": "search",
+  "text": "search: glp-1",
+  "preview": "glp-1",
+  "details": {
+    "args": {}
+  },
+  "sequence": 0,
+  "ok": true,
+  "duration_ms": 1200
+}
+```
+
+It MUST carry a non-empty `event_type` such as `tool_call`, `approval`, `hook`, `handoff`, or `delivery`. It SHOULD carry
+`["operation", event_type]`, `["operation-status", status]`, and, when known, `["operation-name", name]` tags. If it
+relates to a user prompt or another event, it SHOULD carry an `e` tag. Tool output or operation results that become part
+of the assistant answer belong in the final kind `9`, not in `1202`.
+
+`details` is optional, bounded metadata for UI/debugging. Senders SHOULD redact secrets, raw credentials, large tool
+inputs, and bulky tool outputs before writing durable operation details, even though the event is encrypted to the group.
+
+Kind `1210` group system content is JSON:
+
+```json
+{
+  "v": 1,
+  "system_type": "member_added",
+  "text": "Member added",
+  "data": {}
+}
+```
+
+It SHOULD carry a `["system", system_type]` tag. Group system rows are durable UI/history facts, not chat messages.
 
 ## Key derivation
 

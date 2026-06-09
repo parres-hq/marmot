@@ -32,6 +32,10 @@ Common app payload kinds include:
 
 - kind `9` for chat text;
 - kind `7` for reactions;
+- kind `1200` for agent text stream starts;
+- kind `1201` for agent activity rows;
+- kind `1202` for agent operation rows;
+- kind `1210` for group system rows;
 - feature-specific app events such as push-notification token events.
 
 The inner app event has an `id` but no `sig`. It MUST NOT include transport routing tags.
