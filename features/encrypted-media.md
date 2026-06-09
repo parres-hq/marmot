@@ -10,7 +10,7 @@ profile images are separate and remain owned by their own group image or avatar 
 ## Surfaces
 
 - App component: `marmot.group.encrypted-media.v1` owns the group media policy.
-- MLS protocol: media key material comes from `SafeExportSecret(0x8008)`.
+- MLS protocol: media key material comes from `MLS-Exporter("marmot", "encrypted-media", 32)`.
 - App payload: kind-9 chat messages carry ordered NIP-92-style `imeta` tags.
 - Blob storage: locators identify upload/fetch backends. Blossom is the first reference locator kind.
 
@@ -47,7 +47,7 @@ A V1 attachment `imeta` tag contains:
 `blurhash` is invalid in `encrypted-media-v1`.
 
 The source epoch is not an `imeta` field. It is the MLS epoch of the application message that carried the media tag.
-Clients need that epoch to select the correct `SafeExportSecret(0x8008)`.
+Clients need that epoch to select the correct media exporter secret.
 
 ## Locator Kinds
 
@@ -77,10 +77,10 @@ media-version change.
 
 ## Key Derivation
 
-`encrypted-media-v1` uses the group component secret for the message source epoch:
+`encrypted-media-v1` uses the group media exporter secret for the message source epoch:
 
 ```text
-media_secret = SafeExportSecret(0x8008, source_epoch)
+media_secret = MLS-Exporter("marmot", "encrypted-media", 32) at source_epoch
 file_key     = HKDF-Expand(media_secret,
                            "encrypted-media-v1" || 0x00 || plaintext_sha256_bytes ||
                            0x00 || media_type || 0x00 || filename ||
@@ -90,7 +90,9 @@ nonce        = random(12)
 ```
 
 `media_secret` is key material. Clients MUST NOT publish, transmit, log, or expose it in diagnostics. Clients SHOULD
-cache source-epoch media secrets only in encrypted local account storage.
+protect cached source-epoch media secrets at rest with confidentiality controls appropriate to the platform. Clients
+SHOULD retain recent epoch media secrets long enough to decrypt delayed media references according to local retention
+policy. If a past-epoch media secret is no longer available, media from that epoch cannot be decrypted.
 
 ## Encryption
 
