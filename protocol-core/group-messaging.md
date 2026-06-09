@@ -79,5 +79,6 @@ replaces retention data so the on-wire behavior is determined by group state.
 
 ## Migration notes
 
-MIP-03 remains the canonical description of current group messages until the v2 draft is adopted. The MIP coverage map
-records where each MIP-03 concern lives in the v2 draft.
+This document is the v2 home for MIP-03 group-message behavior; the [MIP coverage map](../mip-coverage.md) records where
+each MIP-03 concern moved. As with the whole draft, the merged MIP set stays the production reference until v2 is
+adopted (see the [spec README](../README.md)).

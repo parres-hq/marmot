@@ -82,7 +82,9 @@ channel.
 
 The MIP-06 draft payload carries, per group:
 
-- `group_event_key`: the exact 32-byte current-epoch key used for Nostr kind `445` outer encryption;
+- `group_event_key`: the exact 32-byte current-epoch key used for Nostr kind `445` outer encryption. Its derivation is
+  owned by [../transports/nostr.md](../transports/nostr.md) (`MLS-Exporter("marmot", "group-event", 32)`); the pairing
+  payload transfers the already-derived key rather than redefining it;
 - `join_psk`: the current-epoch multi-device join PSK;
 - `group_info`: TLS-serialized MLS GroupInfo with `external_pub`, `ratchet_tree`, `app_data_dictionary`, and any
   multi-device signaling required by the active profile.

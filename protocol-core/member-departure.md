@@ -1,8 +1,12 @@
-# Self-remove
+# Member departure
 
 Status: draft for internal review.
 
-Member departure covers voluntary SelfRemove and ordinary member removal.
+Member departure covers two paths: a member leaving on its own through SelfRemove, and an admin removing another
+member. This document specifies the SelfRemove path in full. Ordinary admin-initiated removal is an admin-gated
+group-state change whose authorization is owned by
+[../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md) ("remove another member"); it otherwise
+follows the normal commit, publish-lifecycle, and convergence rules.
 
 SelfRemove lets a current member leave a group without asking an admin to remove them. It uses the MLS SelfRemove
 proposal from the MLS extensions work and does not define a Marmot custom proposal type.

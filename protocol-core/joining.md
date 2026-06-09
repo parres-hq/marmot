@@ -49,8 +49,11 @@ After unwrapping a Welcome, the receiver:
 10. catches up on outstanding Commits as best it can;
 11. performs a self-update as soon as practical.
 
-The current MIP-era rule recommends doing the post-join self-update before sending application payloads when feasible
-and requires it within 24 hours of joining.
+A new member SHOULD perform the post-join self-update before sending application payloads when feasible, and SHOULD do
+so promptly after joining. This carries forward the MIP-02 post-join rotation guidance; the v2 draft keeps it as a
+`SHOULD` because a member who never rotates is a forward-secrecy weakness for itself, not a correctness break for the
+group. The concrete recommended completion window is operational, not interop-visible, so it lives in
+[../implementation-model.md](../implementation-model.md) rather than here.
 
 ## Failure behavior
 
@@ -64,4 +67,5 @@ A receiver rejects the Welcome if:
 - the MLSMessage is not an MLS Welcome;
 - the referenced KeyPackage is not local to this account/device;
 - any resulting member leaf is missing a valid account identity proof;
-- the resulting group state lacks required Marmot state or unsupported required capabilities are active.
+- the resulting group state lacks required Marmot state;
+- the group requires a capability this client does not support.

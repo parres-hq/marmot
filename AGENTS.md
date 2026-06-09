@@ -10,12 +10,30 @@ directory tree, surface ownership model, and feature/component split live in `la
 Do not put darkmatter module names, database schemas, queue mechanics, local API shapes, or crate-specific test plans in
 normative spec files. Put those in `implementation-model.md`, `docs/marmot-architecture/`, or crate docs.
 
+## Surface map
+
+Each surface has a `README.md` (human orientation) and an `AGENTS.md` (agent operating rules: scope, read order,
+boundary, verification). Start at the surface you are editing; its `AGENTS.md` carries the rules specific to it, so this
+top-level file stays cross-surface only.
+
+| Surface / doc | Start here |
+| --- | --- |
+| Stable invariants: identity, encodings, registries, errors | `foundation/AGENTS.md` |
+| Required group flows and group-state transitions | `protocol-core/AGENTS.md` |
+| Versioned MLS `app_data_dictionary` component bytes | `app-components/AGENTS.md` |
+| How Marmot bytes move over a network (Nostr, QUIC) | `transports/AGENTS.md` |
+| Optional or user-visible flows that span surfaces | `features/AGENTS.md` |
+| Where new text belongs (canonical tree + ownership) | `layout.md` |
+| How to write the spec (placement + detail rules) | `principles.md` |
+| Map from current MIPs to v2 surfaces | `mip-coverage.md` |
+| Non-normative mapping to this repo's code | `implementation-model.md` |
+
 ## Read Order
 
 1. `README.md`
 2. `layout.md`
 3. `principles.md`
-4. The README for the surface you are changing.
+4. The `AGENTS.md` for the surface you are changing (it links its README and the owning docs).
 5. `mip-coverage.md` only when mapping from current MIPs.
 6. `implementation-model.md` only when local implementation guidance matters.
 
@@ -36,7 +54,8 @@ normative spec files. Put those in `implementation-model.md`, `docs/marmot-archi
 
 ## Verification
 
-After editing spec text, review matches from:
+After editing spec text, review matches from these commands (run from the repository root, where the `spec` path
+resolves):
 
 ```sh
 rg -n \

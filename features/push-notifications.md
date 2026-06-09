@@ -8,9 +8,12 @@ Push notification support is optional. A group MUST still work when no client su
 
 ## Surfaces
 
-- App payload: token gossip event kinds `447`, `448`, and `449`.
-- Transport: Nostr push notification rumor kind `446` for the current Nostr binding.
-- State machine: no group-state transition.
+- App payload: token gossip event kinds `447`, `448`, and `449`. These are unsigned inner Marmot app events carried
+  inside ordinary encrypted group messages, like other app payloads.
+- Transport: Nostr push notification rumor kind `446` for the current Nostr binding. Unlike the kinds above, `446` is
+  not an inner group payload: it is the rumor inside a separately gift-wrapped trigger addressed to the notification
+  server's inbox (see "Notification trigger").
+- Group state: no group-state transition.
 - Account transport: notification server relay discovery through kind `10050`.
 
 No persistent group app component is required for push notifications v1.

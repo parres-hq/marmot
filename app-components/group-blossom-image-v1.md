@@ -13,7 +13,9 @@ This component is for encrypted group images stored through Blossom. It is not t
 possible image reference.
 
 A group that wants to reference a plain URL, an IPFS object, an application-owned CDN object, or another blob store
-SHOULD use a different component.
+SHOULD use a different component. In particular, [`marmot.group.avatar-url.v1`](group-avatar-url-v1.md) is the
+plain-`https` alternative. A group MAY carry both components at once; when both are present, the URL avatar wins for
+rendering. [`group-avatar-url-v1.md`](group-avatar-url-v1.md) ("Coexistence and precedence") owns that precedence rule.
 
 ## State
 
@@ -34,8 +36,10 @@ When an image is present:
 - `image_hash` is exactly 32 bytes
 - `image_key` is exactly 32 bytes
 - `image_nonce` is exactly 12 bytes
-- `image_upload_key` is exactly 32 bytes
-- `media_type` is valid UTF-8 and names the encrypted image media type
+- `image_upload_key` is exactly 32 bytes. It is the secret a client uses to authorize the Blossom upload/replace of
+  this blob (the Blossom server-side write credential for the image). It is not the content-decryption key; that is
+  `image_key`.
+- `media_type` is non-empty valid UTF-8, at most 128 bytes, and names the encrypted image media type
 
 The component stores the cryptographic metadata clients need for a Blossom-backed image. It does not define the Blossom
 upload or download request flow, server selection, relay behavior, or CDN behavior.
@@ -65,3 +69,9 @@ Only a current admin MAY commit an image update.
 ## Removal
 
 Removal is equivalent to the empty image state for application rendering.
+
+## Migration
+
+This component carries the `image_hash`, `image_key`, `image_nonce`, and `image_upload_key` fields from the MIP-01
+`marmot_group_data` extension (see [../mip-coverage.md](../mip-coverage.md)), plus `media_type`. v1 is the first
+versioned form; a breaking change gets a new component id and file.

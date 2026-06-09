@@ -11,6 +11,13 @@ Nostr also appears in Marmot identity and app payloads. Those are separate found
 
 This transport document covers only the outer relay-facing Nostr events used to publish, fetch, and route MLS bytes.
 
+## Transport name and version
+
+This binding is `marmot.transport.nostr`, version 1. There is no single on-wire version field; the binding is versioned
+structurally through the event kinds, tag shapes, and the `marmot.transport.nostr.routing.v1` component below. An
+interop-visible change uses the narrowest hook in [README.md](./README.md) ("Versioning") — a new envelope version, a
+new Nostr kind, a new routing component id, or a new required capability — rather than a binding-wide version number.
+
 ## Required group state
 
 A Nostr-routed group requires the `marmot.transport.nostr.routing.v1` app component.
@@ -106,7 +113,7 @@ MUST NOT by itself choose the canonical branch; it only recovers candidate MLS b
 judge.
 
 Trying the staged-but-unmerged local commit's key here is candidate construction, not application. It does not conflict
-with the rule in `../protocol-core/group-state.md` that inbound MUST NOT be applied to canonical group state during
+with the rule in [../protocol-core/group-state.md](../protocol-core/group-state.md) that inbound MUST NOT be applied to canonical group state during
 `PendingPublish` or `Merging`: trial decryption only recovers bytes for convergence to judge, and the inbound message is
 not applied while the group is in those states.
 
@@ -165,9 +172,10 @@ KeyPackage relay discovery uses the account's kind `10002` NIP-65 relay list. Ke
 from, the relays in that list. There is no dedicated KeyPackage relay list, and KeyPackage kind `30443` events do not
 repeat those relays.
 
-Kind `30443` is a Nostr addressable event. For one `(author, kind, d)` slot, clients SHOULD keep the newest valid event
-by `created_at`, with lower event id as the deterministic tie-breaker when timestamps are equal. Across different `d`
-slots, each valid event is a separate candidate KeyPackage. Candidate ranking then follows
+Kind `30443` is a Nostr addressable event. Two events occupy the same slot when their `author`, `kind`, and `d` tag
+value are all equal, comparing the `d` value as exact bytes. For one `(author, kind, d)` slot, clients SHOULD keep the
+newest valid event by `created_at`, with lower event id as the deterministic tie-breaker when timestamps are equal.
+Across different `d` slots, each valid event is a separate candidate KeyPackage. Candidate ranking then follows
 [../foundation/key-packages.md](../foundation/key-packages.md).
 
 When candidates from different `(author, kind, d)` slots are otherwise equivalent after foundation ranking, clients
@@ -214,3 +222,31 @@ A Nostr transport client MUST validate the outer event enough to classify it bef
 
 The peeler validates transport encryption, welcome recipient binding, and MLS bytes. Protocol core validates group
 state.
+
+## Duplicate and replay handling
+
+Relays MAY redeliver the same event, and a client subscribing to several relays will receive the same group message
+more than once. The Nostr event id is transport evidence and MUST NOT be used as the Marmot deduplication id: the id
+used for dedup and replay is defined over the recovered Marmot or MLS bytes (see
+[../foundation/wire-envelopes.md](../foundation/wire-envelopes.md), "Message ids", and
+[../protocol-core/inbound-processing.md](../protocol-core/inbound-processing.md), "Message identity"). A client peels
+the transport envelope, recovers the MLS message, and deduplicates on that stable id before applying state, so relay
+redelivery and cross-relay duplication collapse to a single `duplicate` outcome. Relay `created_at` timestamps, relay
+arrival order, and subscription order are fetch hints only and MUST NOT choose group state.
+
+## Metadata exposed to the transport
+
+Relays see only transport-envelope metadata, never plaintext or MLS secrets:
+
+- kind `445` events expose the group's random `nostr_group_id` via the `h` tag (it is not derived from any member key,
+  so it does not link members across groups), a fresh per-event ephemeral `pubkey` (never the sender's account identity
+  and never reused), and the relay timestamp. The MLS message is encrypted under the per-epoch group-event key.
+- welcomes are NIP-59 gift wraps addressed to the invitee's account public key; the inbox address is the deliberate
+  account-addressing exception ([../foundation/identity.md](../foundation/identity.md)). The gift wrap and seal hide the
+  sender and the inner `kind 444` rumor.
+- kind `30443` KeyPackage events are authored by the account identity, because their purpose is to let others find that
+  account's packages.
+
+A client MUST NOT add tags, content, or `encoding` markers that expose account ids, group ids, message ids, payloads,
+or key material beyond what each event shape above already requires. Local safety policy MAY refuse a relay URL, but it
+MUST NOT rewrite signed group state to do so.

@@ -169,6 +169,7 @@ Assigned component ids are registered in [../foundation/registries.md](../founda
 - [marmot.transport.nostr.routing.v1](./nostr-routing-v1.md)
 - [marmot.group.message-retention.v1](./message-retention-v1.md)
 - [marmot.group.agent-text-stream.quic.v1](./agent-text-stream-quic-v1.md)
+- [marmot.group.avatar-url.v1](./group-avatar-url-v1.md)
 - [marmot.group.encrypted-media.v1](./group-encrypted-media-v1.md)
 
 ## Resolved Direction

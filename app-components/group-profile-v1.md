@@ -53,3 +53,9 @@ The admin check is evaluated against the prior epoch state.
 ## Removal
 
 If the component is not required, removal means the group has no signed Marmot display profile.
+
+## Migration
+
+This component carries the `name` and `description` fields from the MIP-01 `marmot_group_data` extension (see
+[../mip-coverage.md](../mip-coverage.md)). v1 is the first versioned form; a breaking change gets a new component id and
+file, not a version field in the payload.

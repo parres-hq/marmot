@@ -28,7 +28,9 @@ Each inbound message has a message id used for deduplication. A client MUST dedu
 The message id used for deduplication MUST be stable for the carried protocol bytes. It MUST NOT depend on local receive
 order, transport source order, subscription id, or database row id.
 
-Duplicate input MUST receive an `AlreadySeen` disposition and MUST NOT be applied twice.
+Duplicate input maps to the `duplicate` category in [../foundation/errors.md](../foundation/errors.md) and MUST NOT be
+applied twice. (Protocol-core dispositions named in `PascalCase` below, such as `BeyondAnchor`, are convergence outcome
+names; each maps to one of the shared `snake_case` categories in `errors.md`.)
 
 ## Classification
 
@@ -63,13 +65,18 @@ branch.
 
 Input that cannot affect the group MUST receive a stale or dropped disposition. This includes:
 
-- duplicate messages;
-- messages for unknown groups;
-- welcomes addressed to another member;
-- own echoes (`own_echo` per [../foundation/errors.md](../foundation/errors.md));
-- commits older than the retained anchor;
-- MLS application messages older than the retained app-payload window;
-- commits outside the rollback horizon.
+- duplicate messages (`duplicate`);
+- messages for unknown groups (`unknown_group`);
+- welcomes addressed to another member (`wrong_recipient`);
+- own echoes (`own_echo`);
+- commits older than the retained anchor (`BeyondAnchor`, per [retained-history.md](./retained-history.md));
+- MLS application messages older than the retained app-payload window (`app_payload_past_epoch_limit` past epochs, see
+  [convergence.md](./convergence.md));
+- commits that fork from outside the rollback horizon: these are ineligible for branch selection (see
+  [convergence.md](./convergence.md), "Eligibility") and, when their source epoch is also older than the retained
+  anchor, are reported as `BeyondAnchor`.
+
+The category names in parentheses are the shared outcomes in [../foundation/errors.md](../foundation/errors.md).
 
 Stale input MUST NOT mutate canonical group state.
 

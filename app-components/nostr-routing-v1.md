@@ -67,5 +67,13 @@ No member MAY propose or commit a `nostr_group_id` update in v1.
 
 ## Removal
 
-If removed from a group that still exists over another transport, the Nostr transport can no longer route group messages
-from signed group state.
+This component MUST NOT be removed while the group is Nostr-routed and lists it as required in GroupContext
+`app_components`. It MAY be removed only from a group that no longer routes over Nostr. If it is removed from a group
+that still exists over another transport, the Nostr transport can no longer route group messages from signed group
+state.
+
+## Migration
+
+This component carries the `nostr_group_id` and `relays` fields from the MIP-01 `marmot_group_data` extension (see
+[../mip-coverage.md](../mip-coverage.md)). v1 is the first versioned form; a breaking change gets a new component id and
+file.

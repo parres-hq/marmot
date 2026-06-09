@@ -74,3 +74,8 @@ Only a current admin MAY commit an avatar update.
 ## Removal
 
 Removal is equivalent to the empty avatar state for application rendering.
+
+## Migration
+
+This component is new in v2 and has no MIP-era predecessor. v1 is the first versioned form; a breaking change gets a new
+component id and file.

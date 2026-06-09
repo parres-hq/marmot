@@ -72,8 +72,8 @@ say which table stores that material.
 
 Identity says who an account or member is.
 
-Delivery addressing says which delivery coordinates are used for a class of bytes. Examples are a group delivery handle,
-a recipient inbox, a relay list, a topic, or an endpoint set.
+Delivery addressing says which delivery coordinates are used for a class of bytes. Examples are a group delivery
+address, a recipient inbox, a relay list, a topic, or an endpoint set.
 
 Transport says how a network carries, publishes, fetches, wraps, and validates those bytes.
 

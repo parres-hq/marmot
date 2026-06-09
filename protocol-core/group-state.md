@@ -44,18 +44,27 @@ Unrecoverable
   -> Stable              state was repaired, restored, or replaced by a verified join
 ```
 
+Fork detection runs only from `Stable`, against settled canonical state. There is no `Merging -> Recovering` edge: a
+competing branch observed while the client is applying its own confirmed commit is retained, the merge completes to
+`Stable`, and fork detection then runs from `Stable`. `Recovering` re-entry is implicit: convergence-relevant input
+that arrives while the group is already in `Recovering` is folded into the same recovery pass, and the group stays in
+`Recovering` until a branch is selected and applied (`-> Stable`) or no safe branch exists (`-> Unrecoverable`).
+
 A client MUST reject a local group-state commit while the group is in `PendingPublish`, `Merging`, `Recovering`, or
 `Unrecoverable`.
 
-Inbound group messages MAY be retained during `PendingPublish`, `Merging`, `Recovering`, or `Unrecoverable`. They MUST
-NOT be applied to canonical group state during `PendingPublish` or `Merging`.
+Inbound group messages MAY be retained in any non-`Stable` state. Whether retained inbound may change canonical group
+state depends on the state:
+
+- during `PendingPublish` and `Merging`, retained inbound MUST NOT be applied to canonical group state;
+- during `Recovering`, retained inbound is replayed only as candidate material for convergence; canonical group state
+  changes only when a selected branch is applied (see below);
+- during `Unrecoverable`, retained inbound MUST NOT be applied to canonical group state until a verified repair path
+  restores, repairs, or replaces the local group state.
 
 While a group is in `Recovering`, a client MAY process or reprocess retained input to build candidate branches, score
 them, and select a canonical branch. That processing MUST NOT release outbound work or emit delivered app payloads until
 the selected branch has been applied and the lifecycle returns to `Stable`.
-
-While a group is in `Unrecoverable`, a client MUST NOT process retained input for canonical application until a
-verified repair path restores, repairs, or replaces the local group state.
 
 ## Unrecoverable cases
 
@@ -85,6 +94,22 @@ Convergence has a separate derived status:
 - `Blocked`: candidate processing cannot safely continue without a repair path or missing retained material.
 
 Convergence status is derived from stored input and policy. It is not a claim made by the transport.
+
+The lifecycle state is authoritative; convergence status is a derived view of how convergence is progressing within it.
+The legal combinations are:
+
+| Convergence status | Lifecycle states it can appear in | Notes                                                                 |
+| ------------------ | --------------------------------- | --------------------------------------------------------------------- |
+| `Syncing`          | `Stable`, `Recovering`            | input still arriving or quiescence not elapsed                        |
+| `Resolving`        | `Stable`, `Recovering`            | quiescence elapsed, work outstanding (e.g. a child commit's parent)   |
+| `Settled`          | `Stable`                          | fixed point reached and any selected branch applied                   |
+| `Blocked`          | `Recovering`, `Unrecoverable`     | needs a repair path or missing retained material                      |
+
+Two couplings follow from this table. A group leaves `Recovering` for `Stable` only after convergence reaches
+`Settled` (a selected branch was applied). A `Blocked` convergence status that cannot be cleared by retained material
+is the `Unrecoverable` condition: when recovery has no safe branch and no repair path, the lifecycle moves to
+`Unrecoverable`. `PendingPublish` and `Merging` are local-publish states, not convergence passes, so convergence status
+is not meaningful while the group is in them.
 
 ## Local actions during convergence
 

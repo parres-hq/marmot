@@ -39,9 +39,12 @@ client enters `Unrecoverable` until it has a verified repair path").
 
 ## App-payload retention
 
-MLS application messages have their own retained decryption window for app payloads.
+MLS application messages have their own retained decryption window for app payloads. The width of that window is the
+signed convergence-policy field `app_payload_past_epoch_limit` (the number of past MLS epochs that may still produce
+delivered app payloads or app-payload witnesses; see [convergence.md](./convergence.md)).
 
-An MLS application message that is older than the retained app-payload window MUST expire.
+An MLS application message that is older than the retained app-payload window (`app_payload_past_epoch_limit` past
+epochs) MUST expire.
 
 An MLS application message for a future candidate epoch MAY remain deferred until convergence selects a branch that can
 decrypt its Marmot app payload or until the message expires.

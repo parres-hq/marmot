@@ -48,8 +48,25 @@ A convergence pass uses the active policy from the retained parent state being u
 score itself with policy values introduced by commits on that same branch. Policy changes apply after the
 policy-changing commit becomes canonical.
 
-Groups that do not yet carry explicit policy use the default policy for their group profile. A client MUST treat that
-default as the active policy and persist it once the group records explicit policy bytes.
+Groups that do not yet carry explicit policy bytes use the default Marmot convergence policy below ("group profile"
+here means a group's chosen feature set, not the `marmot.group.profile.v1` component). A client MUST treat the default
+as the active policy and persist it once the group records explicit policy bytes.
+
+The default Marmot convergence policy is:
+
+| Field                               | Default |
+| ----------------------------------- | ------- |
+| `policy_version`                    | `1`     |
+| `max_rewind_commits`                | `5`     |
+| `app_payload_past_epoch_limit`      | `5`     |
+| `settlement_quiescence_ms`          | `1000`  |
+| `witness_quorum_senders_per_epoch`  | `2`     |
+| `witness_quorum_epochs`             | `1`     |
+| `max_witness_override_depth`        | `1`     |
+
+These satisfy the bound `max_witness_override_depth <= max_rewind_commits`. A group profile that needs different values
+MUST record them as explicit, signed policy bytes (a policy change is a required-capability change, per the rules
+above).
 
 ## Candidate branches
 
@@ -65,7 +82,10 @@ Each candidate branch has:
 
 - `fork_epoch`: the epoch where the branch diverged from retained canonical state;
 - `tip_epoch`: the epoch reached after replaying the branch's valid commits;
-- `tip_digest`: a digest of the tip commit bytes;
+- `tip_digest`: `SHA-256` of the serialized MLS message bytes of the branch's tip commit (the same Commit
+  `MLSMessage` bytes the branch replayed to reach `tip_epoch`). It is exactly 32 bytes. For a branch whose only commit
+  is its tip, `tip_digest` is byte-for-byte the same value as that commit's `commit_digest` in "Same-epoch races"
+  below; both are `SHA-256` over the one Commit's MLS bytes.
 - `raw_commit_depth`: the number of valid commits from `fork_epoch` to `tip_epoch`;
 - app-payload witnesses that decrypt on candidate states in the branch.
 
@@ -100,19 +120,17 @@ epoch_witness_score =
       witness_quorum_senders_per_epoch)
 ```
 
-For the candidate branch as a whole:
+For the candidate branch as a whole, sum that per-epoch score:
 
 ```text
 app_witness_score =
-  sum over branch epochs:
-    min(distinct_valid_app_senders_at_epoch,
-        witness_quorum_senders_per_epoch)
+  sum over branch epochs of epoch_witness_score
 ```
 
-A branch meets witness quorum when at least `witness_quorum_senders_per_epoch` distinct senders witnessed at least
-`witness_quorum_epochs` branch epochs.
+`witness_quorum_met` is the boolean used below. It is true when at least `witness_quorum_senders_per_epoch` distinct
+senders witnessed each of at least `witness_quorum_epochs` branch epochs, and false otherwise.
 
-When a branch meets witness quorum, the branch receives a bounded depth boost:
+When `witness_quorum_met` is true, the branch receives a bounded depth boost:
 
 ```text
 effective_commit_depth =

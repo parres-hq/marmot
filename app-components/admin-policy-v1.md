@@ -78,3 +78,9 @@ SelfRemove is special:
 
 If the component is absent, components and operations that require a current admin are invalid unless the active
 application profile defines another authorization component.
+
+## Migration
+
+This component carries the `admin_pubkeys` field from the MIP-01 `marmot_group_data` extension (see
+[../mip-coverage.md](../mip-coverage.md)). v1 is the first versioned form; a breaking change gets a new component id and
+file.

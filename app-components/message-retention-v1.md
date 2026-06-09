@@ -38,8 +38,9 @@ MarmotMessageRetentionV1 MarmotMessageRetentionUpdateV1;
 
 ## Validation
 
-A retention state is valid if `disappearing_message_secs` is no greater than the maximum defined by the application
-profile.
+Any `disappearing_message_secs` value in the `uint64` range is a valid retention state. v1 defines no protocol-level
+maximum. An application MAY refuse to enable a duration its UI considers unreasonable, but that local cap is not signed
+group state and MUST NOT invalidate otherwise-valid retention state received from the group.
 
 This component governs application plaintext retention. It MUST NOT force deletion of MLS state, retained anchors,
 pending message records, publish obligations, or other protocol data before the protocol retention rules allow that data
@@ -54,3 +55,9 @@ Only a current admin MAY commit a message-retention update.
 ## Removal
 
 Removal is equivalent to `disappearing_message_secs = 0`.
+
+## Migration
+
+This component carries the `disappearing_message_secs` field from the MIP-01 `marmot_group_data` extension (see
+[../mip-coverage.md](../mip-coverage.md)). v1 is the first versioned form; a breaking change gets a new component id and
+file.

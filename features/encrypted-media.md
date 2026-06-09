@@ -86,7 +86,6 @@ file_key     = HKDF-Expand(media_secret,
                            0x00 || media_type || 0x00 || filename ||
                            0x00 || "key",
                            32)
-nonce        = random(12)
 ```
 
 `media_secret` is key material. Clients MUST NOT publish, transmit, log, or expose it in diagnostics. Clients SHOULD
@@ -99,7 +98,8 @@ policy. If a past-epoch media secret is no longer available, media from that epo
 `encrypted-media-v1` uses ChaCha20-Poly1305.
 
 ```text
-aad = "encrypted-media-v1" || 0x00 || plaintext_sha256_bytes || 0x00 || media_type || 0x00 || filename
+nonce             = random(12)
+aad               = "encrypted-media-v1" || 0x00 || plaintext_sha256_bytes || 0x00 || media_type || 0x00 || filename
 encrypted_content = ChaCha20-Poly1305.encrypt(file_key, nonce, plaintext, aad)
 ```
 

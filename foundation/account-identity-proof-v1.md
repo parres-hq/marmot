@@ -30,9 +30,14 @@ opaque mls_signature_public_key[mls_signature_public_key_len]
 opaque schnorr_signature[64]
 ```
 
-Integers are unsigned big-endian integers. `account_identity` is the raw 32-byte x-only secp256k1 account public key
-also carried as the MLS `BasicCredential` identity. `mls_signature_public_key` is the exact serialized MLS leaf
-signature public key bytes from the same LeafNode.
+This structure does not use the Marmot binary profile's QUIC variable-length prefixes
+([canonical-encoding.md](./canonical-encoding.md)): all integers are fixed-width unsigned big-endian, every
+`opaque name[N]` is exactly N bytes with no prefix, and the one length-prefixed field uses a fixed `uint16`
+(`mls_signature_public_key_len`), not a QUIC varint. `account_identity` is the raw 32-byte x-only secp256k1 account
+public key also carried as the MLS `BasicCredential` identity. `mls_signature_public_key` is the exact serialized MLS
+leaf signature public key bytes from the same LeafNode; `mls_signature_public_key_len` MUST equal the signature public
+key length for `mls_signature_scheme` (32 bytes for Ed25519 under the required ciphersuite `0x0001`), and the field
+exists only as an explicit length boundary.
 
 ## Signing input
 
@@ -51,7 +56,11 @@ uint16 mls_signature_public_key_len
 opaque mls_signature_public_key[mls_signature_public_key_len]
 ```
 
-The signature is a 64-byte BIP-340 Schnorr signature over that digest, verified with `account_identity`.
+The signature is a 64-byte BIP-340 Schnorr signature over that digest, verified with `account_identity`. The 32-byte
+`SHA-256` digest above is itself the BIP-340 message: the account key signs and a verifier checks it as a prehashed
+32-byte value. Marmot reuses only the account key's BIP-340 scheme here; it does NOT apply the Nostr canonical
+event-id construction (`[0, pubkey, created_at, kind, tags, content]`) to build this preimage. This proof is not a Nostr
+event and is never published.
 
 The signing input is a standalone, domain-separated preimage. It is not the extension payload re-serialized. It begins
 with the fixed 32-byte ASCII label `marmot.account-identity-proof.v1` (no length prefix) followed by a `0x00` separator,

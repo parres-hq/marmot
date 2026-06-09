@@ -15,11 +15,13 @@ spec/
   principles.md
   mip-coverage.md
   foundation/
+    README.md
     identity.md
+    account-identity-proof-v1.md
     key-packages.md
     canonical-encoding.md
-    wire-envelopes.md
     application-messages.md
+    wire-envelopes.md
     mls-protocol.md
     errors.md
     registries.md
@@ -42,9 +44,12 @@ spec/
     nostr-routing-v1.md
     message-retention-v1.md
     agent-text-stream-quic-v1.md
+    group-avatar-url-v1.md
+    group-encrypted-media-v1.md
   transports/
     README.md
     nostr.md
+    quic.md
   features/
     README.md
     encrypted-media.md
@@ -53,6 +58,10 @@ spec/
     agent-text-streams-quic.md
   implementation-model.md
 ```
+
+This tree is the canonical file list. When you add, rename, or remove a doc, update this tree in the same change, and
+update the matching index in the surface's `README.md` (and `foundation/registries.md` when an id changes). The subdir
+`AGENTS.md` files carry this as a verification step.
 
 ## Foundation
 
@@ -96,7 +105,8 @@ GroupContext `app_data_dictionary`.
 Each component document owns:
 
 - component id
-- component name and version
+- component name (its `v1` suffix records the major version; the component id is the version, so there is no separate
+  version field in the payload)
 - payload schema
 - update schema
 - canonical encoding

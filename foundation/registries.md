@@ -51,6 +51,9 @@ in the component registry rather than as extension `0x000a`.
 | `0xf2f0`       | `marmot.multi-device.v1`            | [doc](../features/multi-device.md)                         |
 | `0xf2f1`       | `marmot.account-identity-proof.v1`  | [doc](./account-identity-proof-v1.md)                       |
 
+`0xf2ef` and `0xf2f0` are reserved for the branch-draft multi-device feature (MIP-06) and are not yet implemented;
+confirm the values when that feature lands. `0xf2f1` is implemented and required on every Marmot member LeafNode.
+
 ## Marmot custom proposal types
 
 No Marmot-owned custom MLS proposal type is assigned in this draft yet.
@@ -59,24 +62,28 @@ No Marmot-owned custom MLS proposal type is assigned in this draft yet.
 
 ## Nostr event kinds used by Marmot
 
-These event kinds are part of the current Nostr binding or MIP-era specs. Transport and feature docs own their exact
-event shapes.
+These are the event kinds Marmot allocates or assigns meaning to. The owning document defines each exact event shape;
+this table only names the value and points at the owner.
 
-| Kind    | Name                                | Layer                               |
-| ------- | ----------------------------------- | ----------------------------------- |
-| `444`   | Marmot welcome rumor                | Nostr welcome transport             |
-| `445`   | Marmot group message                | Nostr group transport               |
-| `446`   | Push notification rumor             | Push notification transport         |
-| `447`   | Push token request                  | Marmot app payload                  |
-| `448`   | Push token list response            | Marmot app payload                  |
-| `449`   | Push token removal                  | Marmot app payload                  |
-| `450`   | Multi-device identity proof event   | Local signing template, not relayed |
-| `1200`  | Agent text stream start             | Marmot app payload                  |
-| `1201`  | Agent activity                      | Marmot app payload                  |
-| `1202`  | Agent operation event                    | Marmot app payload                  |
-| `1210`  | Group system event                  | Marmot app payload                  |
-| `10050` | Push notification server relay list | Nostr account transport             |
-| `30443` | Marmot KeyPackage event             | Nostr KeyPackage publication        |
+This table lists Marmot-allocated kinds only. Standard Nostr kinds that the Nostr binding reuses unchanged — kind `1059`
+(NIP-59 gift wrap), kind `13` (NIP-59 seal), and kind `10002` (NIP-65 relay list) — are not Marmot-owned and are
+defined in [../transports/nostr.md](../transports/nostr.md), not here.
+
+| Kind    | Name                                | Layer                               | Document                                                |
+| ------- | ----------------------------------- | ----------------------------------- | ------------------------------------------------------- |
+| `444`   | Marmot welcome rumor                | Nostr welcome transport             | [nostr.md](../transports/nostr.md)                      |
+| `445`   | Marmot group message                | Nostr group transport               | [nostr.md](../transports/nostr.md)                      |
+| `446`   | Push notification rumor             | Push notification transport         | [push-notifications.md](../features/push-notifications.md) |
+| `447`   | Push token request                  | Marmot app payload                  | [push-notifications.md](../features/push-notifications.md) |
+| `448`   | Push token list response            | Marmot app payload                  | [push-notifications.md](../features/push-notifications.md) |
+| `449`   | Push token removal                  | Marmot app payload                  | [push-notifications.md](../features/push-notifications.md) |
+| `450`   | Multi-device identity proof event   | Local signing template, not relayed | [multi-device.md](../features/multi-device.md)          |
+| `1200`  | Agent text stream start             | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
+| `1201`  | Agent activity                      | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
+| `1202`  | Agent operation event               | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
+| `1210`  | Group system event                  | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
+| `10050` | Push notification server relay list | Nostr account transport             | [push-notifications.md](../features/push-notifications.md) |
+| `30443` | Marmot KeyPackage event             | Nostr KeyPackage publication        | [nostr.md](../transports/nostr.md)                      |
 
 The experimental agent text stream QUIC feature claims kind `1200` for durable stream start app events, kind `1201` for
 agent activity rows, and kind `1202` for agent operation rows. Live stream chunks are transient QUIC records. Future durable
@@ -95,11 +102,12 @@ is the `context`, and the third is the output length in bytes.
 The `label` and `context` pair is the top-level domain separator. Owning documents define any additional key context
 used below the exporter output.
 
-| Label      | Context                    | Length   | Consumer                            |
-| ---------- | -------------------------- | -------- | ----------------------------------- |
-| `"marmot"` | `"group-event"`            | `32`     | kind `445` outer encryption key     |
-| `"marmot"` | `"agent-text-stream-quic"` | `32`     | Agent text stream QUIC record crypto |
-| `"marmot"` | `join_psk_id`              | `KDF.Nh` | multi-device external PSK material  |
+| Label      | Context                    | Length   | Consumer                              |
+| ---------- | -------------------------- | -------- | ------------------------------------- |
+| `"marmot"` | `"group-event"`            | `32`     | kind `445` outer encryption key       |
+| `"marmot"` | `"encrypted-media"`        | `32`     | encrypted-media per-file key schedule |
+| `"marmot"` | `"agent-text-stream-quic"` | `32`     | agent text stream QUIC record crypto  |
+| `"marmot"` | `join_psk_id`              | `KDF.Nh` | multi-device external PSK material    |
 
 Fixed `32`-byte outputs are used where the owning document feeds a 32-byte AEAD key or feature key schedule.
 `KDF.Nh` is used for the multi-device join PSK because that output is external PSK material for the MLS ciphersuite KDF.

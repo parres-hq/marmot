@@ -11,7 +11,8 @@ component docs.
 
 - Foundation MLS protocol and capability negotiation.
 - Protocol-core publish lifecycle and convergence.
-- App components for profile, admin policy, routing, image, and message retention state.
+- App components for profile, avatar, admin policy, routing, image, encrypted-media policy, and message-retention
+  state (see [../app-components/README.md](../app-components/README.md) for the full set).
 - The active transport binding, if the group needs transport-owned routing state.
 - Canonical encoding for every component state and update payload.
 
@@ -40,9 +41,17 @@ If the group has a human-visible profile, creation includes `marmot.group.profil
 
 If the group has admin-gated settings or membership changes, creation includes `marmot.group.admin-policy.v1`.
 
-If the group has a Blossom-backed group image, creation includes `marmot.group.blossom.image.v1`.
+If the group has a Blossom-backed group image, creation includes `marmot.group.blossom.image.v1`; a group that
+references an avatar by plain URL instead includes `marmot.group.avatar-url.v1`.
 
 If the group has disappearing messages, creation includes `marmot.group.message-retention.v1`.
+
+If the application profile supports encrypted media, creation includes `marmot.group.encrypted-media.v1`. This is an
+application-profile choice: the encrypted-media component is required for new app groups created under a media-capable
+profile, not by the bare protocol. A non-media group MAY omit it.
+
+The component documents in [../app-components/](../app-components/) own the exact bytes, authorization, and removal
+rules for each component named here.
 
 ## Updates
 
@@ -66,8 +75,11 @@ doc owns the detailed leave flow.
 
 ## Message retention
 
-When message retention is enabled, the transport binding applies its own retention hint, if it has one. The timestamp or
-duration is derived from the inner app payload timestamp plus the retention duration.
+When message retention is enabled, the transport binding applies its own retention hint, if it has one. The expiry
+timestamp is the sender's inner app-payload `created_at` plus the retention duration. Because the base timestamp is the
+sender's own `created_at`, expiry is advisory and inherits the trust placed in the MLS-authenticated sender; it is not
+a deletion guarantee against a hostile sender. The owning component
+[../app-components/message-retention-v1.md](../app-components/message-retention-v1.md) states this caveat in full.
 
 Retention is group state, not a sender preference. A sender-supplied expiration tag is replaced or removed according to
 the active retention component.

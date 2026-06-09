@@ -8,6 +8,12 @@ Foundation docs own identity, app payload shape, MLS choices, and shared wire ru
 convergence. App components own signed group routing state. A transport doc owns the outer envelope, delivery addresses,
 publish and fetch rules, and transport-specific validation.
 
+## Current transports
+
+- [nostr.md](./nostr.md) - the primary binding: MLS group messages, welcomes, and KeyPackages over Nostr relays.
+- [quic.md](./quic.md) - experimental raw QUIC binding for transient agent text stream previews (companion to
+  [../features/agent-text-streams-quic.md](../features/agent-text-streams-quic.md)).
+
 ## Transport document checklist
 
 Each transport document MUST define:

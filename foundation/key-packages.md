@@ -51,6 +51,11 @@ Marmot KeyPackages advertise:
 - the upstream `app_data_update` proposal type (`0x0008`);
 - the `self_remove` proposal type (`0x000a`).
 
+`last_resort` and `self_remove` both show `0x000a`; this is not a collision, because one is an extension type and the
+other is a proposal type, and MLS values are unique only within their own registry (see
+[registries.md](./registries.md)). Each entry above is namespaced by its kind — extension type, proposal type, or the
+`app_components` component id.
+
 A member can join only if its KeyPackage advertises support for every MLS primitive and app component the group
 requires.
 
@@ -59,8 +64,9 @@ requires.
 An inviter MAY see several current KeyPackages for one account. It MUST reject malformed or incompatible candidates
 before selecting one.
 
-The MIP-era selection policy prefers valid non-`last_resort` candidates when available, then prefers the freshest valid
-candidate. A transport binding owns any transport-specific replacement, address, and tie-breaking rules.
+The selection policy carried forward from the MIP-era documents (the prior Marmot Improvement Proposals; see
+[../mip-coverage.md](../mip-coverage.md)) prefers valid non-`last_resort` candidates when available, then prefers the
+freshest valid candidate. A transport binding owns any transport-specific replacement, address, and tie-breaking rules.
 
 Before ranking candidates, an inviter MUST perform the validation listed below and any additional checks required by the
 active transport binding. Candidate freshness is only a KeyPackage selection input. It MUST NOT create group state and

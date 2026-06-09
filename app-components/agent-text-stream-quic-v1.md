@@ -1,6 +1,6 @@
 # marmot.group.agent-text-stream.quic.v1
 
-Status: experimental draft.
+Status: experimental draft for internal review.
 
 ## Registry
 
@@ -13,6 +13,11 @@ Status: experimental draft.
 ## State
 
 This component records the group-level policy for raw QUIC agent text streams.
+
+Embedding the transport name (`quic`) in the component id and name is a deliberate exception to the usual layering: the
+bytes this component owns are generic group policy (role masks and frame/replay/padding caps), but the role capabilities
+and live-stream behavior it gates are specific to the raw QUIC binding, so a non-QUIC stream profile (WebTransport,
+HTTP/3, WebSocket) gets its own component id and file rather than reusing this one.
 
 It does not store stream transcripts, endpoint candidates, relay URLs, or app-event kinds. Live stream records stay
 transient, and final content is carried by normal Marmot app payloads.
@@ -62,7 +67,8 @@ The first application profile uses these maximums:
 - `padding_bucket_bytes <= 4096`.
 
 This component does not store QUIC endpoints or relay URLs. Endpoint discovery, relay discovery, relay authentication,
-and direct-path probing belong in the raw QUIC transport binding. Per-stream candidates are carried by the start payload.
+and direct-path probing belong in the raw QUIC transport binding ([../transports/quic.md](../transports/quic.md)).
+Per-stream candidates are carried by the start payload.
 
 ## Update
 

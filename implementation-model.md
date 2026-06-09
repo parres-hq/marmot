@@ -56,6 +56,14 @@ The API names can vary. The categories should map to the Marmot classification s
 recipients, unknown groups, already-applied commits, stale epochs, invalid encodings, authorization failures, and
 missing history.
 
+## Post-join rotation window
+
+`protocol-core/joining.md` requires a new member to perform a post-join self-update as a `SHOULD`, before sending
+application payloads when feasible. The concrete operational target carried forward from MIP-02 is to complete that
+self-update within 24 hours of joining. This window is local operational guidance — it is not interop-visible and no
+other client can observe or enforce it — so it lives here rather than in the protocol document. An implementation may
+schedule the rotation sooner.
+
 ## Diagnostics
 
 Logs, errors, metrics, and traces should avoid account ids, group ids, message ids, relay URLs, pubkeys, payloads,

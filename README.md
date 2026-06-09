@@ -14,7 +14,8 @@ user-visible flows and point to the surfaces they touch.
 
 Marmot is a protocol for end-to-end encrypted group messaging. It uses Nostr public keys for identity, Nostr
 event-shaped app payloads inside MLS, and MLS as the continuous group key agreement layer. Those three choices are the
-current protocol invariants.
+core protocol invariants; [principles.md](./principles.md) lists the full set, including redundant delivery and metadata
+minimization.
 
 Transport beyond that stays agnostic. Marmot clients currently move messages over Nostr relays, but the identity,
 content, and key agreement layers do not depend on Nostr relays as the only possible transport.
@@ -41,8 +42,17 @@ For review, focus on these questions:
 ## Draft Map
 
 The canonical directory tree and per-surface ownership rules live in [layout.md](./layout.md). Start there when deciding
-where new protocol text belongs. Use [mip-coverage.md](./mip-coverage.md) only as a historical map from current MIPs to
-the v2 surfaces.
+where new protocol text belongs. The writing rules behind that split live in [principles.md](./principles.md). Use
+[mip-coverage.md](./mip-coverage.md) only as a historical map from current MIPs to the v2 surfaces, and
+[implementation-model.md](./implementation-model.md) for the non-normative mapping to this repository's code.
+
+The surfaces, each with its own section README (human orientation) and `AGENTS.md` (agent operating rules):
+
+- [foundation/](./foundation/README.md) - stable Marmot invariants: identity, encodings, registries, errors.
+- [protocol-core/](./protocol-core/README.md) - required group flows and group-state transitions.
+- [app-components/](./app-components/README.md) - versioned MLS `app_data_dictionary` component bytes.
+- [transports/](./transports/README.md) - how Marmot bytes move over a network (Nostr, QUIC).
+- [features/](./features/README.md) - optional or user-visible flows that span surfaces.
 
 ## Working Rules
 
