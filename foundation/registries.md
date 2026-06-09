@@ -19,6 +19,7 @@ Marmot app components use MLS private-use component ids.
 | `0x8005`     | `marmot.group.message-retention.v1`      | [doc](../app-components/message-retention-v1.md)      |
 | `0x8006`     | `marmot.group.agent-text-stream.quic.v1` | [doc](../app-components/agent-text-stream-quic-v1.md) |
 | `0x8007`     | `marmot.group.avatar-url.v1`             | [doc](../app-components/group-avatar-url-v1.md)       |
+| `0x8008`     | `marmot.group.encrypted-media.v1`        | [doc](../app-components/group-encrypted-media-v1.md)  |
 
 ## Upstream MLS extension draft ids
 
@@ -91,7 +92,6 @@ used below the exporter output.
 | Label      | Context                    | Length   | Consumer                            |
 | ---------- | -------------------------- | -------- | ----------------------------------- |
 | `"marmot"` | `"group-event"`            | `32`     | kind `445` outer encryption key     |
-| `"marmot"` | `"encrypted-media"`        | `32`     | MIP-04 media key input              |
 | `"marmot"` | `"agent-text-stream-quic"` | `32`     | Agent text stream QUIC record crypto |
 | `"marmot"` | `join_psk_id`              | `KDF.Nh` | multi-device external PSK material  |
 

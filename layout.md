@@ -122,12 +122,9 @@ A feature document SHOULD mostly reference foundation, protocol-core, and compon
 their rules.
 
 Feature documents stay separate from app components. The feature doc explains the flow. The app component doc owns the
-bytes.
-
-MIP-04 encrypted media is the current exception. It is message media, not persistent group state, and
-[features/encrypted-media.md](./features/encrypted-media.md) owns its v1 media reference, key-derivation, and AEAD bytes
-until the draft assigns exact app-payload schemas or a later app component. Do not model new feature documents on this
-exception without naming the exception explicitly.
+component bytes. Encrypted media follows that split: [app-components/group-encrypted-media-v1.md](./app-components/group-encrypted-media-v1.md)
+owns group policy bytes, while [features/encrypted-media.md](./features/encrypted-media.md) owns message attachment
+format, key derivation, and AEAD behavior.
 
 When a feature has an interop-visible breaking change, the owning document MUST name the new version in a capability,
 component id, proposal id, event kind, or feature document. Git history is useful, but it is not a version-negotiation

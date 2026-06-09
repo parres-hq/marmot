@@ -27,8 +27,9 @@ work and is tracked here because it affects the likely v2 design.
   - Member departure: [protocol-core/member-departure.md](./protocol-core/member-departure.md)
   - Transport binding: [transports/nostr.md](./transports/nostr.md)
   - App payloads: [foundation/application-messages.md](./foundation/application-messages.md)
-- MIP-04, Encrypted Media: Review and optional.
+- Encrypted Media V1: Review and required for new app groups.
   - Feature flow: [features/encrypted-media.md](./features/encrypted-media.md)
+  - App component: [app-components/group-encrypted-media-v1.md](./app-components/group-encrypted-media-v1.md)
 - MIP-05, Push Notifications: Draft and optional.
   - Feature flow: [features/push-notifications.md](./features/push-notifications.md)
 - MIP-06, Multi-Device Support: branch draft and optional.

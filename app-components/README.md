@@ -169,6 +169,7 @@ Assigned component ids are registered in [../foundation/registries.md](../founda
 - [marmot.transport.nostr.routing.v1](./nostr-routing-v1.md)
 - [marmot.group.message-retention.v1](./message-retention-v1.md)
 - [marmot.group.agent-text-stream.quic.v1](./agent-text-stream-quic-v1.md)
+- [marmot.group.encrypted-media.v1](./group-encrypted-media-v1.md)
 
 ## Resolved Direction
 
@@ -179,7 +180,5 @@ Assigned component ids are registered in [../foundation/registries.md](../founda
 - `marmot.transport.nostr.routing.v1` is required for Nostr-routed Marmot groups.
 - Nostr relays in `marmot.transport.nostr.routing.v1` are canonical signed group state, not local hints.
 - AppDataUpdate proposals MAY be inline or standalone. Inline is the default path when the committer is authorized.
-- MIP-04 encrypted media is an acknowledged current exception to the usual feature/component split. It is message media,
-  not persistent group state, and its v1 reference, key-derivation, and AEAD bytes stay in
-  [encrypted-media.md](../features/encrypted-media.md) until the draft assigns exact app-payload schemas or a later
-  component version.
+- `marmot.group.encrypted-media.v1` owns the group media policy. Individual media attachments remain message metadata
+  and are described in [encrypted-media.md](../features/encrypted-media.md).
