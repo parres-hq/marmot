@@ -14,15 +14,15 @@ This document describes the member join flow built around MLS Welcomes.
 
 ## Behavior
 
-An inviter adds a new member by committing an MLS Add that uses the invitee's KeyPackage. The resulting group-state
-change MUST be published before the inviter sends the Welcome.
+For Add commits after initial group creation, the inviter MUST wait for the Commit publish obligation to succeed
+before sending the Welcome. Sending the Welcome first can activate the new member at an epoch existing members
+have not seen yet.
 
-For member additions after initial group creation, the inviter MUST wait for the Commit publish obligation to succeed
-before sending the Welcome. Sending the Welcome first can activate the new member at an epoch existing members have not
-seen yet.
-
-Initial one-member group creation is the exception: there are no existing peers that can be forked by a missing creation
-Commit.
+Founding group creation is the exception, including both one-member creation and creation with initial invitees. There
+are no existing peers that can be forked by a missing creation Commit. A one-member creation has an empty creation
+publish obligation. A founding creation with initial invitees satisfies its creation publish obligation through the
+Welcome deliveries defined in [publish-lifecycle.md](./publish-lifecycle.md), and does not require a separate
+group-message publish of the founding Add commit before those Welcomes are sent.
 
 ## Delivery
 
