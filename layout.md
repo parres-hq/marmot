@@ -12,6 +12,7 @@ MIPs remain useful history. They SHOULD point to the stable docs they changed.
 ```text
 spec/
   README.md
+  layout.md
   principles.md
   mip-coverage.md
   foundation/
