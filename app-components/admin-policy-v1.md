@@ -68,6 +68,11 @@ In v1, the following operations require a current admin to commit:
 - remove another member
 - change required Marmot components
 
+For Welcome-based joins, the receiver applies the same invite authorization check at join time. The receiver identifies
+the inviter from the MLS GroupInfo signer leaf and rejects the Welcome unless that leaf's MLS-authenticated Marmot
+account identity is in this admin set. If this component is absent, the receiver rejects the Welcome unless the active
+application profile defines another membership-add authorization component.
+
 SelfRemove is special:
 
 - a non-admin MAY self-remove

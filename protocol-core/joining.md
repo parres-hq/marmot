@@ -42,12 +42,15 @@ After unwrapping a Welcome, the receiver:
 3. decodes the transport-carried content as an MLSMessage with `mls_welcome` wire format;
 4. processes the MLS Welcome;
 5. validates every resulting member identity and account identity proof;
-6. validates the resulting Marmot group state and required components;
-7. stores the group state and routing information;
-8. rotates the consumed published KeyPackage when appropriate;
-9. deletes consumed `init_key` material according to the KeyPackage lifecycle rules;
-10. catches up on outstanding Commits as best it can;
-11. performs a self-update as soon as practical.
+6. identifies the Welcome author from the MLS GroupInfo signer leaf and validates that author's Marmot account identity;
+7. validates the resulting Marmot group state and required components;
+8. rejects the Welcome unless the author is authorized to add this receiver under the resulting group state's active
+   membership-add authorization rule;
+9. stores the group state and routing information;
+10. rotates the consumed published KeyPackage when appropriate;
+11. deletes consumed `init_key` material according to the KeyPackage lifecycle rules;
+12. catches up on outstanding Commits as best it can;
+13. performs a self-update as soon as practical.
 
 A new member SHOULD perform the post-join self-update before sending application payloads when feasible, and SHOULD do
 so promptly after joining. This carries forward the MIP-02 post-join rotation guidance; the v2 draft keeps it as a
@@ -67,5 +70,8 @@ A receiver rejects the Welcome if:
 - the MLSMessage is not an MLS Welcome;
 - the referenced KeyPackage is not local to this account/device;
 - any resulting member leaf is missing a valid account identity proof;
+- the Welcome author cannot be identified as a member leaf in the resulting group;
 - the resulting group state lacks required Marmot state;
+- the Welcome author's MLS-authenticated account identity is not authorized to add this receiver under the resulting
+  group state's active membership-add authorization rule;
 - the group requires a capability this client does not support.
