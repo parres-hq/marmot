@@ -81,7 +81,7 @@ defined in [../transports/nostr.md](../transports/nostr.md), not here.
 | `1200`  | Agent text stream start             | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
 | `1201`  | Agent activity                      | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
 | `1202`  | Agent operation event               | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
-| `1210`  | Group system event                  | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
+| `1210`  | Group system event                  | Marmot app payload                  | [application-messages.md](application-messages.md)      |
 | `10050` | Push notification server relay list | Nostr account transport             | [push-notifications.md](../features/push-notifications.md) |
 | `30443` | Marmot KeyPackage event             | Nostr KeyPackage publication        | [nostr.md](../transports/nostr.md)                      |
 

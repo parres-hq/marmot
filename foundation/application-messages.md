@@ -64,6 +64,44 @@ an unsupported kind.
 Unknown app-event kinds SHOULD NOT break group state. A client MAY ignore or display unsupported content unless the
 owning feature document says the kind changes protocol state.
 
+## Group system events (kind 1210)
+
+Kind `1210` is a durable group system row: a record of an authenticated change to group state — a member added,
+removed, or left; an admin granted or revoked; the group renamed; the group avatar changed. These rows are not chat.
+A client MUST render them separately from kind `9` chat bubbles and MUST NOT treat their `content` as a chat body.
+
+A kind `1210` row is **synthesized locally** from canonical group state, not sent as a message. When a client applies a
+commit and the protocol surfaces a state-change notification (see
+[`../protocol-core/inbound-processing.md`](../protocol-core/inbound-processing.md)), the client MAY derive the
+corresponding kind `1210` row from that authenticated change. Because the row is derived from MLS-authenticated state
+rather than a separately delivered message, it cannot be forged by a single member and converges across clients that
+apply the same commit. A client MUST NOT depend on receiving a kind `1210` *message* over the wire to know that group
+state changed; the state-change notification is authoritative. (A client or connector MAY still *send* a kind `1210`
+event to post an explicit free-text notice; such a sent event is an assertion by its author, not a derived state fact.)
+
+The `content` is JSON:
+
+```json
+{
+  "v": 1,
+  "system_type": "member_added",
+  "text": "Member added",
+  "data": { "actor": "<hex pubkey>", "subject": "<hex pubkey>" }
+}
+```
+
+- `v` is the schema version (`1`).
+- `system_type` names the change. Defined values: `member_added`, `member_removed`, `member_left`, `admin_added`,
+  `admin_removed`, `group_renamed`, `group_avatar_changed`.
+- `text` is a human-readable fallback only. Clients SHOULD render from `system_type` plus `data` so the row can be
+  localized and re-resolved as display names change.
+- `data` carries structured fields: `actor` (hex pubkey of the committing member, when attributable), `subject` (hex
+  pubkey of the member the change concerns, for the member/admin types), and `name` (the new group name, for
+  `group_renamed`).
+
+The event SHOULD carry a `["system", system_type]` tag. A row is anchored to the epoch the change reached, so it sorts
+into history at the point the change took effect.
+
 ## Relationship to transport events
 
 The inner Marmot app event and an outer Nostr transport event are different objects.

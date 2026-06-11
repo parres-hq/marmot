@@ -19,8 +19,11 @@ Agent activity, operation progress, and group lifecycle rows are not chat text a
 durable inner app-event kinds when they need to survive reload or sync:
 
 - kind `1201`: agent activity/status;
-- kind `1202`: agent operation event;
-- kind `1210`: group system event.
+- kind `1202`: agent operation event.
+
+Kind `1210` group system events are a separate, core concept defined in
+[foundation application payloads](../foundation/application-messages.md#group-system-events-kind-1210). A connector MAY
+emit them, but this feature does not own or define them.
 
 All of these are inner Marmot app-event kinds carried inside encrypted group messages. They do not change the outer
 Nostr group transport kind.
@@ -32,7 +35,6 @@ Nostr group transport kind.
 - Start app-event kind: `1200`
 - Agent activity app-event kind: `1201`
 - Agent operation app-event kind: `1202`
-- Group system app-event kind: `1210`
 - First stream type: `text`
 - First final kind: `9`
 - Exporter: `MLS-Exporter("marmot", "agent-text-stream-quic", 32)`
@@ -173,7 +175,7 @@ receiver ignores them in UI.
 
 ## Typed durable agent rows
 
-Kind `1201`, `1202`, and `1210` are normal Marmot app events. They are end-to-end encrypted with the group like any
+Kind `1201` and `1202` are normal Marmot app events. They are end-to-end encrypted with the group like any
 other inner app event. Clients render them separately from human chat bubbles and MUST NOT treat their `content` as a
 kind `9` chat body.
 
@@ -220,18 +222,8 @@ of the assistant answer belong in the final kind `9`, not in `1202`.
 `details` is optional, bounded metadata for UI/debugging. Senders SHOULD redact secrets, raw credentials, large tool
 inputs, and bulky tool outputs before writing durable operation details, even though the event is encrypted to the group.
 
-Kind `1210` group system content is JSON:
-
-```json
-{
-  "v": 1,
-  "system_type": "member_added",
-  "text": "Member added",
-  "data": {}
-}
-```
-
-It SHOULD carry a `["system", system_type]` tag. Group system rows are durable UI/history facts, not chat messages.
+Kind `1210` group system events (durable membership/admin/profile rows) are defined in
+[foundation application payloads](../foundation/application-messages.md#group-system-events-kind-1210), not here.
 
 ## Key derivation
 
