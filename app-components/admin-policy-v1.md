@@ -25,9 +25,25 @@ struct {
 
 Each admin key is a Marmot account identity: the same raw 32-byte x-only Nostr public key carried as a member's MLS
 `BasicCredential` identity (see [../foundation/identity.md](../foundation/identity.md)). It is not a separate
-authorization key. Admin authority is evaluated by matching a committer's MLS-authenticated account identity against
-this list. A device leaf is an admin when its account identity appears here, so a multi-device account shares one admin
-entry across all of its leaves.
+authorization key.
+
+## Active admins
+
+An account is an active admin when its key is in `admins` and the account has at least one current member leaf in the
+group. Admin authority is evaluated by matching a member's MLS-authenticated account identity against the active
+admins; a multi-device account shares one admin entry across all of its leaves. Every Marmot document that authorizes
+an action against the admin policy uses this term with this definition.
+
+A commit that removes an account's last member leaf MUST also remove that account's key from `admins` in the same
+commit. An admin-policy state that lists an account with no member leaf is invalid in the resulting epoch, so in valid
+group state every key in `admins` names an active admin.
+
+This coupling rule and the SelfRemove flow below are two different departure paths, not two orderings of one
+transition. The coupling rule binds commits that remove a listed account's last leaf — for example, an admin removing
+another listed account's last device with a Remove proposal. SelfRemove never triggers the coupling rule: a SelfRemove
+proposal whose sender is still an active admin is invalid at the sender check, so a departing admin's admin-policy
+update always lands in an earlier commit, and the account is no longer listed in `admins` by the time its SelfRemove
+commits.
 
 ## Update
 
@@ -45,19 +61,24 @@ An admin policy state is valid if:
 - the admin list is sorted lexicographically by key bytes
 - the admin list has no duplicates
 - the admin list is not empty
+- every admin key corresponds to an account with at least one member leaf in the resulting epoch's group state
+
+The last check is cross-component: it validates this component against the resulting epoch's member leaves rather than
+against the component bytes alone. Commit validity already spans components, so a commit whose resulting epoch lists an
+admin key with no member leaf is invalid.
 
 ## Authorization
 
 Any current member MAY send a standalone admin policy proposal.
 
-Only a current admin MAY commit an admin policy update.
+Only an active admin MAY commit an admin policy update.
 
-The commit authorization is evaluated against the prior admin set. An update that removes the committer from the admin
-set is valid only if at least one other admin remains.
+The commit authorization is evaluated against the prior epoch's active admins. An update that removes the committer
+from `admins` is valid only if at least one other active admin remains.
 
 ## Admin-Gated Actions
 
-In v1, the following operations require a current admin to commit:
+In v1, the following operations require an active admin to commit:
 
 - update `marmot.group.profile.v1`
 - update `marmot.group.blossom.image.v1`
@@ -70,18 +91,22 @@ In v1, the following operations require a current admin to commit:
 
 For Welcome-based joins, the receiver applies the same invite authorization check at join time. The receiver identifies
 the inviter from the MLS GroupInfo signer leaf and rejects the Welcome unless that leaf's MLS-authenticated Marmot
-account identity is in this admin set. If this component is absent, the receiver rejects the Welcome unless the active
-application profile defines another membership-add authorization component.
+account identity is an active admin in the joined group state. If this component is absent, the receiver rejects the
+Welcome unless the active application profile defines another membership-add authorization component.
 
 SelfRemove is special:
 
-- a non-admin MAY self-remove
-- an admin MAY self-remove only if another admin remains
+- a non-admin member MAY self-remove
+- a SelfRemove proposal whose sender is an active admin in the prior epoch is invalid
+- a departing admin first commits an admin-policy update that removes it from `admins` (valid only if at least one
+  other active admin remains), then uses SelfRemove
 - the committer of a SelfRemove proposal MUST NOT be the leaving member
+
+[../protocol-core/member-departure.md](../protocol-core/member-departure.md) owns the full SelfRemove flow.
 
 ## Removal
 
-If the component is absent, components and operations that require a current admin are invalid unless the active
+If the component is absent, components and operations that require an active admin are invalid unless the active
 application profile defines another authorization component.
 
 ## Migration

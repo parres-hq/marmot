@@ -28,7 +28,9 @@ Group settings are authenticated group state. A client MUST NOT treat local UI p
 data, or cached transport data as group settings.
 
 Group creation requires `required_capabilities`, `ratchet_tree`, `app_data_dictionary`, and the app components required
-by the selected feature set.
+by the selected feature set. `required_capabilities` and `app_data_dictionary` are GroupContext extensions.
+`ratchet_tree` is a per-Welcome GroupInfo extension, not a GroupContext extension: the GroupInfo encrypted in every
+Marmot Welcome carries the ratchet tree inline, as [joining.md](./joining.md) requires.
 
 ## Creation flow
 
@@ -68,9 +70,10 @@ authorization.
 Admin authority is based on Marmot account identity, not on MLS leaf id. If an account has multiple leaves in a group,
 the admin policy applies to each current leaf with that account identity.
 
-A settings update that would leave the group with no active admin is invalid.
+A settings update that would leave the group with no active admin (defined in
+[../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md)) is invalid.
 
-Admins who want to use SelfRemove MUST first leave the admin set through an admin-policy update. The member-departure
+Admins who want to use SelfRemove MUST first leave the admin list through an admin-policy update. The member-departure
 doc owns the detailed leave flow.
 
 ## Message retention

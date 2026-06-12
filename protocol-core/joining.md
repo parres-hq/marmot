@@ -24,6 +24,10 @@ publish obligation. A founding creation with initial invitees satisfies its crea
 Welcome deliveries defined in [publish-lifecycle.md](./publish-lifecycle.md), and does not require a separate
 group-message publish of the founding Add commit before those Welcomes are sent.
 
+The GroupInfo encrypted in every Marmot Welcome MUST include the `ratchet_tree` extension. Marmot does not support
+out-of-band ratchet tree distribution for the Welcome join path. A joiner MUST reject a Welcome whose GroupInfo does
+not carry the ratchet tree.
+
 ## Delivery
 
 The active transport binding owns the Welcome delivery envelope, recipient addressing, and transport-specific metadata.
@@ -40,7 +44,7 @@ After unwrapping a Welcome, the receiver:
 1. verifies that the Welcome is addressed to its account identity;
 2. verifies that the referenced KeyPackage belongs to this account/device;
 3. decodes the transport-carried content as an MLSMessage with `mls_welcome` wire format;
-4. processes the MLS Welcome;
+4. processes the MLS Welcome, taking the group's ratchet tree from the GroupInfo `ratchet_tree` extension;
 5. validates every resulting member identity and account identity proof;
 6. identifies the Welcome author from the MLS GroupInfo signer leaf and validates that author's Marmot account identity;
 7. validates the resulting Marmot group state and required components;
@@ -69,6 +73,7 @@ A receiver rejects the Welcome if:
 - the Welcome is not addressed to the local account identity;
 - the MLSMessage is not an MLS Welcome;
 - the referenced KeyPackage is not local to this account/device;
+- the GroupInfo does not include the `ratchet_tree` extension;
 - any resulting member leaf is missing a valid account identity proof;
 - the Welcome author cannot be identified as a member leaf in the resulting group;
 - the resulting group state lacks required Marmot state;
