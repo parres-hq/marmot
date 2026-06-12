@@ -44,12 +44,19 @@ it inside MLS.
 
 ## Encoding
 
-The owning message-kind document MUST define the exact app payload encoding.
+A Marmot app payload that uses the unsigned Nostr event shape — including chat kind `9` and reaction kind `7` — is
+serialized as one UTF-8 JSON object with exactly the members `id`, `pubkey`, `created_at`, `kind`, `tags`, and
+`content`, and no others. Field values, tag arrays, and string content follow Nostr event conventions; the signature
+member is absent.
 
-For current Marmot chat-style messages, the payload SHOULD stay compatible with the unsigned Nostr event shape already
-used by the MIP-era protocol: event fields, tag arrays, and string content follow Nostr event conventions, but the
-signature field is absent. Decoders MUST reject a message whose `id` does not match the canonical Nostr event id for the
-other fields.
+Decoders MUST reject a payload that:
+
+- contains a `sig` member;
+- contains an unknown top-level member;
+- contains duplicate object keys;
+- carries transport routing tags — the matching sender-side prohibition is in
+  [../protocol-core/group-messaging.md](../protocol-core/group-messaging.md) ("App payloads");
+- has an `id` that does not match the canonical Nostr event id computed from the other members ("Shape" above).
 
 If a future message kind needs binary content, canonical JSON, or another encoding rule, that rule belongs in the
 message-kind document and MUST name the exact bytes carried inside MLS.

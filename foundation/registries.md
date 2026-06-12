@@ -66,8 +66,8 @@ These are the event kinds Marmot allocates or assigns meaning to. The owning doc
 this table only names the value and points at the owner.
 
 This table lists Marmot-allocated kinds only. Standard Nostr kinds that the Nostr binding reuses unchanged — kind `1059`
-(NIP-59 gift wrap), kind `13` (NIP-59 seal), and kind `10002` (NIP-65 relay list) — are not Marmot-owned and are
-defined in [../transports/nostr.md](../transports/nostr.md), not here.
+(NIP-59 gift wrap), kind `13` (NIP-59 seal), kind `10002` (NIP-65 relay list), and kind `10050` (NIP-17 DM inbox relay
+list) — are not Marmot-owned and are defined in [../transports/nostr.md](../transports/nostr.md), not here.
 
 | Kind    | Name                                | Layer                               | Document                                                |
 | ------- | ----------------------------------- | ----------------------------------- | ------------------------------------------------------- |
@@ -82,7 +82,6 @@ defined in [../transports/nostr.md](../transports/nostr.md), not here.
 | `1201`  | Agent activity                      | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
 | `1202`  | Agent operation event               | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
 | `1210`  | Group system event                  | Marmot app payload                  | [application-messages.md](application-messages.md)      |
-| `10050` | Push notification server relay list | Nostr account transport             | [push-notifications.md](../features/push-notifications.md) |
 | `30443` | Marmot KeyPackage event             | Nostr KeyPackage publication        | [nostr.md](../transports/nostr.md)                      |
 
 The experimental agent text stream QUIC feature claims kind `1200` for durable stream start app events, kind `1201` for

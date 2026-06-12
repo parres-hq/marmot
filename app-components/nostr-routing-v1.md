@@ -24,8 +24,9 @@ struct {
 
 `nostr_group_id` is the Nostr group routing handle used for group message delivery.
 
-It is opaque. It MUST be generated from cryptographically secure randomness at group creation. It MUST NOT be derived
-from any account id, member id, public key, MLS group id, KeyPackage id, message id, or relay URL.
+It is opaque. Every `nostr_group_id` value — the one chosen at group creation and any replacement committed by a
+routing rotation — MUST be generated from cryptographically secure randomness. It MUST NOT be derived from any account
+id, member id, public key, MLS group id, KeyPackage id, message id, or relay URL.
 
 `relays` is the canonical sorted list of unique relay URL byte strings for a Nostr-routed group. The list is signed
 group state.
@@ -35,21 +36,40 @@ list.
 
 ## Update
 
-The update payload can change relays only:
+The update payload is a full replacement state:
 
 ```text
-struct {
-  MarmotNostrRelayV1 relays<V>;
-} MarmotNostrRoutingUpdateV1;
+MarmotNostrRoutingV1 MarmotNostrRoutingUpdateV1;
 ```
 
-There is no v1 update that changes `nostr_group_id`.
+An update MAY change the relay list, `nostr_group_id`, or both. An update that changes `nostr_group_id` is a routing
+rotation.
+
+## Routing rotation
+
+The commit that carries a routing change MUST be published to the delivery address of the prior epoch's routing state —
+that is where members are listening. Publish-before-apply already implies this; it is stated here so a rotation commit
+is never published only at the new address.
+
+After applying the commit, members use the new routing state for subsequent traffic.
+
+Members MUST continue to accept and fetch traffic at a prior routing address while any epoch that used it remains
+inside the retained app-payload window ([../protocol-core/retained-history.md](../protocol-core/retained-history.md)),
+and MUST be able to map more than one routing id to the same group during that window.
+
+A member catching up across a rotation uses its recorded routing-state history to fetch older epochs at their
+then-active addresses. A new joiner receives the current routing state in its Welcome and needs older addresses only
+within the retained-history rules.
+
+A group MAY be reachable at more than one Nostr routing address over its lifetime. v1 state carries exactly one current
+`nostr_group_id`; a future component version MAY carry multiple concurrent routing ids.
 
 ## Validation
 
 A Nostr routing state is valid if:
 
 - `nostr_group_id` is exactly 32 bytes
+- the relay list is not empty
 - every relay URL satisfies the Nostr relay URL profile in [../transports/nostr.md](../transports/nostr.md)
 - relay URLs are sorted lexicographically by byte value
 - relay URLs have no duplicates
@@ -59,11 +79,10 @@ update, but a client MUST NOT rewrite relay URL bytes while applying signed grou
 
 ## Authorization
 
-Any current member MAY send a standalone relay update proposal.
+Any current member MAY send a standalone routing update proposal.
 
-Only a current admin MAY commit a relay update.
-
-No member MAY propose or commit a `nostr_group_id` update in v1.
+Only a current admin MAY commit a routing update. This includes routing rotations: a `nostr_group_id` change is
+admin-gated like every other routing update.
 
 ## Removal
 
