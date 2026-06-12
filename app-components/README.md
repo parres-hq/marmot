@@ -108,6 +108,11 @@ For v1 component documents, these defaults apply unless the component says other
   sender and committer are the same member. For admin-gated components, the sender MUST be a current admin.
 - A component MUST NOT be removed while it is listed as required in the GroupContext `app_components` component.
 
+Component state and update decoders follow the canonical decoding rule in
+[../foundation/canonical-encoding.md](../foundation/canonical-encoding.md): bytes that are not canonical are invalid,
+and a decoder MUST NOT trim, case-fold, normalize, deduplicate, or reorder values while decoding. Fields an owning
+component document marks as opaque hints are validated only against their stated bounds.
+
 ## Update Processing
 
 Each Marmot component document defines two byte formats:

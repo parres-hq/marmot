@@ -19,7 +19,9 @@ transport message
   -> emit application-visible output when canonical state or delivered payloads change
 ```
 
-The exact local API is implementation-defined. The protocol-visible result is the disposition.
+The exact local API is implementation-defined. The protocol-visible result is the disposition. The disposition
+vocabulary (`accepted`, `deferred`, `stale`, `invalidated`) is pinned in
+[../foundation/errors.md](../foundation/errors.md).
 
 ## Message identity
 
@@ -29,8 +31,8 @@ The message id used for deduplication MUST be stable for the carried protocol by
 order, transport source order, subscription id, or database row id.
 
 Duplicate input maps to the `duplicate` category in [../foundation/errors.md](../foundation/errors.md) and MUST NOT be
-applied twice. (Protocol-core dispositions named in `PascalCase` below, such as `BeyondAnchor`, are convergence outcome
-names; each maps to one of the shared `snake_case` categories in `errors.md`.)
+applied twice. Convergence outcomes named in `PascalCase` below, such as `BeyondAnchor`, map to a disposition and a
+shared `snake_case` category in the "Named convergence outcomes" table in `errors.md`.
 
 ## Classification
 
@@ -63,20 +65,22 @@ branch.
 
 ## Stale input
 
-Input that cannot affect the group MUST receive a stale or dropped disposition. This includes:
+Input that cannot affect the group MUST receive a stale disposition. This includes:
 
 - duplicate messages (`duplicate`);
 - messages for unknown groups (`unknown_group`);
 - welcomes addressed to another member (`wrong_recipient`);
 - own echoes (`own_echo`);
-- commits older than the retained anchor (`BeyondAnchor`, per [retained-history.md](./retained-history.md));
-- MLS application messages older than the retained app-payload window (`app_payload_past_epoch_limit` past epochs, see
-  [convergence.md](./convergence.md));
+- commits older than the retained anchor (`BeyondAnchor` -> `stale_epoch`, per
+  [retained-history.md](./retained-history.md));
+- MLS application messages older than the retained app-payload window (`stale_epoch`; the window is
+  `app_payload_past_epoch_limit` past epochs, see [convergence.md](./convergence.md));
 - commits that fork from outside the rollback horizon: these are ineligible for branch selection (see
   [convergence.md](./convergence.md), "Eligibility") and, when their source epoch is also older than the retained
   anchor, are reported as `BeyondAnchor`.
 
-The category names in parentheses are the shared outcomes in [../foundation/errors.md](../foundation/errors.md).
+The `snake_case` names in parentheses are the shared categories in [../foundation/errors.md](../foundation/errors.md);
+`BeyondAnchor` is a named convergence outcome that maps to the `stale` disposition and the `stale_epoch` category.
 
 Stale input MUST NOT mutate canonical group state.
 

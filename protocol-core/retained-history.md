@@ -26,7 +26,8 @@ At minimum, a client needs retained state for:
 Late commits are judged by their source epoch:
 
 - If the source epoch is at or after the retained anchor, the commit MAY be replayed during convergence.
-- If the source epoch is older than the retained anchor, the commit MUST be dropped as `BeyondAnchor`.
+- If the source epoch is older than the retained anchor, the commit MUST receive a stale disposition, reported as
+  `BeyondAnchor`.
 - If the source epoch is inside the rollback horizon but the required retained state is missing, convergence MUST report
   `MissingRetainedAnchor`, leave canonical group state unchanged, and move the local group to `Unrecoverable`.
 
@@ -44,7 +45,7 @@ signed convergence-policy field `app_payload_past_epoch_limit` (the number of pa
 delivered app payloads or app-payload witnesses; see [convergence.md](./convergence.md)).
 
 An MLS application message that is older than the retained app-payload window (`app_payload_past_epoch_limit` past
-epochs) MUST expire.
+epochs) MUST expire (a stale disposition).
 
 An MLS application message for a future candidate epoch MAY remain deferred until convergence selects a branch that can
 decrypt its Marmot app payload or until the message expires.

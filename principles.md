@@ -41,6 +41,18 @@ A clean implementation SHOULD be able to find each rule by the surface it is imp
 When a feature changes one surface, edit that surface. When it changes several surfaces, name each one and update each
 owning document.
 
+## Delegate to rules that exist
+
+A document MAY delegate a rule to the surface that owns it. A delegation names the owning document, and the owning
+document contains the rule.
+
+A delegation to a class of documents — for example "the active transport binding" — is a requirement on every document
+in that class: each transport binding MUST either define the delegated behavior or state explicitly that it does not
+provide it.
+
+Two documents MUST NOT delegate the same rule to each other. When neither side defines the behavior, the rule does not
+exist, and both documents read as complete when they are not.
+
 ## Define protocol bytes exactly
 
 Anything signed, hashed, referenced, stored for replay, compared for equality, or used to choose state needs a canonical

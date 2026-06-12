@@ -63,6 +63,22 @@ Examples:
 - a 16383-byte value starts with `7f ff`;
 - a 16384-byte value starts with `80 00 40 00`.
 
+## Canonical decoding
+
+Marmot-owned canonical bytes are valid only in canonical form.
+
+A decoder of signed, hashed, replay-stored, equality-compared, or state-selecting Marmot bytes MUST reject input whose
+bytes differ from the canonical re-encoding of the decoded value. A decoder MUST NOT trim, case-fold, normalize,
+deduplicate, reorder, or otherwise rewrite a value while decoding it.
+
+When an owning document defines a normalized form for a field, normalization is a producer-side encoding rule. The
+producer MUST emit the field already normalized, and a decoder MUST reject bytes that are not in that form. A decoder
+never repairs non-canonical input into canonical state.
+
+When an owning document marks a field as an opaque hint, a decoder validates only the structural bounds that document
+states, such as a length limit. Interpreting the contents — for example as UTF-8 text or as a width-by-height pair — is
+an application concern, and an interpretation failure MUST NOT invalidate otherwise-valid state.
+
 ## Upstream TLS and MLS bytes
 
 Marmot uses MLS, and MLS uses TLS Presentation Language. Marmot does not rewrite MLS-owned structures into the Marmot
@@ -97,6 +113,27 @@ validation rules have run.
 Unknown optional data that a client is required to preserve MUST be copied byte-for-byte.
 
 A client MUST NOT parse, normalize, sort inside, partially copy, or re-encode unknown preserved bytes.
+
+## Cryptographic derivations
+
+A document that defines a key derivation, keyed hash, AEAD usage, or hash construction MUST name:
+
+- the exact algorithm, including the hash function: `HKDF-SHA256`, not `HKDF`; `SHA-256`, not "a hash";
+- how the input keying material is used — for HKDF, whether a secret is the PRK used Expand-only or IKM passed through
+  Extract with a named salt;
+- the exact context, info, and AAD bytes, including the length-prefix rule for every variable-length input;
+- the output length in bytes.
+
+New Marmot constructions SHOULD use SHA-256 and SHOULD length-prefix variable-length derivation inputs with the QUIC
+variable-length encoding above. A construction that deviates MUST name its choice in the owning document; there is no
+silent default.
+
+Wire structures carry version discriminants as fixed-width unsigned integers per the Marmot binary profile. Text labels
+such as `"v1"` MAY appear inside derivation context bytes as domain separators, but a wire structure's version field is
+never text.
+
+A document that pins a derivation or canonical hash SHOULD include at least one fixed test vector so independent
+implementations can check their bytes.
 
 ## Nostr-shaped values
 

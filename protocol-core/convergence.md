@@ -181,14 +181,18 @@ content-derived ordering key.
 After selecting a branch, a client applies the selected branch by replaying the selected commit path from the retained
 parent state.
 
-The client then assigns dispositions:
+The client then assigns dispositions (the disposition vocabulary is pinned in
+[../foundation/errors.md](../foundation/errors.md)):
 
 - commits on the selected path are accepted;
 - proposals consumed by selected commits are accepted;
-- proposals consumed only by losing branches are dropped;
-- app payloads from MLS application messages that decrypt on the selected branch are delivered;
-- app payloads from MLS application messages that decrypt only on losing branches are invalidated;
-- commits and MLS application messages beyond retained history are dropped.
+- proposals consumed only by losing branches are stale;
+- MLS application messages that decrypt on the selected branch are accepted, and their Marmot app payloads are
+  delivered to the application;
+- MLS application messages that decrypt only on losing branches are invalidated, and their app payloads are withdrawn
+  from application output;
+- commits and MLS application messages beyond retained history are stale (a commit older than the retained anchor is
+  reported as `BeyondAnchor`).
 
 Applying the selected branch also produces application-visible state notifications for changes the application MAY need
 to render or act on. Examples include epoch advancement, member additions, member removals, app component changes,
