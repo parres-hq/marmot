@@ -62,6 +62,27 @@ so promptly after joining. This carries forward the MIP-02 post-join rotation gu
 group. The concrete recommended completion window is operational, not interop-visible, so it lives in
 [../implementation-model.md](../implementation-model.md) rather than here.
 
+## Welcome-bootstrap trust
+
+The join-time authorization check (step 8 of the receiving flow) validates the Welcome author against the admin set of
+the joined group state itself. In a forked group that admin set is author-controlled: an existing non-admin member can
+fork with a single commit that both adds the joiner and rewrites the admin policy to list itself, and the check passes
+against the fork's own admin set. The check therefore guarantees that the Welcome author is an admin of the group state
+the joiner received — it does not prove that this group is the one the joiner intended to join.
+
+This version deliberately defines no in-band cryptographic anchor for first-contact group authenticity: every value a
+first-time joiner can check arrives in the Welcome, and a forger authors all of it.
+
+The first-contact trust root is therefore the Welcome author. A joiner MUST authenticate the Welcome author's account
+identity — this is step 6 of the receiving flow — and a client SHOULD present that identity to the joining user
+before or at join, so accepting an invite is an explicit decision about who the inviter is.
+
+A client SHOULD treat a newly joined group as unverified until at least one MLS application message from a member
+account other than the Welcome author authenticates on the group's branch. A forged fork cannot produce such a message:
+the forger cannot sign for another account and cannot forge another account's identity proof. How an unverified group is
+presented is application-defined. This is a corroboration signal, not a proof — a genuine but quiet group also stays
+unverified until another member speaks, and a future feature may add an out-of-band anchor for the legitimate admin set.
+
 ## Failure behavior
 
 If Welcome processing fails, the receiver MUST NOT rotate away the KeyPackage that was referenced by the failed Welcome.
