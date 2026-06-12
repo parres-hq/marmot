@@ -71,6 +71,37 @@ an unsupported kind.
 Unknown app-event kinds SHOULD NOT break group state. A client MAY ignore or display unsupported content unless the
 owning feature document says the kind changes protocol state.
 
+## Message edits (kind 1009)
+
+Kind `1009` is an in-place replacement of a prior chat message's text. The edit references the original event id via a
+single `e` tag; its `content` is the replacement plaintext. Edits are not chat — they MUST NOT render as a separate row
+in the conversation transcript. Clients SHOULD overlay the latest replacement onto the original message body and SHOULD
+indicate that the row has been edited.
+
+```json
+{
+  "v": 1,
+  "kind": 1009,
+  "tags": [["e", "<hex event id of the edited message>"]],
+  "content": "the replacement plaintext"
+}
+```
+
+- The original message's projected `kind` does not change; only its rendered body is overlaid.
+- The chat-list preview MUST NOT bump on an edit. An edit to a stale message must not reorder the conversation list.
+- The unread count MUST NOT advance on an edit. A receiver who is caught up with the original is caught up with the
+  edit.
+
+Authorship is enforced client-side: an edit is honoured only when its authenticated author (the inner event signer)
+equals the original message's author. A client receiving a kind `1009` whose signer differs from the target's signer
+MUST ignore the edit. The runtime emits all kind `1009` rows it persists; the client decides display.
+
+Multiple edits to the same target are ordered by their inner event's `created_at`. The most recent edit wins as the
+overlaid body. A history surface MAY list each version with its timestamp.
+
+A client receiving an edit whose target it has not yet ingested MAY hold the edit for a bounded window and apply it
+when the target arrives, or drop it. Either choice is acceptable.
+
 ## Group system events (kind 1210)
 
 Kind `1210` is a durable group system row: a record of an authenticated change to group state — a member added,

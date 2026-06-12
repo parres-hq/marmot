@@ -78,6 +78,7 @@ list) — are not Marmot-owned and are defined in [../transports/nostr.md](../tr
 | `448`   | Push token list response            | Marmot app payload                  | [push-notifications.md](../features/push-notifications.md) |
 | `449`   | Push token removal                  | Marmot app payload                  | [push-notifications.md](../features/push-notifications.md) |
 | `450`   | Multi-device identity proof event   | Local signing template, not relayed | [multi-device.md](../features/multi-device.md)          |
+| `1009`  | Message edit                        | Marmot app payload                  | [application-messages.md](application-messages.md)      |
 | `1200`  | Agent text stream start             | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
 | `1201`  | Agent activity                      | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
 | `1202`  | Agent operation event               | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
@@ -90,6 +91,10 @@ abort, media-final, or fallback preview app-event kinds MUST be added to this re
 
 Kind `1210` is reserved for durable group system rows, such as membership, name, avatar, or other group-lifecycle
 notices that clients render separately from human chat.
+
+Kind `1009` is reserved for message edits — an in-place replacement of a prior chat message's text. The event carries a
+single `e` tag referencing the edited event id and `content` is the replacement plaintext. Clients render the latest
+replacement onto the original row's body, never as a separate transcript row.
 
 ## Exporter labels
 
