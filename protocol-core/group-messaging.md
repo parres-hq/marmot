@@ -67,8 +67,8 @@ If the Commit adds members, the associated Welcomes are sent only after the Comm
 
 ## Race handling
 
-Convergence uses content-derived commit ordering, retained MLS states, and group policy. Transport evidence MUST NOT
-choose the winning branch.
+Convergence uses content-derived commit ordering, retained MLS states, and the pinned convergence policy. Transport
+evidence MUST NOT choose the winning branch.
 
 ## Message retention
 

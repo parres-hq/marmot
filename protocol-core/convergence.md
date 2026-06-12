@@ -7,26 +7,17 @@ Convergence chooses one canonical branch from unordered group input.
 Commits are the consensus log. MLS application messages can witness that members used a branch, but they do not create
 epochs and they do not replace MLS commit validation.
 
-## Group policy
+## Convergence policy
 
-Group policy is the signed group-state value that tells clients how to run convergence for this group.
+The convergence policy tells clients how to run convergence. The v1 convergence policy is a set of protocol constants:
+every client MUST use exactly the values below. The policy is not carried in group state and is not a local preference;
+every convergence pass, and every branch scored within it, uses the same values.
 
-A client MAY choose policy values when it creates a group. Members MAY change policy values through a group-state
-update. Once a policy is active, it is not a local preference: every member processing the same group epoch MUST use the
-same policy bytes.
+The convergence policy contains:
 
-A client that cannot apply the active group policy MUST NOT join the group.
-
-A policy format or policy value that changes convergence behavior is a required capability. A group-state update that
-changes the active policy is valid only if every current member has advertised support for the resulting policy. A
-client MUST reject any commit that would make the active policy unsupported by a current member.
-
-The active convergence policy contains:
-
-- `policy_version`: the version of the convergence policy format.
 - `max_rewind_commits`: how far back from the current tip a branch MAY fork and still be eligible.
 - `app_payload_past_epoch_limit`: how many past MLS epochs MAY still produce delivered app payloads or app-payload
-  witnesses.
+  witnesses (the exact window formula is in [retained-history.md](./retained-history.md), "App-payload retention").
 - `settlement_quiescence_ms`: the minimum time without new convergence-relevant input before a client MAY treat a
   convergence pass as settled and release queued outbound work.
 - `witness_quorum_senders_per_epoch`: the number of distinct senders needed for one branch epoch to count toward witness
@@ -34,29 +25,10 @@ The active convergence policy contains:
 - `witness_quorum_epochs`: the number of branch epochs that MUST meet sender quorum.
 - `max_witness_override_depth`: the maximum commit-depth boost a branch MAY receive from witness quorum.
 
-`max_witness_override_depth` MUST NOT exceed `max_rewind_commits`. The witness-quorum boost is bounded so it can never
-push a branch past the rollback horizon; allowing it to would let app-payload traffic beat an arbitrarily longer valid
-commit branch, violating the invariant below. A policy that violates this bound MUST be rejected rather than applied.
+The Marmot convergence policy, version 1, is:
 
-`settlement_quiescence_ms` gates when a client decides it has waited long enough to run or finish convergence. It MUST NOT
-enter the branch score.
-
-Group policy MUST be encoded canonically and authenticated as group state. It MUST NOT depend on transport arrival
-order, transport timestamps, outer transport event ids, or local receive order.
-
-A convergence pass uses the active policy from the retained parent state being used for selection. A branch MUST NOT
-score itself with policy values introduced by commits on that same branch. Policy changes apply after the
-policy-changing commit becomes canonical.
-
-Groups that do not yet carry explicit policy bytes use the default Marmot convergence policy below ("group profile"
-here means a group's chosen feature set, not the `marmot.group.profile.v1` component). A client MUST treat the default
-as the active policy and persist it once the group records explicit policy bytes.
-
-The default Marmot convergence policy is:
-
-| Field                               | Default |
+| Field                               | Value   |
 | ----------------------------------- | ------- |
-| `policy_version`                    | `1`     |
 | `max_rewind_commits`                | `5`     |
 | `app_payload_past_epoch_limit`      | `5`     |
 | `settlement_quiescence_ms`          | `1000`  |
@@ -64,9 +36,19 @@ The default Marmot convergence policy is:
 | `witness_quorum_epochs`             | `1`     |
 | `max_witness_override_depth`        | `1`     |
 
-These satisfy the bound `max_witness_override_depth <= max_rewind_commits`. A group profile that needs different values
-MUST record them as explicit, signed policy bytes (a policy change is a required-capability change, per the rules
-above).
+`policy_version` names this pinned profile, not a wire field: the table above is convergence policy version 1.
+
+`max_witness_override_depth` MUST NOT exceed `max_rewind_commits`. The witness-quorum boost is bounded so it can never
+push a branch past the rollback horizon; allowing it to would let app-payload traffic beat an arbitrarily longer valid
+commit branch, violating the invariant below. The version-1 values satisfy this bound, and any future policy component
+MUST satisfy it.
+
+`settlement_quiescence_ms` gates when a client decides it has waited long enough to run or finish convergence. It MUST
+NOT enter the branch score.
+
+Convergence parameters are deliberately not group-tunable: a bad policy choice can fork a group. A future protocol
+version that changes convergence behavior MUST ship the new policy as a new app component behind a required capability.
+Until such a component exists, there is no mechanism to change the active policy.
 
 ## Candidate branches
 
@@ -87,7 +69,9 @@ Each candidate branch has:
   is its tip, `tip_digest` is byte-for-byte the same value as that commit's `commit_digest` in "Same-epoch races"
   below; both are `SHA-256` over the one Commit's MLS bytes.
 - `raw_commit_depth`: the number of valid commits from `fork_epoch` to `tip_epoch`;
-- app-payload witnesses that decrypt on candidate states in the branch.
+- app-payload witnesses that decrypt at the branch epochs defined below.
+
+The branch epochs of a candidate are the epochs strictly greater than `fork_epoch` and at most `tip_epoch`.
 
 ## Eligibility
 
@@ -103,7 +87,11 @@ A branch that needs a retained state older than the retained anchor MUST NOT be 
 
 ## App-payload witnesses
 
-An app-payload witness is an MLS application message whose Marmot app payload decrypts against a candidate branch state.
+An app-payload witness is an MLS application message whose Marmot app payload decrypts against a candidate branch state
+at one of that branch's branch epochs. An MLS application message that decrypts at `fork_epoch` or earlier is not an
+app-payload witness for any candidate. A witness MUST also be inside the retained app-payload window, evaluated with
+the candidate's `tip_epoch` as the reference tip (the window formula is in
+[retained-history.md](./retained-history.md), "App-payload retention").
 
 Witnesses are counted by distinct Marmot sender identity per branch epoch. The sender identity is the account identity
 authenticated by the MLS leaf credential for the application message, not an outer transport public key, Nostr event
@@ -138,8 +126,8 @@ effective_commit_depth =
   + (witness_quorum_met ? max_witness_override_depth : 0)
 ```
 
-The boost is capped by group policy. App payload traffic MUST NOT let a branch beat an arbitrarily longer valid commit
-branch.
+The boost is capped by the pinned policy. App payload traffic MUST NOT let a branch beat an arbitrarily longer valid
+commit branch.
 
 ## Branch selection
 
@@ -153,7 +141,7 @@ Eligible branches are compared in this order:
 
 Lower digest means lexicographic order over the 32 digest bytes.
 
-Every value in this comparison MUST come from MLS-valid bytes, retained state, decrypted app payloads, or the group's
+Every value in this comparison MUST come from MLS-valid bytes, retained state, decrypted app payloads, or the pinned
 convergence policy.
 
 Transport arrival order, transport timestamps, outer transport event ids, and local receive order MUST NOT participate

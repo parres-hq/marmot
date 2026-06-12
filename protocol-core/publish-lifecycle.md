@@ -46,6 +46,12 @@ A publish obligation has four protocol-relevant parts:
 
 The exact local representation is implementation-defined.
 
+A publish obligation succeeds when the active transport binding reports an acknowledged accept for the obligation's
+bytes from at least one endpoint in the obligation's recipient scope. Each transport binding MUST define its
+acknowledgement signal. A transport binding or client MAY apply a stricter success rule, but at least one acknowledged
+accept is the minimum, and a client MUST NOT treat anything weaker (such as a queued or sent-without-acknowledgement
+state) as success.
+
 Group creation is special because there is no existing group recipient set before the group exists.
 
 For one-member group creation, the creation publish obligation has an empty outbound byte set and an empty recipient

@@ -48,6 +48,13 @@ means storing raw MLS message bytes, welcome bytes, prior state snapshots, and l
 
 The protocol defines what must be reproducible. It does not define table names, cache keys, or snapshot formats.
 
+## Convergence Policy Overrides
+
+The convergence policy is pinned by the protocol; clients do not negotiate or store per-group policy values.
+Implementations and simulators MAY expose local convergence-policy overrides for testing, such as shrinking the
+quiescence window or widening the rollback horizon in a harness. Those overrides are development tooling, not protocol.
+A client MUST NOT ship with non-default policy values.
+
 ## Outcomes
 
 Local APIs should expose classified outcomes for inputs that do not produce application content.
