@@ -41,7 +41,20 @@ struct {
 } MarmotAgentTextStreamQuicV1;
 ```
 
-`required_member_roles` is the set of role capabilities every member MUST advertise before joining the group.
+Each role-mask bit names one member role capability defined by the owning feature document:
+
+| Bit    | Role      | Role capability                                    |
+| ------ | --------- | -------------------------------------------------- |
+| `0x01` | `receive` | `marmot.feature.agent_text_stream_quic.receive.v1` |
+| `0x02` | `send`    | `marmot.feature.agent_text_stream_quic.send.v1`    |
+| `0x04` | `fanout`  | `marmot.feature.agent_text_stream_quic.fanout.v1`  |
+
+`required_member_roles` is the set of role capabilities every member MUST advertise before joining the group. It is
+enforced at every membership change:
+
+- a client MUST NOT invite a member whose KeyPackage does not advertise every role capability named by
+  `required_member_roles`;
+- a joiner that does not support every role capability named by `required_member_roles` MUST NOT join the group.
 
 `allowed_member_roles` is the set of role capabilities a member MAY advertise in this group.
 
@@ -56,13 +69,15 @@ For the first user-to-agent profile:
 `replay_ttl_secs` is the maximum time a group-approved relay MAY retain encrypted stream records for short replay.
 `0` means no retained replay.
 
-`padding_bucket_bytes` is the maximum padding bucket size for stream records. `0` means no feature-level padding
-requirement. A first profile SHOULD keep this low; this feature is not trying to hide token cadence at high bandwidth
-cost.
+`padding_bucket_bytes` is reserved in v1. No padding mechanism is defined, and senders MUST NOT emit padding. The field
+stays in the byte layout as a forward-compatibility reservation, so already-deployed state remains valid; a future
+version that defines a padding construction will state how padded bytes relate to the transcript hash. Until then a
+producer SHOULD write `0`, and a decoder accepts any value within the application profile maximum without acting on it.
 
 The first application profile uses these maximums:
 
-- `max_plaintext_frame_len <= 65536`;
+- `max_plaintext_frame_len <= 65519`, so a maximum-length frame's ciphertext (`plaintext_len + 16` AEAD tag bytes)
+  fits the record's `ciphertext<0..2^16-1>` field bound;
 - `replay_ttl_secs <= 300`;
 - `padding_bucket_bytes <= 4096`.
 

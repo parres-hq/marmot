@@ -51,6 +51,7 @@ A `quic://` candidate is `quic://` followed by an authority and nothing the rece
 - `host` is the QUIC/UDP host and is also the TLS server name presented for certificate validation;
 - `port` is the UDP port;
 - a receiver MUST ignore any path, query, or fragment after the authority; the candidate carries no other semantics.
+  The authority ends at the first `/`, `?`, or `#`; everything after that character is ignored.
 
 Candidate tags are advisory routing hints carried in signed group state. They are not authenticated stream content: a
 candidate that points at a wrong or hostile endpoint cannot forge preview records, because every record is
@@ -86,12 +87,19 @@ connect to the same broker candidate and name the same `(stream_id, start_event_
 from the publisher to every current subscriber and keeps a small bounded backlog so a subscriber that joins slightly
 late still sees recent records.
 
-Broker connections negotiate ALPN `marmot.quic_broker.v1`. The first frame on the control stream is a control envelope:
+Broker connections negotiate ALPN `marmot.quic_broker.v1`. The first frame a client sends on a broker stream is a
+control envelope, framed exactly like a record frame (see "Record framing"): a 4-byte big-endian `frame_len` followed
+by that many envelope bytes. The envelope uses the Marmot binary profile
+([../foundation/canonical-encoding.md](../foundation/canonical-encoding.md)):
 
 ```text
+enum { publish(1), subscribe(2), (255) } BrokerControlType;  // uint8
+
 struct {
-  opaque marmot_broker<1..255>;   // length-prefixed; decoded bytes MUST equal "marmot.quic_broker.v1"
-  BrokerControl control;          // Publish or Subscribe
+  opaque marmot_broker<1..255>;     // ASCII "marmot.quic_broker.v1"
+  BrokerControlType control_type;
+  opaque stream_id<1..64>;          // raw stream id bytes
+  opaque start_event_id<1..64>;     // raw event id bytes (32 bytes today)
 } QuicBrokerControlEnvelopeV1;
 ```
 
@@ -100,10 +108,18 @@ binary profile). A broker MUST reject an envelope whose decoded `marmot_broker` 
 `marmot.quic_broker.v1` (21 bytes). The field is variable-length rather than a fixed array so a future protocol string
 of a different length stays decodable by an old reader, which can then reject it cleanly.
 
-`control` is one of:
+`stream_id` and `start_event_id` are the raw bytes of the stream identity pair (see "Stream identity"), not hex text;
+the first text profile uses 32 bytes for each. A broker MUST reject an envelope whose `control_type` is not a defined
+value, whose fields violate their bounds, or whose frame carries trailing bytes after the envelope.
 
-- `Publish { stream_id, start_event_id }` — the sender claims the room and then streams records into it;
-- `Subscribe { stream_id, start_event_id }` — a receiver joins the room and reads fanned-out records.
+Stream direction selects the role:
+
+- a publisher sends its control envelope (`control_type = publish`) and the stream's record frames on a client-opened
+  unidirectional stream — it claims the room and streams records into it;
+- a subscriber opens a bidirectional stream, sends its control envelope (`control_type = subscribe`), and receives
+  fanned-out record frames on the return direction.
+
+A broker MUST reject a publish envelope on a bidirectional stream and a subscribe envelope on a unidirectional stream.
 
 The room key is exactly `(stream_id, start_event_id)`; a broker MUST NOT merge or cross-deliver records between
 different rooms.
@@ -122,9 +138,15 @@ opaque record[frame_len];    // the AgentTextStreamRecordV1 bytes
 ```
 
 - `frame_len` is a 4-byte big-endian unsigned length. A reader MUST reject a frame whose `frame_len` exceeds the
-  feature's `max_plaintext_frame_len` plus a small fixed allowance for the record header and AEAD tag.
-- Records carry `seq` starting at `1` and increasing by one. A reader MUST reject a duplicate or out-of-order `seq` and
-  MUST reject records whose `stream_id` differs from the first record's `stream_id` on the same stream.
+  group's `max_plaintext_frame_len` policy value plus 1024 bytes of header and AEAD-tag allowance.
+- Records carry `seq` starting at `1` and increasing by one. A receiver maintains a last-accepted `seq` high-water
+  mark per preview stream. A record whose `seq` is at or below the high-water mark — for example, a record a broker
+  replays on reconnect — MUST be discarded silently without affecting the stream; a duplicate or replayed record is
+  never stream-fatal. Ordering is judged against the high-water mark: the next accepted record is the one whose `seq`
+  is the high-water mark plus one. A record further ahead signals a gap; the receiver backfills the missing records
+  from a replay source and, if a gap remains after exhausting backfill sources, marks the preview unverifiable because
+  it cannot complete the transcript hash.
+- A reader MUST reject records whose `stream_id` differs from the first record's `stream_id` on the same stream.
 - The stream ends with the QUIC stream finishing cleanly. A reader treats the recovered records as a provisional
   preview and verifies them against the final MLS message's transcript hash per the feature document.
 
@@ -141,11 +163,12 @@ history and do not change the authority of the final MLS message.
 
 ## Reconnect
 
-A receiver MAY reconnect to the same or another candidate while a stream is live and resume reading. Because records are
-ordered by `seq` and the transcript hash covers every accepted record, a receiver can detect a gap and either backfill
-from a broker's replay window or mark the preview unverifiable and wait for the final MLS message. Reconnect and
-candidate selection MUST NOT change record ordering or the transcript: ordering comes from `seq`, never from connection
-or arrival order.
+A receiver MAY reconnect to the same or another candidate while a stream is live and resume reading. A broker replays
+its retained backlog from the start of the replay window, so a reconnecting receiver expects records at or below its
+`seq` high-water mark and discards them silently per "Record framing". Because records are ordered by `seq` and the
+transcript hash covers every accepted record, a receiver can detect a gap and either backfill from a broker's replay
+window or mark the preview unverifiable and wait for the final MLS message. Reconnect and candidate selection MUST NOT
+change record ordering or the transcript: ordering comes from `seq`, never from connection or arrival order.
 
 ## Limits
 
@@ -158,17 +181,18 @@ A broker enforces resource bounds so a relay cannot be used to exhaust memory. T
 - read timeout `15s`, idle timeout `30s`, keep-alive interval `10s`.
 
 These are transport safety limits, not interop-visible protocol values; a broker MAY tighten them. The interop-visible
-caps a stream MUST respect are the per-group policy values (`max_plaintext_frame_len`, `replay_ttl_secs`,
-`padding_bucket_bytes`) owned by the component document.
+caps a stream MUST respect are the per-group policy values (`max_plaintext_frame_len`, `replay_ttl_secs`) owned by the
+component document; `padding_bucket_bytes` is reserved in v1 and caps nothing yet.
 
 ## Metadata exposed to the transport
 
 A direct-path endpoint or a broker sees the routing pair `(stream_id, start_event_id)`, the ciphertext records, their
 sizes and timing, and the connecting peer's network address. It does not see preview plaintext, group ids, account
 ids, or key material. `stream_id` is fresh random per stream and `start_event_id` is an MLS event id; neither is derived
-from a member key, so they do not link members across groups. Implementations SHOULD apply the feature's optional
-`padding_bucket_bytes` and batching guidance to blunt token-cadence side channels; this binding does not attempt to hide
-cadence at high bandwidth cost.
+from a member key, so they do not link members across groups. Senders SHOULD batch output per the feature document to
+blunt token-cadence side channels; this binding does not attempt to hide cadence at high bandwidth cost. Padding is
+reserved in v1: no padding construction is defined, senders MUST NOT emit padding, and `padding_bucket_bytes` in the
+component document is a forward-compatibility reservation.
 
 ## Versioning
 
