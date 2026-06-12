@@ -88,6 +88,11 @@ file_key     = HKDF-Expand(media_secret,
                            32)
 ```
 
+HKDF is HKDF-SHA256. `media_secret` is used directly as the HKDF PRK (Expand only, no Extract step). This choice is
+fixed and independent of the group's MLS ciphersuite; only the `MLS-Exporter` line is computed with the ciphersuite's
+own hash, as MLS defines. The info bytes are exactly the concatenation shown: fields joined by single `0x00` separator
+bytes, with no length prefixes.
+
 `media_secret` is key material. Clients MUST NOT publish, transmit, log, or expose it in diagnostics. Clients SHOULD
 protect cached source-epoch media secrets at rest with confidentiality controls appropriate to the platform. Clients
 SHOULD retain recent epoch media secrets long enough to decrypt delayed media references according to local retention
@@ -103,6 +108,8 @@ aad               = "encrypted-media-v1" || 0x00 || plaintext_sha256_bytes || 0x
 encrypted_content = ChaCha20-Poly1305.encrypt(file_key, nonce, plaintext, aad)
 ```
 
+The AAD bytes are exactly the concatenation shown, with the same single `0x00` separators and no length prefixes.
+
 `plaintext_sha256` is the SHA-256 hash of the original plaintext file. `ciphertext_sha256` is the SHA-256 hash of the
 encrypted content and is the preferred content id for blob storage.
 
@@ -114,7 +121,7 @@ A receiver MUST reject an encrypted media reference if:
 - the version is absent or not `encrypted-media-v1`
 - any legacy media version string is present
 - no locator is present
-- a locator kind is malformed or not allowed by the group policy
+- a locator kind is malformed or not in the group policy's `allowed_locator_kinds`
 - required MIME type, filename, ciphertext hash, plaintext hash, nonce, or version fields are missing
 - `ciphertext_sha256` or `plaintext_sha256` is not a 32-byte hex SHA-256 value
 - `nonce` is not exactly 12 bytes encoded as 24 hex characters
@@ -123,3 +130,10 @@ A receiver MUST reject an encrypted media reference if:
 - decryption fails
 - the plaintext SHA-256 does not match `plaintext_sha256`
 - the decrypted media type or size violates application policy
+
+The set of allowed locator kinds comes from the group's `marmot.group.encrypted-media.v1` policy
+(`allowed_locator_kinds`), not from a fixed list. A locator whose kind is outside the group policy makes the media
+reference invalid, as above. A well-formed locator whose kind the group policy allows but the receiving client does not
+support is unusable, not invalid: the client skips it, and the attachment is unfetchable if no usable locator or
+fallback endpoint remains. Missing client support MUST NOT invalidate the media reference and MUST NOT invalidate or
+drop the containing message.

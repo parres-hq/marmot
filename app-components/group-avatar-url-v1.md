@@ -29,10 +29,10 @@ An absent avatar is encoded with an empty `url` (all fields empty).
 When an avatar is present:
 
 - `url` is valid UTF-8, non-empty, and a normalized `https` URL (see Validation)
-- `dim` is optional; when present it is a UTF-8 render hint, by convention `WIDTHxHEIGHT` (e.g. `512x512`). It is
-  opaque to the protocol and is not parsed beyond its length bound
-- `thumbhash` is optional; when present it is a UTF-8 ThumbHash render hint. This component deliberately uses ThumbHash,
-  not BlurHash
+- `dim` is an optional opaque render hint (see Validation). By convention a producer emits UTF-8 `WIDTHxHEIGHT`
+  (for example `512x512`), but the bytes are not interpreted at decode
+- `thumbhash` is an optional opaque render hint with the same decode rule. By convention a producer emits a UTF-8
+  ThumbHash string; this component deliberately uses ThumbHash, not BlurHash
 
 ## Update
 
@@ -53,11 +53,27 @@ A non-empty avatar state is valid only if `url` validates and normalizes:
 - the URL includes a host and no userinfo (no `user:password@`) and no fragment
 - the host MUST NOT be `localhost`, a `.localhost` name, or a loopback, private, link-local, unspecified, broadcast,
   documentation, or multicast IP address. Producers SHOULD reject other non-routable hosts as well
-- the producer normalizes the URL (scheme/host case, default-port and path normalization) before encoding, and stores
-  the normalized form. Decoders re-run validation and compare the decoded bytes
 
-`dim` and `thumbhash` are advisory render hints; an invalid hint MUST NOT invalidate otherwise-valid group state, but a
-producer SHOULD only emit hints it can populate. Both are length-bounded at 256 bytes.
+The producer normalizes the URL before encoding and stores the normalized form. Normalization is exactly these steps,
+in order:
+
+1. lowercase the scheme
+2. lowercase the host
+3. remove the port if it is the scheme's default (`443` for `https`)
+4. apply RFC 3986 dot-segment removal to the path
+
+Normalization changes nothing else: percent-encodings, the query, and all other bytes are left untouched. A URL with a
+fragment or userinfo is invalid regardless, per the rules above.
+
+Per [../foundation/canonical-encoding.md](../foundation/canonical-encoding.md) ("Canonical decoding"), normalization is
+a producer-side encoding rule. A decoder re-runs validation and normalization on the decoded `url` and MUST reject
+state whose stored URL bytes differ from the bytes produced by re-normalizing them. A decoder never repairs a
+non-normalized URL into canonical state.
+
+`dim` and `thumbhash` are opaque hints per [../foundation/canonical-encoding.md](../foundation/canonical-encoding.md)
+("Canonical decoding"): a decoder validates only their 256-byte length bounds. Interpreting the bytes — as UTF-8 text,
+or `dim` as a width-by-height pair — happens at render time. A hint the renderer cannot interpret is treated as absent
+and MUST NOT invalidate otherwise-valid group state. A producer SHOULD only emit hints it can populate.
 
 ## Coexistence and precedence
 

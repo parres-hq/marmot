@@ -36,13 +36,53 @@ When an image is present:
 - `image_hash` is exactly 32 bytes
 - `image_key` is exactly 32 bytes
 - `image_nonce` is exactly 12 bytes
-- `image_upload_key` is exactly 32 bytes. It is the secret a client uses to authorize the Blossom upload/replace of
-  this blob (the Blossom server-side write credential for the image). It is not the content-decryption key; that is
-  `image_key`.
-- `media_type` is non-empty valid UTF-8, at most 128 bytes, and names the encrypted image media type
+- `image_upload_key` is exactly 32 bytes. It is the secret key that authorizes Blossom writes for this blob (see Image
+  bytes). It is not the content-decryption key; that is `image_key`.
+- `media_type` is non-empty valid UTF-8, at most 128 bytes, and names the decrypted image's media type (see Image
+  bytes)
 
 The component stores the cryptographic metadata clients need for a Blossom-backed image. It does not define the Blossom
 upload or download request flow, server selection, relay behavior, or CDN behavior.
+
+## Image bytes
+
+The image is encrypted, content-addressed, and stored as one opaque blob. The component fields bind to that blob as
+follows.
+
+Encryption is ChaCha20-Poly1305 keyed with `image_key` and the 12-byte `image_nonce`:
+
+```text
+aad            = "marmot-group-image-v1" || 0x00 || media_type
+encrypted_blob = ChaCha20-Poly1305.encrypt(image_key, image_nonce, plaintext_image, aad)
+```
+
+The AAD bytes are exactly the concatenation shown: the ASCII version label `marmot-group-image-v1`, one `0x00`
+separator byte, and the canonical media type bytes, with no length prefixes. `media_type` is canonicalized with the
+algorithm in [encrypted-media.md](../features/encrypted-media.md) ("Media Type Canonicalization"); the producer stores
+the canonical form, and the AAD input on both ends is the canonical media type derived from the stored `media_type`
+field. The encrypted blob is the AEAD output, including the 16-byte authentication tag.
+
+A producer MUST generate a fresh random `image_key` and `image_nonce` for every new image and MUST NOT reuse a
+key-nonce pair.
+
+`image_hash` is the SHA-256 hash of the encrypted blob. It is the blob's content id: the producer uploads the encrypted
+blob under that hash, and a fetching client addresses the blob by it. A fetching client MUST verify that the fetched
+bytes hash to `image_hash` before decrypting.
+
+`media_type` describes the decrypted image, not the encrypted blob. The encrypted blob is opaque bytes to the blob
+store.
+
+`image_upload_key` is the secret key of a Nostr keypair generated fresh for this image. It authorizes Blossom writes:
+the producer signs the Blossom upload authorization event with this key, so the corresponding public key is the blob's
+server-side write credential. Because the secret travels inside the MLS-protected component, any current member can
+sign later authorization events for the same blob. A producer MUST generate a fresh keypair for every new image and
+MUST NOT use an account identity key, so the blob store cannot link the blob to a Marmot account.
+
+Blob upload and download are outside MLS group state. A fetch, hash-mismatch, or decryption failure is an
+application-level fetch failure: the image is unavailable, and the failure MUST NOT invalidate the component state or
+the commit that carried it.
+
+Fixed test vectors for this scheme will be published with the conformance fixtures.
 
 ## Update
 

@@ -67,13 +67,25 @@ Endpoint updates are group-state updates. They are not message metadata and do n
 A policy state is valid if:
 
 - `media_format` is exactly `encrypted-media-v1`
-- every locator kind is non-empty UTF-8, contains no whitespace, and is at most 64 bytes
+- every locator kind is 1..64 bytes and contains only lowercase ASCII letters (`a-z`), digits (`0-9`), and `-`
 - `allowed_locator_kinds` is non-empty and contains at most 16 unique entries
 - `default_blob_endpoints` is non-empty and contains at most 16 unique entries
 - every endpoint locator kind appears in `allowed_locator_kinds`
-- every production endpoint is normalized HTTPS
-- loopback HTTP endpoints are valid only through explicit dev/test configuration
+- every endpoint base URL is a normalized `https` URL, or a normalized `http` URL whose host is loopback
 - endpoints with userinfo, fragments, missing hosts, or non-routable non-loopback hosts are invalid
+
+State bytes MUST be canonical per [../foundation/canonical-encoding.md](../foundation/canonical-encoding.md)
+("Canonical decoding"): a decoder rejects state whose bytes differ from the canonical re-encoding of the decoded value
+and MUST NOT trim, case-fold, normalize, or deduplicate a value while decoding it. List order and uniqueness are
+producer-side rules; a decoder rejects a duplicate entry rather than removing it, and rejects a non-normalized URL or
+locator kind rather than repairing it.
+
+Component-state validity is the same for every member. An endpoint with scheme `http` and a loopback host is valid
+state, and validators MUST accept it, so commit validity never depends on local configuration.
+
+Whether a client acts on such an endpoint is a separate, local rule: a client MUST NOT upload to or download from a
+loopback HTTP endpoint unless it is explicitly configured for development or testing. In a production configuration
+those endpoints are unusable, and attachments that rely on them are unfetchable.
 
 ## Authorization
 
