@@ -111,7 +111,7 @@ component version.
 
 Any current member MAY send a standalone agent text stream QUIC update proposal.
 
-Only a current admin MAY commit an update.
+Only an active admin MAY commit an update.
 
 ## Removal
 

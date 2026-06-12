@@ -53,7 +53,7 @@ to be discarded.
 
 Any current member MAY send a standalone message-retention proposal.
 
-Only a current admin MAY commit a message-retention update.
+Only an active admin MAY commit a message-retention update.
 
 ## Removal
 

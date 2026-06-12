@@ -46,7 +46,7 @@ empty.
 
 Any current member MAY send a standalone profile update proposal.
 
-Only a current admin MAY commit a profile update.
+Only an active admin MAY commit a profile update.
 
 The admin check is evaluated against the prior epoch state.
 

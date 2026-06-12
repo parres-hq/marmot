@@ -105,7 +105,8 @@ For v1 component documents, these defaults apply unless the component says other
 - If the update payload is a full replacement state, partial field updates are not defined. A caller that wants to
   change one field reads the current state, changes that field, and sends a full replacement.
 - An inline AppDataUpdate requires the sender to satisfy the component's commit authorization because the proposal
-  sender and committer are the same member. For admin-gated components, the sender MUST be a current admin.
+  sender and committer are the same member. For admin-gated components, the sender MUST be an active admin (defined
+  in [admin-policy-v1.md](./admin-policy-v1.md)).
 - A component MUST NOT be removed while it is listed as required in the GroupContext `app_components` component.
 
 Component state and update decoders follow the canonical decoding rule in

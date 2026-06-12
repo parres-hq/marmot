@@ -81,7 +81,7 @@ update, but a client MUST NOT rewrite relay URL bytes while applying signed grou
 
 Any current member MAY send a standalone routing update proposal.
 
-Only a current admin MAY commit a routing update. This includes routing rotations: a `nostr_group_id` change is
+Only an active admin MAY commit a routing update. This includes routing rotations: a `nostr_group_id` change is
 admin-gated like every other routing update.
 
 ## Removal

@@ -54,20 +54,18 @@ A non-empty avatar state is valid only if `url` validates and normalizes:
 - the host MUST NOT be `localhost`, a `.localhost` name, or a loopback, private, link-local, unspecified, broadcast,
   documentation, or multicast IP address. Producers SHOULD reject other non-routable hosts as well
 
-The producer normalizes the URL before encoding and stores the normalized form. Normalization is exactly these steps,
-in order:
+The producer normalizes the URL before encoding and stores the normalized form. Normalization is defined by the
+[WHATWG URL Standard](https://url.spec.whatwg.org/): the producer parses the URL and serializes the parse result as
+that standard specifies, and stores the serializer's output bytes.
 
-1. lowercase the scheme
-2. lowercase the host
-3. remove the port if it is the scheme's default (`443` for `https`)
-4. apply RFC 3986 dot-segment removal to the path
-
-Normalization changes nothing else: percent-encodings, the query, and all other bytes are left untouched. A URL with a
-fragment or userinfo is invalid regardless, per the rules above.
+The WHATWG standard is the normative definition; the effects below are orientation, not an exhaustive list. WHATWG
+serialization lowercases the scheme and host, removes the scheme's default port (`443` for `https`), resolves
+dot-segments in the path, serializes an empty path as `/`, normalizes percent-encoding, and encodes non-ASCII hosts
+with IDNA (punycode). A URL with a fragment or userinfo is invalid regardless, per the rules above.
 
 Per [../foundation/canonical-encoding.md](../foundation/canonical-encoding.md) ("Canonical decoding"), normalization is
-a producer-side encoding rule. A decoder re-runs validation and normalization on the decoded `url` and MUST reject
-state whose stored URL bytes differ from the bytes produced by re-normalizing them. A decoder never repairs a
+a producer-side encoding rule. A decoder re-runs validation and the WHATWG parse-and-serialize on the decoded `url`
+and MUST reject state whose stored URL bytes differ from the serializer's output. A decoder never repairs a
 non-normalized URL into canonical state.
 
 `dim` and `thumbhash` are opaque hints per [../foundation/canonical-encoding.md](../foundation/canonical-encoding.md)
@@ -85,7 +83,7 @@ this component (empty state) falls back to the Blossom image if one is present.
 
 Any current member MAY send a standalone avatar update proposal.
 
-Only a current admin MAY commit an avatar update.
+Only an active admin MAY commit an avatar update.
 
 ## Removal
 

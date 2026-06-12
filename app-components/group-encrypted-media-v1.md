@@ -74,6 +74,10 @@ A policy state is valid if:
 - every endpoint base URL is a normalized `https` URL, or a normalized `http` URL whose host is loopback
 - endpoints with userinfo, fragments, missing hosts, or non-routable non-loopback hosts are invalid
 
+A base URL is normalized when it is byte-equal to its own parse-and-serialize output under the
+[WHATWG URL Standard](https://url.spec.whatwg.org/) — the same normalization
+[group-avatar-url-v1.md](group-avatar-url-v1.md) defines for avatar URLs.
+
 State bytes MUST be canonical per [../foundation/canonical-encoding.md](../foundation/canonical-encoding.md)
 ("Canonical decoding"): a decoder rejects state whose bytes differ from the canonical re-encoding of the decoded value
 and MUST NOT trim, case-fold, normalize, or deduplicate a value while decoding it. List order and uniqueness are
@@ -91,7 +95,7 @@ those endpoints are unusable, and attachments that rely on them are unfetchable.
 
 Any current member MAY send a standalone encrypted-media policy update proposal.
 
-Only a current admin MAY commit an encrypted-media policy update. The admin check is evaluated against the prior epoch
+Only an active admin MAY commit an encrypted-media policy update. The admin check is evaluated against the prior epoch
 state.
 
 ## Removal
