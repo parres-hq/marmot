@@ -64,10 +64,17 @@ Each candidate branch has:
 
 - `fork_epoch`: the epoch where the branch diverged from retained canonical state;
 - `tip_epoch`: the epoch reached after replaying the branch's valid commits;
+- `tip_priority`: the authenticated ordering class of the branch's tip commit. `privileged` commits are valid commits
+  that require an administrator according to the group's application policy (membership changes, app-data component
+  updates, and any other admin-only staged commit). `ordinary` commits are valid member commits that do not require an
+  administrator (for example member self-updates and self-removes).
+- `tip_committer`: the authenticated Marmot account identity of the branch's tip commit sender, derived from the MLS
+  credential/leaf that authenticated the commit, not from transport metadata.
 - `tip_digest`: `SHA-256` of the serialized MLS message bytes of the branch's tip commit (the same Commit
   `MLSMessage` bytes the branch replayed to reach `tip_epoch`). It is exactly 32 bytes. For a branch whose only commit
   is its tip, `tip_digest` is byte-for-byte the same value as that commit's `commit_digest` in "Same-epoch races"
-  below; both are `SHA-256` over the one Commit's MLS bytes.
+  below; both are `SHA-256` over the one Commit's MLS bytes. `tip_digest` is only a final tie-breaker after fixed
+  authenticated metadata.
 - `raw_commit_depth`: the number of valid commits from `fork_epoch` to `tip_epoch`;
 - app-payload witnesses that decrypt at the branch epochs defined below.
 
@@ -137,9 +144,12 @@ Eligible branches are compared in this order:
 2. Witness quorum beats no quorum.
 3. Higher `raw_commit_depth`.
 4. Higher `app_witness_score`.
-5. Lower `tip_digest`.
+5. Lower `tip_priority` (`privileged` before `ordinary`).
+6. Lower `tip_committer`.
+7. Lower `tip_digest`.
 
-Lower digest means lexicographic order over the 32 digest bytes.
+Lower `tip_committer` means lexicographic order over the authenticated member-id bytes. Lower digest means
+lexicographic order over the 32 digest bytes. Digest ordering is a same-committer fallback, not the primary fork winner.
 
 Every value in this comparison MUST come from MLS-valid bytes, retained state, decrypted app payloads, or the pinned
 convergence policy.
@@ -149,20 +159,26 @@ in branch selection.
 
 ## Same-epoch races
 
-When two commits both advance the same source epoch, the lower content-derived ordering key wins:
+When two commits both advance the same source epoch, the lower authenticated ordering key wins:
 
 ```text
 CommitOrderingKey {
   source_epoch,
+  priority,       // privileged < ordinary
+  committer,      // authenticated Marmot account id
   commit_digest = SHA-256(mls_bytes)
 }
 ```
 
-For same-epoch races, `source_epoch` is equal, so the lower `commit_digest` decides. Lower digest means lexicographic
-order over the 32 digest bytes.
+For same-epoch races, `source_epoch` is equal. A valid privileged commit wins over an ordinary commit before byte
+ordering, so an admin removal or other authorized membership change is not defeated by a targeted member's concurrent
+self-update solely by choosing different commit bytes. If both commits have the same `priority`, lower `committer`
+lexicographically wins. The lower `commit_digest` decides only when the same authenticated committer produced multiple
+same-priority commits for the same source epoch.
 
 This rule is for branch choice only. The stored message id used to mark a losing commit is still separate from the
-content-derived ordering key.
+ordering key. Implementations MUST NOT use transport source, relay metadata, or any unauthenticated sender claim in this
+key.
 
 ## Applying the selected branch
 
