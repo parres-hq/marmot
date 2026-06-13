@@ -115,13 +115,17 @@ encrypted content and is the preferred content id for blob storage.
 
 ## Validation
 
-A receiver MUST reject an encrypted media reference if:
+A receiver MUST reject (invalidate) an encrypted media reference ONLY for structural-integrity or host-safety reasons. A
+receiver MUST reject a reference if:
 
 - the `imeta` tag cannot be decoded
 - the version is absent or not `encrypted-media-v1`
 - any legacy media version string is present
 - no locator is present
-- a locator kind is malformed or not in the group policy's `allowed_locator_kinds`
+- a locator has an empty kind or an empty value, or its value does not parse as a URL
+- a `blossom-v1` locator points at an unsafe host — loopback, private, link-local, documentation, broadcast,
+  multicast, or an IPv6 transition prefix (6to4 `2002::/16`, Teredo `2001:0::/32`) — or uses cleartext `http` to a
+  non-loopback host (host safety; see below)
 - required MIME type, filename, ciphertext hash, plaintext hash, nonce, or version fields are missing
 - `ciphertext_sha256` or `plaintext_sha256` is not a 32-byte hex SHA-256 value
 - `nonce` is not exactly 12 bytes encoded as 24 hex characters
@@ -131,9 +135,22 @@ A receiver MUST reject an encrypted media reference if:
 - the plaintext SHA-256 does not match `plaintext_sha256`
 - the decrypted media type or size violates application policy
 
-The set of allowed locator kinds comes from the group's `marmot.group.encrypted-media.v1` policy
-(`allowed_locator_kinds`), not from a fixed list. A locator whose kind is outside the group policy makes the media
-reference invalid, as above. A well-formed locator whose kind the group policy allows but the receiving client does not
-support is unusable, not invalid: the client skips it, and the attachment is unfetchable if no usable locator or
-fallback endpoint remains. Missing client support MUST NOT invalidate the media reference and MUST NOT invalidate or
-drop the containing message.
+A locator kind is NOT a validity condition. A well-formed locator whose kind is not in the group's
+`marmot.group.encrypted-media.v1` `allowed_locator_kinds`, or whose kind the receiving client does not support, makes
+that locator UNFETCHABLE: the client skips it, and the attachment is unfetchable if no usable locator or fallback
+endpoint remains. An out-of-policy or unsupported locator MUST NOT invalidate the media reference and MUST NOT
+invalidate or drop the containing message. The rationale is that media content is authenticated by its
+`ciphertext_sha256` / `plaintext_sha256` and the AEAD independent of the locator, so an out-of-policy or otherwise wrong
+locator cannot forge content; only the structural conditions above protect integrity.
+
+Host safety is the one locator property that DOES invalidate, and it applies only to `blossom-v1` locators — the kind
+this client fetches over HTTP. An unsafe-host or cleartext-`http` Blossom locator is a hostile request vector: unlike a
+wrong kind, the harm is the fetch request itself (an attempt to make the client reach a private or internal address),
+which content hash-authentication cannot neutralize, so such a reference is rejected and its message dropped. A
+non-Blossom locator is never fetched by this client, so it is subject only to the structural checks and is otherwise
+merely unfetchable per the rule above.
+
+Fetchability is judged at fetch time against the group's current `allowed_locator_kinds` and the receiving client's
+current support and configuration, not against the source epoch. Because the locator policy no longer gates delivery,
+validation needs no source-epoch policy snapshot. (This supersedes the earlier rule that a locator whose kind is outside
+the group policy makes the media reference invalid.)
