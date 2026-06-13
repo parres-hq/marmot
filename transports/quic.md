@@ -152,11 +152,13 @@ opaque record[frame_len];    // the AgentTextStreamRecordV1 bytes
 
 ## Short replay
 
-A broker MAY retain recent encrypted records for short replay so a late subscriber can catch up. The replay window is
-bounded by the group policy field `replay_ttl_secs` in
+A broker MAY retain recent encrypted records for short replay so a late subscriber can catch up. A broker does not see
+MLS group state, so it cannot independently read or enforce the group's `replay_ttl_secs` component field. Broker
+operators configure a per-room/operator replay TTL instead; deployments that advertise brokered replay for a group MUST
+configure that operator TTL no greater than the group's `replay_ttl_secs` in
 [../app-components/agent-text-stream-quic-v1.md](../app-components/agent-text-stream-quic-v1.md) (at most 300 seconds in
-the first profile; `0` disables retained replay). A broker MUST NOT retain records beyond this window and MUST bound
-total retained bytes per room.
+the first profile; `0` disables retained replay). A broker MUST NOT retain records beyond its configured operator TTL
+and MUST bound total retained bytes per room.
 
 Replay is a transport convenience only. Retained records remain provisional preview data; they do not become durable
 history and do not change the authority of the final MLS message.
@@ -180,9 +182,11 @@ A broker enforces resource bounds so a relay cannot be used to exhaust memory. T
 - maximum connections: `256`, and at most `64` concurrent streams per connection;
 - read timeout `15s`, idle timeout `30s`, keep-alive interval `10s`.
 
-These are transport safety limits, not interop-visible protocol values; a broker MAY tighten them. The interop-visible
-caps a stream MUST respect are the per-group policy values (`max_plaintext_frame_len`, `replay_ttl_secs`) owned by the
-component document; `padding_bucket_bytes` is reserved in v1 and caps nothing yet.
+These are broker transport safety limits, not interop-visible protocol values; a broker MAY tighten them. Brokers cannot
+inspect MLS component state, so sender/receiver implementations are responsible for enforcing the interop-visible
+per-group policy values (`max_plaintext_frame_len`, `replay_ttl_secs`) from the component document. Broker operator
+replay TTLs used for a room MUST be configured no greater than that room's `replay_ttl_secs`; `padding_bucket_bytes` is
+reserved in v1 and caps nothing yet.
 
 ## Metadata exposed to the transport
 
