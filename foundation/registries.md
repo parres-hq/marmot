@@ -45,11 +45,23 @@ in the component registry rather than as extension `0x000a`.
 
 ## Marmot custom MLS extension types
 
-| Extension type | Name                                | Document                                                    |
-| -------------- | ----------------------------------- | ----------------------------------------------------------- |
-| `0xf2ef`       | `marmot.encrypted-device-name.v1`   | [doc](../features/multi-device.md)                         |
-| `0xf2f0`       | `marmot.multi-device.v1`            | [doc](../features/multi-device.md)                         |
-| `0xf2f1`       | `marmot.account-identity-proof.v1`  | [doc](./account-identity-proof-v1.md)                       |
+| Extension type | Name                                            | Document                                                    |
+| -------------- | ----------------------------------------------- | ----------------------------------------------------------- |
+| `0xf2d1`       | `marmot.feature.agent_text_stream_quic.receive.v1` | [doc](../app-components/agent-text-stream-quic-v1.md)    |
+| `0xf2d2`       | `marmot.feature.agent_text_stream_quic.send.v1`    | [doc](../app-components/agent-text-stream-quic-v1.md)    |
+| `0xf2d4`       | `marmot.feature.agent_text_stream_quic.fanout.v1`  | [doc](../app-components/agent-text-stream-quic-v1.md)    |
+| `0xf2ef`       | `marmot.encrypted-device-name.v1`               | [doc](../features/multi-device.md)                         |
+| `0xf2f0`       | `marmot.multi-device.v1`                        | [doc](../features/multi-device.md)                         |
+| `0xf2f1`       | `marmot.account-identity-proof.v1`              | [doc](./account-identity-proof-v1.md)                       |
+
+`0xf2d1`, `0xf2d2`, and `0xf2d4` are the agent-text-stream-QUIC member role capabilities. A member advertises a role by
+listing the matching extension type in its LeafNode capabilities; the `required_member_roles` mask in
+`marmot.group.agent-text-stream.quic.v1` is enforced against these ids at invite and join. The bit values (`0x01`,
+`0x02`, `0x04`) are role-mask bits inside the component payload, distinct from these extension type ids.
+
+These three extension types are capability markers only: v1 defines no extension data for them. They appear solely in
+`LeafNode.capabilities.extensions` to advertise role support and are never emitted as LeafNode or GroupContext
+extension bodies.
 
 `0xf2ef` and `0xf2f0` are reserved for the branch-draft multi-device feature (MIP-06) and are not yet implemented;
 confirm the values when that feature lands. `0xf2f1` is implemented and required on every Marmot member LeafNode.

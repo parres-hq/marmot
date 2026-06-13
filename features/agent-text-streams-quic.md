@@ -45,13 +45,18 @@ below.
 
 ## Capabilities
 
-KeyPackages advertise stream support with normal Marmot capabilities:
+KeyPackages advertise stream support with normal Marmot capabilities. Each role is an MLS extension-type capability
+listed in the LeafNode capabilities; a member advertises a role by listing its extension type:
 
-```text
-marmot.feature.agent_text_stream_quic.receive.v1
-marmot.feature.agent_text_stream_quic.send.v1
-marmot.feature.agent_text_stream_quic.fanout.v1
-```
+| Role      | Capability                                         | Extension type |
+| --------- | -------------------------------------------------- | -------------- |
+| `receive` | `marmot.feature.agent_text_stream_quic.receive.v1` | `0xf2d1`       |
+| `send`    | `marmot.feature.agent_text_stream_quic.send.v1`    | `0xf2d2`       |
+| `fanout`  | `marmot.feature.agent_text_stream_quic.fanout.v1`  | `0xf2d4`       |
+
+The extension type ids are registered in [../foundation/registries.md](../foundation/registries.md), and the
+`required_member_roles` role-mask bits that gate them live in the component table
+([../app-components/agent-text-stream-quic-v1.md](../app-components/agent-text-stream-quic-v1.md)).
 
 Groups that use live agent text streams require `marmot.group.agent-text-stream.quic.v1` in GroupContext
 `app_components`. A member that cannot understand the component and the required role capabilities cannot join the group.

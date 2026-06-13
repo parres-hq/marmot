@@ -41,13 +41,15 @@ struct {
 } MarmotAgentTextStreamQuicV1;
 ```
 
-Each role-mask bit names one member role capability defined by the owning feature document:
+Each role-mask bit names one member role capability. A member advertises a role by listing that capability's MLS
+extension type in its LeafNode capabilities; the extension type ids are registered in
+[../foundation/registries.md](../foundation/registries.md).
 
-| Bit    | Role      | Role capability                                    |
-| ------ | --------- | -------------------------------------------------- |
-| `0x01` | `receive` | `marmot.feature.agent_text_stream_quic.receive.v1` |
-| `0x02` | `send`    | `marmot.feature.agent_text_stream_quic.send.v1`    |
-| `0x04` | `fanout`  | `marmot.feature.agent_text_stream_quic.fanout.v1`  |
+| Bit    | Role      | Role capability                                    | Extension type |
+| ------ | --------- | -------------------------------------------------- | -------------- |
+| `0x01` | `receive` | `marmot.feature.agent_text_stream_quic.receive.v1` | `0xf2d1`       |
+| `0x02` | `send`    | `marmot.feature.agent_text_stream_quic.send.v1`    | `0xf2d2`       |
+| `0x04` | `fanout`  | `marmot.feature.agent_text_stream_quic.fanout.v1`  | `0xf2d4`       |
 
 `required_member_roles` is the set of role capabilities every member MUST advertise before joining the group. It is
 enforced at every membership change:
