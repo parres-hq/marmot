@@ -51,8 +51,11 @@ A non-empty avatar state is valid only if `url` validates and normalizes:
 - the encoded `url` is at most 2048 bytes
 - the scheme is `https` (clients MUST reject `http` and all other schemes)
 - the URL includes a host and no userinfo (no `user:password@`) and no fragment
-- the host MUST NOT be `localhost`, a `.localhost` name, or a loopback, private, link-local, unspecified, broadcast,
-  documentation, or multicast IP address. Producers SHOULD reject other non-routable hosts as well
+- the host MUST NOT be unsafe per [../foundation/host-safety.md](../foundation/host-safety.md): not `localhost` or a
+  `.localhost` name, and not an IP literal in the unsafe IPv4 or IPv6 ranges (loopback, private, CGNAT, link-local,
+  unspecified, documentation, benchmarking, reserved/broadcast, multicast, ULA, or an IPv6 transition prefix). Unlike
+  the encrypted-media endpoint, an avatar URL has no loopback exception — the scheme is `https`-only and loopback is
+  unsafe
 
 The producer normalizes the URL before encoding and stores the normalized form. Normalization is defined by the
 [WHATWG URL Standard](https://url.spec.whatwg.org/): the producer parses the URL and serializes the parse result as

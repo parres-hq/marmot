@@ -203,7 +203,9 @@ whose values follow the tag name in a single tag array, for example `["mls_exten
 A producer MUST NOT split the ids of one list across repeated tags. Each value is the `0x`-prefixed lowercase
 hexadecimal encoding of the 16-bit id, zero-padded to four hex digits, such as `0x0001` or `0xf2f1`. Each id-list tag
 MUST carry at least one value. Consumers compare id-list values as exact strings; under the text rule in
-[../foundation/canonical-encoding.md](../foundation/canonical-encoding.md), the producer emits exactly this form.
+[../foundation/canonical-encoding.md](../foundation/canonical-encoding.md), the producer emits exactly this form. A
+consumer MUST reject a KeyPackage event that carries more than one tag with the same id-list name (so the producer's
+"exactly one tag" rule is enforced, not assumed); it MUST NOT read only the first occurrence and ignore the rest.
 
 The `i` tag is the KeyPackageRef, not the account identity. Receivers MUST verify it against the decoded KeyPackage.
 

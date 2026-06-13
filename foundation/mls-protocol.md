@@ -30,6 +30,22 @@ The Marmot account identity carried in credentials is defined in [identity.md](.
 that binds that identity to the MLS leaf signature key is defined in
 [account-identity-proof-v1.md](./account-identity-proof-v1.md).
 
+## Handshake wire format
+
+Marmot handshake messages — Commits and Proposals — use a single MLS wire format within a group, so the serialized
+`MLSMessage` bytes of a given commit are deterministic: every member that processes the same commit recovers the same
+bytes. The first profile uses MLS `PublicMessage` for handshake content. Confidentiality comes from the transport
+binding, which wraps the `MLSMessage` before it reaches relays — for the Nostr binding, the kind `445`
+ChaCha20-Poly1305 envelope in [../transports/nostr.md](../transports/nostr.md) — so relays never see plaintext handshake
+bytes.
+
+Pinning one wire format matters for convergence. MLS defines a single canonical TLS serialization for an `MLSMessage`,
+and Marmot does not mix `PublicMessage` and `PrivateMessage` carriage for handshake content, so the commit identity used
+by convergence is well defined: the `commit_digest` / `tip_digest` (see
+[../protocol-core/convergence.md](../protocol-core/convergence.md)) and the dedup `message_id` (see
+[wire-envelopes.md](./wire-envelopes.md)) are each `SHA-256` over the serialized commit `MLSMessage` bytes, and two
+members never derive different digests for the same authenticated commit by choosing a different carriage.
+
 ## App components and group state
 
 New group-level feature state SHOULD use MLS app components carried in `app_data_dictionary` when the backend supports

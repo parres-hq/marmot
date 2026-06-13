@@ -80,6 +80,19 @@ In the direct mode, a receiver exposes a QUIC endpoint and the sender dials it, 
 writes the stream's records. This is the point-to-point primitive; it carries no control envelope because the dialed
 endpoint already corresponds to one receiver.
 
+Direct-path connections negotiate ALPN `marmot.quic_stream.v1`. ALPN is a mandatory TLS 1.3 parameter, so both peers
+MUST offer exactly this protocol; a direct-path endpoint MUST reject a connection that does not negotiate it. This is the
+direct-path counterpart to the broker path's `marmot.quic_broker.v1` and gives the direct path its own incompatible
+change hook (see "Versioning").
+
+In the first profile the direct path has no start-payload discovery: the `route` and `broker` start-payload tags
+advertise broker candidates only, and there is no start-payload candidate by which a direct-path receiver advertises its
+own endpoint to the sender. The direct path is therefore usable in v1 only when the sender already knows the receiver's
+endpoint out of band (for example a dev/test or preconfigured peer). Broker-relayed delivery is the v1 discovery
+mechanism. A start-payload candidate format for direct-path discovery is deferred to a future profile, which will also
+settle the connection direction (the natural form mirrors the broker path: the sender advertises a direct `quic://`
+endpoint and the receiver dials it).
+
 ### Broker-relayed
 
 In the broker mode, a group-approved broker is the rendezvous. The sender (publisher) and each receiver (subscriber)
@@ -157,8 +170,8 @@ MLS group state, so it cannot independently read or enforce the group's `replay_
 operators configure a per-room/operator replay TTL instead; deployments that advertise brokered replay for a group MUST
 configure that operator TTL no greater than the group's `replay_ttl_secs` in
 [../app-components/agent-text-stream-quic-v1.md](../app-components/agent-text-stream-quic-v1.md) (at most 300 seconds in
-the first profile; `0` disables retained replay). A broker MUST NOT retain records beyond its configured operator TTL
-and MUST bound total retained bytes per room.
+the first profile; `0` disables retained replay). A broker MUST NOT retain records beyond its configured operator TTL,
+MUST bound per-room backlog depth, and MUST bound total retained bytes across the broker.
 
 Replay is a transport convenience only. Retained records remain provisional preview data; they do not become durable
 history and do not change the authority of the final MLS message.
@@ -177,7 +190,8 @@ change record ordering or the transcript: ordering comes from `seq`, never from 
 A broker enforces resource bounds so a relay cannot be used to exhaust memory. The first-profile defaults are:
 
 - per-subscriber queue depth: `32` records;
-- per-room backlog depth: `1024` records, and at most `64 MiB` retained per the replay window;
+- per-room backlog depth: `1024` records;
+- total retained backlog bytes across all rooms: at most `64 MiB` (a broker-wide budget, not per room);
 - maximum rooms: `512`;
 - maximum connections: `256`, and at most `64` concurrent streams per connection;
 - read timeout `15s`, idle timeout `30s`, keep-alive interval `10s`.
@@ -203,6 +217,7 @@ component document is a forward-compatibility reservation.
 This binding is `marmot.transport.quic`, version 1, used only for the first agent text stream text profile. Interop
 visible changes use the narrowest hook:
 
+- the direct-path ALPN `marmot.quic_stream.v1` (a new value for an incompatible direct-path change);
 - the broker control protocol string `marmot.quic_broker.v1` (a new value for an incompatible control change);
 - a new record version in `AgentTextStreamRecordV1` (owned by the feature document) for an incompatible record change;
 - a new `route` value or candidate scheme for an incompatible discovery change;

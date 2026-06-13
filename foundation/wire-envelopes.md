@@ -40,6 +40,24 @@ They SHOULD NOT redefine Marmot account identity or inner app payload shape.
 
 ## Message ids
 
-Any message id used for duplicate detection, replay, or branch selection MUST be defined over Marmot or MLS bytes.
+A Marmot message id is used for duplicate detection, replay rejection, and for marking the losing commit in a
+same-epoch race. It MUST be defined over the MLS security bytes, never over transport evidence.
+
+The message id is:
+
+```text
+message_id = SHA-256(mls_message_bytes)
+```
+
+where `mls_message_bytes` is the recovered `MLSMessage` — the transport-independent MLS security bytes from "MLS bytes"
+above, serialized as MLS defines, exactly as MLS authenticated them. It is not the transport envelope and not the inner
+app payload. The id is exactly 32 bytes (the raw `SHA-256` output; there is no domain-separation prefix). A decoder
+computes it over the recovered bytes without re-encoding, so two transport copies of the same MLS message yield the same
+id.
+
+This is the same `SHA-256`-over-`MLSMessage`-bytes construction used for `commit_digest` / `tip_digest` in
+[../protocol-core/convergence.md](../protocol-core/convergence.md) ("Same-epoch races"): for a commit, its dedup
+`message_id` is byte-for-byte its `commit_digest`. The dedup/replay use of the id is separate from its use as the
+same-epoch ordering tie-breaker, but the bytes are computed identically, so an implementation needs only one hash.
 
 A Nostr event id is transport evidence. It is not a Marmot consensus id.

@@ -48,8 +48,9 @@ After unwrapping a Welcome, the receiver:
 5. validates every resulting member identity and account identity proof;
 6. identifies the Welcome author from the MLS GroupInfo signer leaf and validates that author's Marmot account identity;
 7. validates the resulting Marmot group state and required components;
-8. rejects the Welcome unless the author is authorized to add this receiver under the resulting group state's active
-   membership-add authorization rule;
+8. rejects the Welcome unless the author is an active admin in the resulting group state, per the admin-policy component
+   ([../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md)), which is the sole membership-add
+   authority for v1 groups;
 9. stores the group state and routing information;
 10. rotates the consumed published KeyPackage when appropriate;
 11. deletes consumed `init_key` material according to the KeyPackage lifecycle rules;
@@ -98,6 +99,7 @@ A receiver rejects the Welcome if:
 - any resulting member leaf is missing a valid account identity proof;
 - the Welcome author cannot be identified as a member leaf in the resulting group;
 - the resulting group state lacks required Marmot state;
-- the Welcome author's MLS-authenticated account identity is not authorized to add this receiver under the resulting
-  group state's active membership-add authorization rule;
+- the Welcome author's MLS-authenticated account identity is not an active admin in the resulting group state (the
+  sole membership-add authority for v1 groups; see
+  [../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md));
 - the group requires a capability this client does not support.

@@ -121,12 +121,14 @@ Each Marmot component document defines two byte formats:
 - state bytes stored in `AppDataDictionary.component_data.data`;
 - update bytes carried in `AppDataUpdate.update`.
 
-Updates are diffs. They are not required to be complete replacement states.
-
 For each Commit, a Marmot client groups AppDataUpdate proposals by component id. For each component id, the client
 evaluates the prior state and ordered update bytes using that component's update rule.
 
-The update rule returns new state bytes or rejects the Commit.
+The update rule returns new state bytes or rejects the Commit. A component's update rule decides how update bytes relate
+to prior state. In v1 every component document defines its update payload as a full replacement state, so the update
+rule replaces the prior state with the update bytes (partial field updates are not defined; see "Common Rules" above). A
+future component MAY define a diff-style update rule, but it MUST say so explicitly in its own document; no v1 component
+does.
 
 Update rules MUST be deterministic. They MUST NOT read local wall-clock time, transport state, random numbers, local UI
 state, or local storage order.

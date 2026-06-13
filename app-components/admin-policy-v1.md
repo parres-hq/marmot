@@ -91,8 +91,8 @@ In v1, the following operations require an active admin to commit:
 
 For Welcome-based joins, the receiver applies the same invite authorization check at join time. The receiver identifies
 the inviter from the MLS GroupInfo signer leaf and rejects the Welcome unless that leaf's MLS-authenticated Marmot
-account identity is an active admin in the joined group state. If this component is absent, the receiver rejects the
-Welcome unless the active application profile defines another membership-add authorization component. This check's trust
+account identity is an active admin in the joined group state. This component is the sole membership-add authority for
+v1 groups: if it is absent, no member is authorized to add, so the receiver rejects the Welcome. This check's trust
 model and its limits are described in [../protocol-core/joining.md](../protocol-core/joining.md) ("Welcome-bootstrap
 trust").
 
@@ -108,8 +108,8 @@ SelfRemove is special:
 
 ## Removal
 
-If the component is absent, components and operations that require an active admin are invalid unless the active
-application profile defines another authorization component.
+This component is the sole admin authority for v1 groups. If it is absent, components and operations that require an
+active admin are invalid (there is no other authorization component in v1).
 
 ## Migration
 

@@ -78,6 +78,23 @@ ciphertext, plaintext, and key material.
 
 Use aggregate counts, method names, local enum names, and redacted or hashed values when a diagnostic needs correlation.
 
+## Deferred implementation surfaces
+
+Some surfaces are fully specified but not yet implemented in this repository. They remain normative; the deferral is a
+property of the current darkmatter code, not of the protocol.
+
+- NIP-40 message expiration — the `expiration` tag in [transports/nostr.md](./transports/nostr.md) ("Message
+  expiration") that drives [app-components/message-retention-v1.md](./app-components/message-retention-v1.md)
+  disappearing messages. The protocol `SHOULD` for attaching the tag stands, but darkmatter does not attach it today:
+  the peeler boundary (`wrap_group_message`) sees only the opaque encrypted payload and group-context snapshot, so it
+  cannot read the inner app-payload `created_at`, the retention duration, or the app-vs-commit kind needed to compute
+  and gate the tag. Implementing it requires plumbing those inputs to the wrap boundary. Tracked in
+  marmot-protocol/darkmatter#359.
+
+Other deferred implementation tails are tracked as issues rather than restated here: per-group agent-stream
+`replay_ttl_secs` / `max_plaintext_frame_len` enforcement (#321) and exposing the MLS own-leaf-index through the engine
+API for push `leaf_index` (#329).
+
 ## Darkmatter Mapping
 
 This repository maps the model above to code using names such as:

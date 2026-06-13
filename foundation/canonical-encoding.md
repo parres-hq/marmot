@@ -12,7 +12,8 @@ strings owned by this spec.
 It does not redefine bytes owned by another protocol:
 
 - MLS messages, KeyPackages, credentials, and MLS-defined extensions use the encoding defined by MLS.
-- Nostr event ids and signatures use the Nostr canonical event serialization.
+- Nostr event ids and signatures use the Nostr canonical event serialization defined by
+  [NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md) (see "Nostr-shaped values" below).
 - Transport envelopes use the encoding defined by their transport document.
 
 When a Marmot document embeds upstream bytes, it treats them as opaque bytes unless that document says it parses the
@@ -103,7 +104,10 @@ bytes, not the encoded characters.
 ## Sorting and duplicates
 
 When a Marmot structure says a list is sorted, the default sort order is lexicographic order over the encoded item
-bytes.
+bytes. For an item carried with a length prefix — a variable-length `opaque name<..>` value, or a struct whose payload is
+one such value — the comparison is over the item's content bytes (the value itself), not over the length prefix. For a
+fixed-length item the content bytes are the encoded bytes, so the two readings coincide. A document MAY override this
+with an explicit per-list rule.
 
 When a Marmot structure says a list is unique, duplicates are checked by exact byte equality after the owning document's
 validation rules have run.
@@ -137,7 +141,13 @@ implementations can check their bytes.
 
 ## Nostr-shaped values
 
-When Marmot asks for a Nostr event signature or event id, the signing input is the Nostr canonical event serialization.
+When Marmot asks for a Nostr event signature or event id, the signing input is the Nostr canonical event serialization
+defined by [NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md): the UTF-8 JSON array
+`[0, pubkey, created_at, kind, tags, content]` serialized with no insignificant whitespace and NIP-01's exact
+string-escaping rules (escape only `"`, `\`, `\n`, `\r`, `\t`, `\b`, `\f`; all other characters, including non-ASCII,
+are emitted verbatim), with `created_at` and `kind` as JSON integers and `pubkey` as lowercase hex. The event id is the
+lowercase-hex `SHA-256` of those bytes. Marmot pins this serialization by reference so that an inner app-event id is
+byte-identical across implementations.
 
 Unsigned Nostr-shaped app payloads inside MLS are still encoded by the document that owns that message type. They are
 not relay-publishable Nostr events.

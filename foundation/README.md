@@ -19,6 +19,7 @@ Foundation docs SHOULD change slowly. A change here usually means the whole prot
 - [mls-protocol.md](./mls-protocol.md) - the MLS protocol pieces Marmot builds on.
 - [errors.md](./errors.md) - shared result and rejection vocabulary.
 - [registries.md](./registries.md) - Marmot-owned ids and namespaces.
+- [host-safety.md](./host-safety.md) - the canonical unsafe-host set for validating fetchable URLs (SSRF protection).
 
 ## Layering
 

@@ -30,8 +30,13 @@ A Marmot app event has the same fields as a Nostr event, except `sig`:
 - `content`
 
 `id` is the Nostr event id for the rest of the event shape. It is computed from the canonical Nostr event serialization
-of `[0, pubkey, created_at, kind, tags, content]`. This is the same hash preimage Nostr uses before signing, even though
-Marmot does not produce a Nostr signature for the inner Marmot app event.
+of `[0, pubkey, created_at, kind, tags, content]` as defined by
+[NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md) and pinned in
+[canonical-encoding.md](./canonical-encoding.md) ("Nostr-shaped values"): the lowercase-hex `SHA-256` of that
+whitespace-free UTF-8 JSON serialization. This is the same hash preimage Nostr uses before signing, even though Marmot
+does not produce a Nostr signature for the inner Marmot app event. Because decoders MUST reject a payload whose `id`
+does not match (see "Encoding"), every implementation MUST produce byte-identical serialization; the exact rules are
+NIP-01's, not implementation-defined.
 
 The payload is not signed as a Nostr relay event. Relays MUST NOT be able to accept it as a standalone event. MLS
 authenticates the sender as a group member, and the `pubkey` field identifies the Marmot account that authored the
@@ -54,8 +59,9 @@ Decoders MUST reject a payload that:
 - contains a `sig` member;
 - contains an unknown top-level member;
 - contains duplicate object keys;
-- carries transport routing tags — the matching sender-side prohibition is in
-  [../protocol-core/group-messaging.md](../protocol-core/group-messaging.md) ("App payloads");
+- carries a transport routing tag (for the Nostr binding the `h`, `p`, `relays`, or `expiration` tag; the enumerated
+  set, the general rule, and the matching sender-side prohibition are in
+  [../protocol-core/group-messaging.md](../protocol-core/group-messaging.md), "App payloads");
 - has an `id` that does not match the canonical Nostr event id computed from the other members ("Shape" above).
 
 If a future message kind needs binary content, canonical JSON, or another encoding rule, that rule belongs in the
@@ -80,12 +86,17 @@ indicate that the row has been edited.
 
 ```json
 {
-  "v": 1,
+  "id": "<hex event id of this edit event>",
+  "pubkey": "<hex account public key of the editor>",
+  "created_at": 1700000000,
   "kind": 1009,
   "tags": [["e", "<hex event id of the edited message>"]],
   "content": "the replacement plaintext"
 }
 ```
+
+A kind `1009` event is an ordinary Marmot app event and carries exactly the six members from "Shape" above (no top-level
+`v`; its `content` is the replacement plaintext, not JSON).
 
 - The original message's projected `kind` does not change; only its rendered body is overlaid.
 - The chat-list preview MUST NOT bump on an edit. An edit to a stale message must not reorder the conversation list.

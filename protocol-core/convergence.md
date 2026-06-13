@@ -71,10 +71,12 @@ Each candidate branch has:
 - `tip_committer`: the authenticated Marmot account identity of the branch's tip commit sender, derived from the MLS
   credential/leaf that authenticated the commit, not from transport metadata.
 - `tip_digest`: `SHA-256` of the serialized MLS message bytes of the branch's tip commit (the same Commit
-  `MLSMessage` bytes the branch replayed to reach `tip_epoch`). It is exactly 32 bytes. For a branch whose only commit
-  is its tip, `tip_digest` is byte-for-byte the same value as that commit's `commit_digest` in "Same-epoch races"
-  below; both are `SHA-256` over the one Commit's MLS bytes. `tip_digest` is only a final tie-breaker after fixed
-  authenticated metadata.
+  `MLSMessage` bytes the branch replayed to reach `tip_epoch`). These bytes are deterministic because Marmot pins one
+  handshake wire format, so the same authenticated commit cannot yield two different digests (see
+  [../foundation/mls-protocol.md](../foundation/mls-protocol.md), "Handshake wire format"). It is exactly 32 bytes. For a
+  branch whose only commit is its tip, `tip_digest` is byte-for-byte the same value as that commit's `commit_digest` in
+  "Same-epoch races" below; both are `SHA-256` over the one Commit's MLS bytes. `tip_digest` is only a final tie-breaker
+  after fixed authenticated metadata.
 - `raw_commit_depth`: the number of valid commits from `fork_epoch` to `tip_epoch`;
 - app-payload witnesses that decrypt at the branch epochs defined below.
 

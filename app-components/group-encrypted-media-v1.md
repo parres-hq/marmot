@@ -72,7 +72,11 @@ A policy state is valid if:
 - `default_blob_endpoints` is non-empty and contains at most 16 unique entries
 - every endpoint locator kind appears in `allowed_locator_kinds`
 - every endpoint base URL is a normalized `https` URL, or a normalized `http` URL whose host is loopback
-- endpoints with userinfo, fragments, missing hosts, or non-routable non-loopback hosts are invalid
+- endpoints with userinfo, fragments, or missing hosts are invalid
+- an endpoint whose host is unsafe per [../foundation/host-safety.md](../foundation/host-safety.md) is invalid, with the
+  single exception of a loopback host (which carries the `http`-to-loopback dev/test endpoint allowed above); every other
+  range in the unsafe-host set — private, CGNAT, link-local, documentation, benchmarking, reserved, multicast, and the
+  IPv6 transition prefixes — makes the endpoint invalid
 
 A base URL is normalized when it is byte-equal to its own parse-and-serialize output under the
 [WHATWG URL Standard](https://url.spec.whatwg.org/) — the same normalization
