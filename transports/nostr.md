@@ -185,8 +185,10 @@ A receiver MUST reject a kind `444` rumor whose content is not valid base64, who
 
 Nostr KeyPackages use kind `30443`.
 
-The event content is the serialized MLS KeyPackage bytes encoded as base64. The event is authored by the account
-identity that owns the KeyPackage. The event MUST be signed as a normal Nostr event.
+The event content is serialized `MLSMessage` bytes whose wire format is `mls_key_package`, encoded as base64. The
+`MLSMessage` wraps the public `KeyPackage`; private `init_key` material is never published. This mirrors the kind `444`
+welcome framing above, where the content is an `MLSMessage` with `mls_welcome` wire format. The event is authored by the
+account identity that owns the KeyPackage. The event MUST be signed as a normal Nostr event.
 
 The current tag set is:
 
@@ -271,7 +273,8 @@ A Nostr transport client MUST validate the outer event enough to classify it bef
   MUST have base64 content whose decoded length is at least 28 bytes;
 - kind `1059` welcomes MUST be signed Nostr events and MUST have a `p` tag;
 - kind `444` welcome rumors MUST have `e` and `relays` tags after NIP-59 unwrapping;
-- kind `30443` KeyPackage event content MUST be base64-encoded MLS KeyPackage bytes;
+- kind `30443` KeyPackage event content MUST be base64-encoded `MLSMessage` bytes whose wire format is
+  `mls_key_package`;
 - fields that claim to be hex or base64 MUST decode successfully;
 - unsupported Nostr kinds are ignored or reported as malformed transport input.
 

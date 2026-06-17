@@ -35,7 +35,10 @@ When a KeyPackage is published through a transport object, the transport binding
 is checked against the credential identity.
 
 Only the public KeyPackage bytes are published. Private `init_key` material is never published. If implementation APIs
-expose a `KeyPackageBundle` type, only the public KeyPackage bytes belong in a transport publication.
+expose a `KeyPackageBundle` type, only the public KeyPackage bytes belong in a transport publication. Those public
+KeyPackage bytes are carried inside an `MLSMessage` with `wire_format = mls_key_package` (RFC 9420 §6), so a transport
+publication is unambiguously the framed `MLSMessage`, not a bare `KeyPackage` struct. The `KeyPackageRef` is computed
+over the inner `KeyPackage` (RFC 9420 `MakeKeyPackageRef`), not over the `MLSMessage` envelope.
 
 ## Capability advertising
 
