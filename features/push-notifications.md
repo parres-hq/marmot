@@ -156,6 +156,7 @@ per record, including its own. A recipient applies the same entry rule as for ki
   "removals": [
     {
       "member_id_hex": "<64 lowercase hex characters>",
+      "leaf_index": 3,
       "platform": "apns",
       "token_fingerprint": "sha256:<24 hex characters>",
       "server_pubkey_hex": "<64 lowercase hex characters>"
@@ -165,19 +166,78 @@ per record, including its own. A recipient applies the same entry rule as for ki
 ```
 
 - `removals` is an array of removal entries. A missing `removals` member is read as an empty array.
-- The four members identify the token record being removed and use the encodings defined for token entries.
+- The five members identify the token record being removed and use the encodings defined for token entries. A removal
+  entry MUST carry `leaf_index` so it targets exactly one device's record and cannot revoke a sibling leaf's active
+  token for the same account, platform, and server.
 
-A recipient deletes the stored token record matching all four values.
+A recipient deletes the stored token record matching all five values.
 
 ### Record state
 
 A device keeps one push registration at a time, so a leaf has at most one active token record. Clients store one token
-record per member id, platform, and server public key in a group: an incoming entry that matches a stored record on
-those three values replaces it — including its leaf index, fingerprint, relay hint, and encrypted token — and any
+record per member id, leaf index, platform, and server public key in a group: an incoming entry that matches a stored
+record on those four values replaces it — including its fingerprint, relay hint, and encrypted token — and any
 other entry inserts a new record. Entries are applied in array order, so a later entry replaces an earlier match.
 
-When a member is removed from the group, clients delete every stored token record for that member as part of local
-cleanup. No kind `449` event is required for that cleanup.
+Token records are local push state, never group state. The rules below order and revoke them so that two members'
+clients can converge on the same token set without any of it affecting group validity. None of this ordering touches
+MLS state, commit selection, or message validity, and a client MUST NOT reject, delay, or reorder a valid group
+message because of a token record's age, absence, or supersession.
+
+#### Record key and ordering primitive
+
+The record key is the tuple `(member_id_hex, leaf_index, platform, server_pubkey_hex)`. At most one active record
+exists per key per group. `leaf_index` is part of the key because one Marmot account can participate from multiple MLS
+leaves (see [multi-device.md](multi-device.md)); omitting it would collapse sibling devices, letting one leaf's list
+entry or removal overwrite or suppress another leaf's active token.
+
+Every kind `447`, `448`, and `449` event carries the unsigned Marmot app-event members from
+[../foundation/application-messages.md](../foundation/application-messages.md), including an inner `created_at` and a
+content-derived app-event `id`. The ordering primitive for a record key is the pair `(created_at, app-event id)`,
+compared as the integer `created_at` first and the lowercase-hex app-event `id` as the lexicographic tie-breaker. The
+`created_at` half is the same sender-clock, latest-wins basis that kind `1009` edits use; the app-event `id`
+tie-breaker is added here so that records with an equal `created_at` still converge deterministically. It inherits the
+trust already placed in the MLS-authenticated sender and is deliberately advisory. A client MUST NOT substitute
+transport arrival order, outer transport event ids, relay metadata, or local receive time for this primitive.
+
+A client stamps each stored record with the `(created_at, app-event id)` of the event that last wrote it. Apply an
+incoming entry or removal to a record key only when its event's ordering primitive is strictly greater than the stored
+stamp for that key; otherwise ignore it as stale. Within a single event the array-order rule above still holds, so the
+last matching entry in one event's array wins and shares that event's stamp.
+
+#### Removal and tombstones
+
+A kind `449` removal does not merely delete the matching record: it writes a tombstone for the record key stamped with
+the removal event's `(created_at, app-event id)`. A tombstone suppresses any later-arriving but earlier-stamped kind
+`447`/`448` entry for that key, so a token list assembled before the removal cannot resurrect a revoked token. A
+subsequent kind `447`/`448` entry whose stamp is strictly greater than the tombstone re-establishes an active record
+for the key and clears the tombstone.
+
+A tombstone is durable: it persists until a strictly-greater-stamped kind `447`/`448` entry clears it (as above) or
+the owning member is removed from the group (see member cleanup below). A client MUST NOT garbage-collect a tombstone
+merely because it looks old by wall clock or sender `created_at`: record stamps are sender-supplied and uncorrelated
+with MLS epoch, so a later-arriving but earlier-stamped kind `448` could otherwise resurrect a revoked token. A client
+MAY drop a tombstone only once the MLS application message that would carry any competing token record can no longer be
+accepted — that is, once the carrying epoch falls outside the retained app-payload window defined by
+`app_payload_past_epoch_limit` in [../protocol-core/retained-history.md](../protocol-core/retained-history.md). Beyond
+that window the application message is rejected outright (`BeyondAnchor`), so no surviving kind `447`/`448` can deliver
+a competing record for the key and dropping the tombstone cannot resurrect a revoked token.
+
+#### Race handling
+
+- **Removal versus a stale list response.** A kind `449` and a kind `448` that both reference the same record key are
+  resolved by their ordering primitives, not by arrival order. The higher-stamped event wins; a lower-stamped list
+  entry is dropped even if it arrives later.
+- **Removal versus a stale trigger.** A kind `446` trigger whose target token record has been removed or superseded is
+  ignored as a stale trigger (see "Replay and freshness"). The trigger never deletes or mutates a record.
+- **Concurrent self-updates.** Two kind `447` self-updates for the same key from re-registration are ordered by their
+  primitives; the higher-stamped record is the active one. Equal `created_at` is broken by app-event id, so clients
+  converge.
+- **Equal stamps.** Two distinct events cannot share an app-event id under the canonical id rule, so the tie-breaker is
+  always decisive. An exact-duplicate event (same id) is idempotent: applying it again is a no-op.
+
+When a member is removed from the group, clients delete every stored token record and tombstone for that member as part
+of local cleanup. No kind `449` event is required for that cleanup.
 
 ## Notification trigger
 
@@ -204,6 +264,33 @@ The sender publishes the gift wrap to the relay hints carried in the stored toke
 stored record carries a relay hint, the sender publishes to the server account's inbox relays from the Nostr binding
 ([../transports/nostr.md](../transports/nostr.md)).
 
+### Replay and freshness
+
+A kind `446` trigger is a delivery hint, not group data. Replaying, dropping, duplicating, or reordering triggers MUST
+NOT affect group state and MUST NOT make any valid group message invalid. All handling below is local push hygiene.
+
+A notification server SHOULD deduplicate incoming triggers. The dedup key is the kind `446` rumor's content hash —
+`SHA-256` over the decoded trigger content (the concatenated `EncryptedToken` bytes), not the outer gift-wrap event id,
+which a replayer can change freely by re-wrapping. A server that has already acted on a content hash within its
+retention window SHOULD ignore a later trigger with the same hash rather than wake the recipient again. Because the
+outer wrap uses a fresh ephemeral key per publish, the server MUST NOT rely on the outer event id for dedup.
+
+A server MUST treat a trigger whose target token record it can no longer match — because the token was removed,
+superseded by a newer record, or never registered — as a stale trigger and ignore it. A stale or replayed trigger never
+mutates token state; only kind `447`/`448`/`449` group events do, under "Record state".
+
+A client that receives a redundant or stale wake performs a silent fetch and returns to sleep (see "Decoys and
+batching"); duplicate wakes are expected and are never surfaced as errors.
+
+### Server retention
+
+Trigger material is ephemeral. A notification server retains a decoded trigger and its content-hash dedup entry only as
+long as needed to deliver the wake and suppress immediate replays — a short bound measured in minutes, not a durable
+log. A server MUST NOT retain decrypted device tokens beyond the active push registration it needs them for, and MUST
+NOT persist trigger plaintext, group identifiers, or recipient linkage derived from a trigger. A server holds no group
+state and learns nothing about group membership or message content from a trigger; the only material it needs is the
+platform token it decrypts to dispatch the native push.
+
 ## Decoys and batching
 
 Clients SHOULD batch notifications for a short period and include decoy tokens when possible. Decoys are valid encrypted
@@ -217,6 +304,30 @@ showing user-facing errors.
 
 A client MUST treat malformed push notification data as advisory failure. It MUST NOT reject valid group messages
 because a related push hint was missing, delayed, duplicated, or malformed.
+
+### Advisory push hygiene versus protocol-invalid group data
+
+Push notifications draw a sharp line between two failure classes:
+
+- **Advisory push hygiene.** Everything in this document — a malformed or unsupported token entry, a removal that
+  matches no record, a stale or replayed kind `446` trigger, a token list that loses an ordering race, a missing relay
+  hint, a failed token decrypt at the server — is advisory. The correct response is to drop the offending datum and
+  continue. None of it rejects a group message, mutates group state, or changes which commit wins. A single bad entry
+  in a kind `447`/`448`/`449` event is dropped on its own; the rest of the array still applies and the carrying group
+  message remains valid.
+- **Protocol-invalid group data.** The only protocol-invalid conditions are the ones the owning foundation/transport
+  docs already define for the carrying surface: an inner app payload whose canonical app-event `id` does not match its
+  bytes, a forbidden `sig` member, a duplicate object key, or a forbidden transport routing tag (see
+  [../foundation/application-messages.md](../foundation/application-messages.md)). Those are decided by the app-payload
+  decoder, not by this feature, and they are not specific to push. This feature adds no new way for push content to
+  invalidate a group message.
+
+Put plainly: kind `447`/`448`/`449` are ordinary unsigned Marmot app events, so they share the app payload's
+validity rules; their push-specific `content` checks below only decide whether an individual token entry or removal is
+applied, never whether the group message is valid.
+
+A recipient applies the per-field rejection rules in "Token entries" and "Removal" at the entry granularity: reject the
+individual entry, keep processing the rest, and never let an entry failure propagate to group-message validity.
 
 Notification servers MUST reject or ignore malformed notification triggers, including:
 
