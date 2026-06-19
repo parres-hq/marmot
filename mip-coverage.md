@@ -65,7 +65,6 @@ Nostr-specific MIP details stay in [transports/nostr.md](./transports/nostr.md).
 - NIP-59 Welcome delivery with kind `444` rumors;
 - kind `445` group message envelopes;
 - the `h` tag and Nostr group routing id;
-- NIP-40 `expiration` tags for message retention (specified, but darkmatter implementation is deferred — see
-  [implementation-model.md](./implementation-model.md), "Deferred implementation surfaces").
+- NIP-40 `expiration` tags for message retention.
 
 Protocol-core docs MAY refer to the active transport binding, but they SHOULD NOT duplicate these Nostr event shapes.
