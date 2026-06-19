@@ -87,7 +87,8 @@ recovery method defined by a future protocol-core document.
 
 Convergence has a separate derived status:
 
-- `Syncing`: convergence-relevant input is still arriving or the quiescence window has not elapsed.
+- `Syncing`: convergence-relevant input is still arriving or the quiescence window defined in
+  [convergence.md](./convergence.md) has not elapsed since the last retained or reclassified convergence-relevant input.
 - `Resolving`: the quiescence window has elapsed, but the client still has unresolved convergence work, such as a child
   commit whose parent has not been retained or fetched yet.
 - `Settled`: candidate processing reached a fixed point and the selected branch, if any, has been applied.

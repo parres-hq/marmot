@@ -62,13 +62,9 @@ The signature is a 64-byte BIP-340 Schnorr signature over that digest, verified 
 event-id construction (`[0, pubkey, created_at, kind, tags, content]`) to build this preimage. This proof is not a Nostr
 event and is never published.
 
-The signing input is a standalone, domain-separated preimage. It is not the extension payload re-serialized. It begins
-with the fixed 32-byte ASCII label `marmot.account-identity-proof.v1` (no length prefix) followed by a `0x00` separator,
-and it carries `account_identity` with an explicit `account_identity_len = 32` field. The extension payload instead
-stores `account_identity` as a fixed `opaque account_identity[32]` with no length prefix. Both representations cover the
-same 32 bytes; the `account_identity_len` field in the preimage is the constant `32` and exists only as an explicit field
-boundary. `mls_signature_scheme` is carried even though it is implied by `mls_ciphersuite`, so a verifier binds and
-checks it directly instead of first resolving the ciphersuite's signature scheme.
+The signing input is a standalone, domain-separated preimage, not the extension payload re-serialized. It length-prefixes
+`account_identity` only to make that field boundary explicit; the payload and preimage both cover the same 32 account-key
+bytes. `mls_signature_scheme` is still carried and verified directly, even though the ciphersuite implies it.
 
 ## Required capabilities
 

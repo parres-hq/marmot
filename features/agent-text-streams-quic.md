@@ -132,7 +132,7 @@ AgentTextStreamRecordV1 {
 variable-length length prefix ([../foundation/canonical-encoding.md](../foundation/canonical-encoding.md)); `version`,
 `seq`, `record_type`, and `flags` are fixed-width big-endian integers. The record's `stream_id<1..64>` bound is the
 general envelope limit; the first text profile uses exactly 32 random bytes (see "Start payload"), and the key context
-binds that profile length as `stream_id<32..32>`. A v1 receiver MUST reject a record whose `stream_id` is not the
+binds that profile length as fixed `stream_id[32]` bytes. A v1 receiver MUST reject a record whose `stream_id` is not the
 32-byte value of the stream it is rendering.
 
 `ciphertext` is the AEAD output for one plaintext frame: `ciphertext_len = plaintext_len + 16`, the plaintext frame
@@ -244,30 +244,32 @@ The stream secret is derived from the MLS epoch in which the start payload is va
 stream_secret = MLS-Exporter("marmot", "agent-text-stream-quic", 32)
 key_context   = AgentTextStreamKeyContextV1
 
-record_key  = HKDF-Expand(stream_secret, len("record key") || "record key" || key_context, 32)
-nonce_base  = HKDF-Expand(stream_secret, len("record nonce") || "record nonce" || key_context, 12)
+record_key = HKDF-Expand-Label(stream_secret, "record key", key_context, 32)
+nonce_base = HKDF-Expand-Label(stream_secret, "record nonce", key_context, 12)
 ```
 
 HKDF is `HKDF-SHA256`, independent of the group's MLS ciphersuite. `stream_secret` is used directly as the HKDF PRK —
-Expand only, with no Extract step and no salt. Each `len(...)` label prefix is the Marmot binary profile's QUIC
-variable-length length prefix ([../foundation/canonical-encoding.md](../foundation/canonical-encoding.md)). The output
-length is 32 bytes for `record_key` and 12 bytes for `nonce_base`.
+Expand only, with no Extract step and no salt. For this feature, `HKDF-Expand-Label(secret, label, context, L)` means
+HKDF-Expand with `info = len(label) || label || context`, where `len(label)` is the Marmot binary profile's QUIC
+variable-length length prefix ([../foundation/canonical-encoding.md](../foundation/canonical-encoding.md)); this is the
+TLS/MLS label-and-context pattern specialized to Marmot's length prefix. The output length is 32 bytes for `record_key`
+and 12 bytes for `nonce_base`.
 
 The exporter label/context pair is registered for agent text stream QUIC record crypto only. `stream_secret` is reusable
 inside the epoch. Implementations MAY derive it more than once for send, watch, retry, or daemon resume paths. Per-stream
 keys MUST be derived through `AgentTextStreamKeyContextV1`; implementations MUST NOT use `stream_secret` directly as an
 AEAD key.
 
-`AgentTextStreamKeyContextV1` uses Marmot canonical length encoding:
+`AgentTextStreamKeyContextV1` uses Marmot canonical encoding:
 
 ```text
 struct {
   opaque version<1..255>;        // "v1"
   opaque group_id<1..1024>;
-  opaque stream_id<32..32>;
+  opaque stream_id[32];
   uint64 mls_epoch;
-  opaque sender_id<1..1024>;
-  opaque start_event_id<32..32>;
+  opaque sender_id[32];
+  opaque start_event_id[32];
 } AgentTextStreamKeyContextV1;
 ```
 
@@ -281,18 +283,26 @@ The AEAD profile is ChaCha20-Poly1305:
 
 ```text
 nonce = nonce_base XOR uint96_be(seq)
-aad   = version || SHA-256(group_id) || len(stream_id) || stream_id ||
-        mls_epoch || len(sender_id) || sender_id || seq || record_type || flags
+aad   = AgentTextStreamRecordAadV1
 ct    = AEAD_Encrypt(record_key, nonce, aad, plaintext_frame)
+
+struct {
+  uint8  version = 1;
+  opaque group_id_hash[32];
+  opaque stream_id[32];
+  uint64 mls_epoch;
+  opaque sender_id[32];
+  uint64 seq;
+  uint8  record_type;
+  uint8  flags;
+} AgentTextStreamRecordAadV1;
 ```
 
-The AAD binds records to the group, sender, epoch, stream id, sequence number, type, and flags. The raw group id is not
-sent on the wire. In this construction `version` is the record wire version — a single `uint8` with value `0x01`, the
-same value as the record's `version` field, never the `"v1"` key-context text bytes. `SHA-256(group_id)` is the 32-byte
-digest of the raw MLS group id, `mls_epoch` and `seq` are `uint64` big-endian, `record_type` and `flags` are `uint8`,
-and every `len(...)` is the Marmot binary profile's QUIC variable-length length prefix — the same length encoding used
-by the QUIC record and the transcript hash. Fixed test vectors for the AAD bytes and record encryption will be
-published with the conformance fixtures.
+The AAD is the canonical encoding of `AgentTextStreamRecordAadV1` and binds records to the group, sender, epoch, stream
+id, sequence number, type, and flags. The raw group id is not sent on the wire; `group_id_hash` is `SHA-256(group_id)`,
+the 32-byte digest of the raw MLS group id. `version` is the record wire version — the single byte `0x01`, never the
+`"v1"` key-context text bytes. The `stream_id` and `sender_id` fields are fixed 32-byte values in this profile. Fixed
+test vectors for the AAD bytes and record encryption will be published with the conformance fixtures.
 
 ## Preview authenticity
 

@@ -84,9 +84,9 @@ the ciphertext before base64 encoding. The AAD is the empty byte string and is n
 The exporter label/context pair is registered for the Nostr kind `445` outer encryption layer only. It MUST NOT be
 reused for app payloads, media, stream records, or other feature keys.
 
-`group_event_key` is scoped to one MLS group epoch, so nonce uniqueness for a given key rests entirely on the 12-byte
-random nonce. The number of kind `445` events in a single epoch is bounded by how often the group commits, which keeps
-random 96-bit nonces well inside the birthday bound for this outer ChaCha20-Poly1305 layer.
+Security note: `group_event_key` is scoped to one MLS group epoch, so nonce uniqueness for a given key rests on the
+12-byte random nonce. The bounded number of kind `445` events in one epoch keeps random 96-bit nonces well inside the
+birthday bound for this outer ChaCha20-Poly1305 layer.
 
 The Nostr event id, event `pubkey`, tags, relay timestamp, and relay URL are not AEAD AAD for kind `445`. They are
 validated as the transport envelope and then treated as transport evidence only.

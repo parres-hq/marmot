@@ -30,6 +30,8 @@ That means:
 - `uint8`, `uint16`, `uint32`, `uint64`, and similar integers are fixed-width unsigned integers in network byte order;
 - `opaque name[N]` is exactly `N` bytes and has no length prefix;
 - `opaque name<min..max>` is a QUIC variable-length integer length prefix followed by that many bytes;
+- Marmot documents MUST NOT write fixed-size byte strings as `opaque name<N..N>`; use `opaque name[N]` for fixed-size
+  bytes so readers know there is no length prefix;
 - `Type items<V>` is a QUIC variable-length integer byte length followed by the concatenated encodings of the items;
 - the decoded length MUST satisfy the bounds written in the structure;
 - a decoder MUST consume the full byte string when a document says a value is decoded exactly.

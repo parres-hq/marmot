@@ -26,17 +26,16 @@ Marmot app components use MLS private-use component ids.
 These values are pinned for the MLS extensions draft profile currently used by Marmot. If the upstream draft changes
 these assignments, Marmot needs an explicit compatibility plan before changing wire behavior.
 
-| Value    | Name                  | Upstream source                      |
-| -------- | --------------------- | ------------------------------------ |
-| `0x0001` | `app_components`      | MLS extensions draft `ComponentID`   |
-| `0x0006` | `app_data_dictionary` | MLS extensions draft extension type  |
-| `0x0008` | `app_data_update`     | MLS extensions draft proposal type   |
-| `0x000a` | `self_remove`         | MLS extensions draft proposal type   |
-| `0x000a` | `last_resort`         | MLS extensions draft extension type  |
+| Namespace        | Value    | Name                  | Upstream source                      |
+| ---------------- | -------- | --------------------- | ------------------------------------ |
+| ComponentID      | `0x0001` | `app_components`      | MLS extensions draft `ComponentID`   |
+| Extension type   | `0x0006` | `app_data_dictionary` | MLS extensions draft extension type  |
+| Proposal type    | `0x0008` | `app_data_update`     | MLS extensions draft proposal type   |
+| Proposal type    | `0x000a` | `self_remove`         | MLS extensions draft proposal type   |
+| Extension type   | `0x000a` | `last_resort`         | MLS extensions draft extension type  |
 
-`self_remove` and `last_resort` share the value `0x000a` but this is not an id collision: they are assigned in different
-MLS registries — `self_remove` in the proposal-type namespace and `last_resort` in the extension-type namespace, as the
-Upstream source column shows. An MLS value is only unique within its own registry.
+`self_remove` and `last_resort` share the value `0x000a` but are not an id collision: MLS values are unique within the
+namespace named in the first column.
 
 The `app_components`, `app_data_dictionary`, `app_data_update`, and `self_remove` values match
 draft-ietf-mls-extensions-09. The `last_resort` value is the extension-type assignment Marmot currently implements

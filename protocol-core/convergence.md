@@ -43,8 +43,11 @@ push a branch past the rollback horizon; allowing it to would let app-payload tr
 commit branch, violating the invariant below. The version-1 values satisfy this bound, and any future policy component
 MUST satisfy it.
 
-`settlement_quiescence_ms` gates when a client decides it has waited long enough to run or finish convergence. It MUST
-NOT enter the branch score.
+`settlement_quiescence_ms` gates when a client decides it has waited long enough to run or finish convergence. It is
+measured with the client's local monotonic clock from the last time the client retained or reclassified
+convergence-relevant input. Convergence-relevant input is non-stale protocol input that can affect candidate branches,
+witness counts, deferred-parent resolution, delivered app payloads, or invalidations. Duplicate, invalid, or stale input
+does not reset the clock. Input ordering MUST NOT enter the branch score.
 
 Convergence parameters are deliberately not group-tunable: a bad policy choice can fork a group. A future protocol
 version that changes convergence behavior MUST ship the new policy as a new app component behind a required capability.
@@ -125,7 +128,9 @@ app_witness_score =
 ```
 
 `witness_quorum_met` is the boolean used below. It is true when at least `witness_quorum_senders_per_epoch` distinct
-senders witnessed each of at least `witness_quorum_epochs` branch epochs, and false otherwise.
+senders witnessed each of at least `witness_quorum_epochs` branch epochs, and false otherwise. Each epoch is evaluated
+independently; the qualifying sender set MAY differ from epoch to epoch, and no single cohort is required to span all
+quorum-counted epochs.
 
 When `witness_quorum_met` is true, the branch receives a bounded depth boost:
 
