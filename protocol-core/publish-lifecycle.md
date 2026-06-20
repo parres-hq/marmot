@@ -80,11 +80,17 @@ When a client receives a proposal and policy selects that client to commit it, t
 pending state, and exposes a publish obligation. The pending state does not become canonical until publication is
 confirmed.
 
-This applies to SelfRemove auto-commits.
+This applies to SelfRemove auto-commits, including later fallback-round commits described in
+[member-departure.md](./member-departure.md). A fallback round only selects who may try to publish next; it does not
+weaken publish-before-apply and it does not decide canonical group state.
 
 ## Failure
 
 If publication fails, the client discards the pending state and keeps the inbound proposal or local action available if
 retry is valid.
+
+For a SelfRemove auto-commit, publication failure leaves the SelfRemove proposal available for retry or for a later
+eligible fallback committer, as long as the proposal has not been consumed by an accepted commit and remains inside
+retained history.
 
 If another member publishes an equivalent or conflicting commit first, ordinary convergence decides the result.

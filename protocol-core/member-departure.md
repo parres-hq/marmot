@@ -41,16 +41,43 @@ The leaving member MUST NOT commit its own SelfRemove proposal. A remaining auth
 Clients that auto-commit a peer SelfRemove proposal need a deterministic committer rule so the group does not fork from
 several equivalent commits.
 
-The current policy is:
+The eligible committer list is:
 
-- build the eligible committer set from current members excluding the leaving member;
-- remove members that are not allowed to commit the resulting state;
-- choose the eligible member with the lowest MLS leaf index.
+1. start with the current members in the proposal's source epoch;
+2. remove the leaving member;
+3. remove members that are not allowed to commit the resulting state;
+4. sort the remaining members by increasing MLS leaf index.
 
-Only that member SHOULD auto-commit the proposal.
+Initially, eligible member position `0` SHOULD auto-commit the proposal promptly when the group lifecycle permits
+local group-state commits.
 
-If the selected member cannot publish, another member MAY commit later through a user or recovery action. This draft
-does not define an automatic fallback timer.
+If no accepted commit consumes the SelfRemove, later members MAY auto-commit through deterministic fallback rounds:
+
+- round `0` selects eligible member position `0`;
+- round `1` selects eligible member position `1` after one fallback quiescence window;
+- round `n` selects eligible member position `n` after `n` fallback quiescence windows.
+
+If a fallback round has no eligible member at its selected position, automatic fallback rounds are exhausted. The retained
+SelfRemove then awaits an explicit user or recovery action; this draft defines no further automatic committer.
+
+The fallback quiescence window is the pinned convergence-policy `settlement_quiescence_ms`. It is a local scheduling
+gate only: it tells a client when it is allowed to try a later-round commit. It MUST NOT enter branch scoring, same-epoch
+commit ordering, message identity, duplicate handling, or validation. If several fallback commits are published, ordinary
+convergence chooses the canonical branch from their MLS-valid commit bytes.
+
+A client starts counting fallback windows for a retained SelfRemove only while it is allowed to prepare local group-state
+commits and has no accepted commit that consumes that SelfRemove. If new convergence-relevant input for the proposal's
+source epoch arrives before the client's next fallback round opens, the client SHOULD re-run convergence before preparing
+a fallback commit. A client whose own fallback publish fails MUST follow the normal publish-before-apply failure rule:
+discard the pending state, keep the SelfRemove available if it is still valid, and wait for another fallback quiescence
+window before retrying automatically.
+
+The leaver MAY rebroadcast the same serialized SelfRemove proposal bytes while no accepted commit consumes it. The
+leaver MUST NOT generate an unbounded stream of fresh SelfRemove proposals for the same source epoch. A client that
+receives multiple SelfRemove proposals from the same leaving member for the same source epoch before one is consumed
+MUST bound storage and commit eligibility to one retained proposal; byte-identical rebroadcasts are duplicates under
+[inbound-processing.md](./inbound-processing.md), and non-identical redundant proposals are stale unless a future
+protocol version defines a distinct retry identity.
 
 ## Validation
 
