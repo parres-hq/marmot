@@ -180,6 +180,9 @@ Assigned component ids are registered in [../foundation/registries.md](../founda
 - `marmot.group.blossom.image.v1` is Blossom-specific. Other image-reference models SHOULD use separate components.
 - `marmot.transport.nostr.routing.v1` is required for Nostr-routed Marmot groups.
 - Nostr relays in `marmot.transport.nostr.routing.v1` are canonical signed group state, not local hints.
+- Application profiles MAY require `marmot.group.agent-text-stream.quic.v1` by default for agent-ready groups. Its
+  `receive` role is final-message fallback compatibility, not a requirement to implement the raw QUIC live-preview data
+  plane.
 - AppDataUpdate proposals MAY be inline or standalone. Inline is the default path when the committer is authorized.
 - `marmot.group.encrypted-media.v1` owns the group media policy. Individual media attachments remain message metadata
   and are described in [encrypted-media.md](../features/encrypted-media.md).

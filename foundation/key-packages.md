@@ -51,8 +51,9 @@ current-profile capabilities are listed by namespace in [registries.md](./regist
 `app_components`, `last_resort`, `app_data_update`, and `self_remove`. The registry is the source of numeric ids and
 namespaces; this document only requires that those capabilities appear in the appropriate MLS capability lists.
 
-A member can join only if its KeyPackage advertises support for every MLS primitive and app component the group
-requires.
+A member can join only if its KeyPackage advertises support for every MLS primitive, app component, and component-owned
+role capability the group requires. For example, an agent-stream-ready group may require the agent text stream `receive`
+role, whose fallback behavior is defined by the owning feature and component documents.
 
 ## Selection and lifecycle
 

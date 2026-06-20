@@ -7,12 +7,12 @@ Status: experimental draft for internal review.
 - Component id: `0x8006`
 - Name: `marmot.group.agent-text-stream.quic.v1`
 - Location: GroupContext `app_data_dictionary`
-- Default requirement: required for groups that use QUIC agent text streams
+- Default requirement: required for groups that are agent-stream-ready under the raw QUIC profile
 - Owning feature: [agent-text-streams-quic.md](../features/agent-text-streams-quic.md)
 
 ## State
 
-This component records the group-level policy for raw QUIC agent text streams.
+This component records the group-level policy for the raw QUIC live-preview path of agent text streams.
 
 Embedding the transport name (`quic`) in the component id and name is a deliberate exception to the usual layering: the
 bytes this component owns are generic group policy (role masks and frame/replay/padding caps), but the role capabilities
@@ -20,7 +20,8 @@ and live-stream behavior it gates are specific to the raw QUIC binding, so a non
 HTTP/3, WebSocket) gets its own component id and file rather than reusing this one.
 
 It does not store stream transcripts, endpoint candidates, relay URLs, or app-event kinds. Live stream records stay
-transient, and final content is carried by normal Marmot app payloads.
+transient, and final content is carried by normal Marmot app payloads. A group can require this component so every member
+understands the stream start/final-message contract without requiring every member to open QUIC connections.
 
 Stream record keys use the reusable `MLS-Exporter("marmot", "agent-text-stream-quic", 32)` secret defined by the feature
 document because send, watch, retry, and resume paths MAY need the same epoch secret more than once.
@@ -51,6 +52,14 @@ extension type in its LeafNode capabilities; the extension type ids are register
 | `0x02` | `send`    | `marmot.feature.agent_text_stream_quic.send.v1`    | `0xf2d2`       |
 | `0x04` | `fanout`  | `marmot.feature.agent_text_stream_quic.fanout.v1`  | `0xf2d4`       |
 
+`receive` means the member understands this component and the MLS-delivered start/final stream anchors. A `receive`
+member can ignore raw QUIC endpoint candidates and wait for the final kind `9` message; it is still a valid participant.
+`receive` does not mean the member can open raw QUIC streams or render live deltas.
+
+`send` means the member can originate raw QUIC preview records for this profile and publish the matching durable
+start/final messages. `fanout` means the member or helper can forward stream records for others, for example through a
+broker.
+
 `required_member_roles` is the set of role capabilities every member MUST advertise before joining the group. It is
 enforced at every membership change:
 
@@ -62,8 +71,9 @@ enforced at every membership change:
 
 For the first user-to-agent profile:
 
-- `required_member_roles` includes `receive`;
+- `required_member_roles` includes `receive` so every member can process agent-stream start/final semantics;
 - `allowed_member_roles` includes `receive` and `send`;
+- `send` and `fanout` are advertised only by members or helpers that implement the live raw QUIC data plane;
 - `fanout` is allowed only when the group wants members or relays to advertise forwarding support.
 
 `max_plaintext_frame_len` caps the plaintext bytes in one stream frame before record encryption.
@@ -106,8 +116,9 @@ A state is valid if:
 - `replay_ttl_secs` is no greater than the application profile maximum;
 - `padding_bucket_bytes` is no greater than the application profile maximum.
 
-This component is for raw QUIC. WebTransport, HTTP/3, and WebSocket profiles require another component or a later
-component version.
+This component is for the raw QUIC live-preview profile. WebTransport, HTTP/3, and WebSocket live-preview profiles
+require another component or a later component version. The durable final kind `9` message remains ordinary Marmot chat
+content regardless of the live-preview transport.
 
 ## Authorization
 
@@ -118,7 +129,7 @@ Only an active admin MAY commit an update.
 ## Removal
 
 If removed from a group that no longer requires it, live QUIC text streams are disabled for that group. Existing durable
-Marmot messages remain valid.
+Marmot messages and final kind `9` stream messages remain valid.
 
 ## Migration
 

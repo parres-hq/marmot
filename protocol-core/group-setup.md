@@ -52,6 +52,11 @@ If the application profile supports encrypted media, creation includes `marmot.g
 application-profile choice: the encrypted-media component is required for new app groups created under a media-capable
 profile, not by the bare protocol. A non-media group MAY omit it.
 
+If the application profile treats agent participation as a baseline group behavior, creation includes
+`marmot.group.agent-text-stream.quic.v1` and requires the `receive` role. This is an application-profile choice that
+makes groups agent-stream-ready without exposing a user-facing enable switch. The component and feature documents own
+the exact role semantics and fallback behavior.
+
 The component documents in [../app-components/](../app-components/) own the exact bytes, authorization, and removal
 rules for each component named here.
 

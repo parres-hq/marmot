@@ -3,7 +3,9 @@
 Status: experimental draft for internal review.
 
 This feature adds live text previews for agent output in an existing Marmot group. MLS remains the membership,
-authentication, epoch, and durable-message layer. QUIC carries only transient preview records.
+authentication, epoch, and durable-message layer. QUIC carries only transient preview records. Live preview delivery is a
+progressive enhancement: every stream finishes as a normal durable Marmot message that clients can display without
+opening a QUIC connection.
 
 ## Invariant
 
@@ -14,6 +16,8 @@ A text preview stream has two durable MLS app payloads:
 
 QUIC records are renderable only when they match the MLS start payload. They are not durable group history. A client that
 stores history, indexes content, sends notifications, exports data, or runs automation uses the final MLS payload.
+Clients that do not implement raw QUIC still participate in the group by accepting the MLS start/final message semantics,
+ignoring the live preview route, and rendering the final kind `9` message.
 
 Agent activity, operation progress, and group lifecycle rows are not chat text and are not preview text. They use separate
 durable inner app-event kinds when they need to survive reload or sync:
@@ -45,7 +49,7 @@ below.
 
 ## Capabilities
 
-KeyPackages advertise stream support with normal Marmot capabilities. Each role is an MLS extension-type capability
+KeyPackages advertise agent-stream roles with normal Marmot capabilities. Each role is an MLS extension-type capability
 listed in the LeafNode capabilities; a member advertises a role by listing its extension type:
 
 | Role      | Capability                                         | Extension type |
@@ -58,26 +62,37 @@ The extension type ids are registered in [../foundation/registries.md](../founda
 `required_member_roles` role-mask bits that gate them live in the component table
 ([../app-components/agent-text-stream-quic-v1.md](../app-components/agent-text-stream-quic-v1.md)).
 
-Groups that use live agent text streams require `marmot.group.agent-text-stream.quic.v1` in GroupContext
-`app_components`. A member that cannot understand the component and the required role capabilities cannot join the group.
+The `receive` role is the baseline agent-stream compatibility role. A `receive` member understands the component, accepts
+kind `1200` start payloads and final kind `9` stream anchors, and can safely ignore the live QUIC route while waiting for
+the durable final message. `receive` does not require implementing the raw QUIC data plane or rendering live deltas.
+
+The `send` role means the member can originate raw QUIC preview records for this profile and publish the matching
+start/final MLS messages. The `fanout` role means the member or helper can forward stream records for others, for example
+through a broker.
+
+Groups that are agent-stream-ready require `marmot.group.agent-text-stream.quic.v1` in GroupContext `app_components`.
+A member that cannot understand the component and the required role capabilities cannot join the group. Application
+profiles MAY make groups agent-stream-ready by default to avoid exposing a user-facing "agent enabled" setting; that
+default still treats live QUIC preview rendering as progressive enhancement.
 
 For the first user-to-agent profile:
 
-- every member supports `receive`;
-- the agent member supports `send`;
+- every member supports `receive`, including clients that only display the final MLS message;
+- the agent member supports `send` when it emits raw QUIC preview records;
 - `fanout` is optional and MAY be advertised by a member or relay helper.
 
 ## Flow
 
 1. A user sends a prompt as an ordinary Marmot app payload.
 2. The agent publishes a hidden kind `1200` start payload through MLS.
-3. Online receivers watch the start payload's `quic://` candidates.
+3. Online preview-capable receivers watch the start payload's `quic://` candidates. Other receivers ignore the route.
 4. The agent sends encrypted, ordered preview records over QUIC.
-5. Receivers render text deltas as provisional preview text and MAY surface stream status.
+5. Preview-capable receivers render text deltas as provisional preview text and MAY surface stream status.
 6. The agent publishes the final kind `9` message through MLS.
-7. Clients replace or verify the preview with the final message.
+7. Clients that rendered a preview replace or verify it with the final message. Clients that skipped the preview display
+   the final message as normal chat history.
 
-Offline members miss the live preview and read the final message when they sync.
+Offline members and non-QUIC members miss the live preview and read the final message when they sync.
 
 An agent turn SHOULD have at most one active Marmot text preview that represents the eventual kind `9` answer. Cursor-only
 frames, gateway notices, pre-operation chatter, and operation progress SHOULD NOT open their own kind `1200` starts. If
@@ -102,10 +117,11 @@ content:
 ```
 
 The `stream`, `stream-type`, and `final-kind` tags are owned by this feature. The `parent` tag is optional. The `route`
-tag selects the transport binding (`quic` for the raw QUIC binding). The candidate tags — the `route` value and each
-`["broker", broker_candidate]` endpoint — are owned by that transport binding: their byte format and discovery rules
-are defined in [../transports/quic.md](../transports/quic.md), where each `broker_candidate` is a `quic://host:port`
-endpoint. A start payload MAY carry more than one `broker` tag (one per candidate).
+tag selects the transport binding (`quic` for the raw QUIC binding). The candidate tags - the `route` value and each
+`["broker", broker_candidate]` endpoint - are owned by that transport binding: their byte format and discovery rules are
+defined in [../transports/quic.md](../transports/quic.md), where each `broker_candidate` is a `quic://host:port`
+endpoint. A start payload MAY carry more than one `broker` tag (one per candidate). A client that implements `receive`
+but not raw QUIC MAY ignore the route and candidate tags.
 
 `stream_id_hex` is lowercase hex for 32 random bytes generated by the sender. The MLS-delivered start event id is the
 durable stream anchor and is included in the key context and transcript hash.
@@ -356,8 +372,9 @@ unsigned decimal count of all transcript records, including `Status` records. Th
 `Status` plaintext MUST NOT appear in the final message content unless the agent deliberately includes similar text in
 the final answer.
 
-Clients SHOULD replace the preview row with the final message when `stream_id` matches. They MAY keep preview chunks as
-local diagnostic state.
+Clients that rendered a preview SHOULD replace the preview row with the final message when `stream_id` matches. Clients
+that did not render a preview MUST treat the final kind `9` payload as normal chat text and MAY ignore the stream tags
+for display. Implementations MAY keep preview chunks as local diagnostic state.
 
 ## Epoch behavior
 

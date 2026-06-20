@@ -55,8 +55,10 @@ in the component registry rather than as extension `0x000a`.
 
 `0xf2d1`, `0xf2d2`, and `0xf2d4` are the agent-text-stream-QUIC member role capabilities. A member advertises a role by
 listing the matching extension type in its LeafNode capabilities; the `required_member_roles` mask in
-`marmot.group.agent-text-stream.quic.v1` is enforced against these ids at invite and join. The bit values (`0x01`,
-`0x02`, `0x04`) are role-mask bits inside the component payload, distinct from these extension type ids.
+`marmot.group.agent-text-stream.quic.v1` is enforced against these ids at invite and join. The `receive` role
+(`0xf2d1`) means the member understands the component and can fall back to the durable final message; it does not require
+opening a live-preview transport. The `send` and `fanout` roles are live-preview data-plane roles. The bit values
+(`0x01`, `0x02`, `0x04`) are role-mask bits inside the component payload, distinct from these extension type ids.
 
 These three extension types are capability markers only: v1 defines no extension data for them. They appear solely in
 `LeafNode.capabilities.extensions` to advertise role support and are never emitted as LeafNode or GroupContext

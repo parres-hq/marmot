@@ -9,7 +9,9 @@ binding owns how the encrypted preview records move over the network.
 
 QUIC here carries only transient preview records. It is not a durable group transport. Durable group history always
 travels as MLS app payloads over the active group transport (today, [nostr.md](./nostr.md)). Nothing in this binding
-chooses group state, and a preview record never substitutes for the authoritative final MLS message.
+chooses group state, and a preview record never substitutes for the authoritative final MLS message. Implementing this
+binding is not required to display agent output: a `receive` member can ignore QUIC candidates and render the final
+kind `9` MLS message.
 
 ## Scope
 
@@ -41,7 +43,8 @@ The kind `1200` start payload advertises how to reach the live stream through th
 document):
 
 - `["route", "quic"]` selects this binding. A client that does not implement raw QUIC ignores the live preview and
-  waits for the final MLS message.
+  waits for the final MLS message. Such a client can still advertise the `receive` role defined by the feature if it
+  understands the component and final-message fallback semantics.
 - one or more `["broker", "quic://<authority>"]` tags, each carrying one reachable QUIC endpoint candidate. A receiver
   tries candidates in listed order and MAY race them; the first that yields the matching stream wins.
 
