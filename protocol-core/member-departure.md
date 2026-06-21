@@ -14,7 +14,7 @@ proposal from the MLS extensions work and does not define a Marmot custom propos
 ## Surfaces
 
 - MLS proposal: SelfRemove.
-- Protocol core: proposal ingest, deterministic commit, convergence, retained history.
+- Protocol core: proposal ingest, opportunistic SelfRemove commits, convergence, retained history.
 - App component: `marmot.group.admin-policy.v1` for admin leave constraints.
 - Transport: whichever transport carries the proposal and commit.
 
@@ -36,47 +36,41 @@ use it: the removing commit drops the account's last leaf and its `admins` key t
 
 The leaving member MUST NOT commit its own SelfRemove proposal. A remaining authorized member commits it.
 
-## Deterministic auto-commit
+After handing the SelfRemove proposal to the active transport, the leaving member enters a local `Leaving` state for
+that group. While `Leaving`, the member MUST NOT send MLS application messages, group-state commits, or non-SelfRemove
+MLS proposals in that group; it MAY publish a fresh SelfRemove proposal for a newer source epoch when the prior
+SelfRemove becomes stale. Transport-level retries of the same serialized SelfRemove proposal MAY continue, but the
+client MUST NOT generate fresh SelfRemove proposal bytes for the same source epoch. The `Leaving` state is backed by a
+durable leave request and ends only when an accepted commit removes the member, the member repairs or rejoins through a
+future specified recovery flow, a future explicit cancel flow clears the request, or the client discards the local group
+copy.
 
-Clients that auto-commit a peer SelfRemove proposal need a deterministic committer rule so the group does not fork from
-several equivalent commits.
+If an accepted commit advances the group to a later epoch without removing the leaving member, the prior SelfRemove is
+stale because MLS proposals are epoch-bound. The client remains in `Leaving`, MUST NOT reuse the old SelfRemove
+proposal bytes, and SHOULD publish a fresh SelfRemove proposal for the new source epoch once local group-state commits
+are allowed.
 
-The eligible committer list is:
+## SelfRemove commits
 
-1. start with the current members in the proposal's source epoch;
-2. remove the leaving member;
-3. remove members that are not allowed to commit the resulting state;
-4. sort the remaining members by increasing MLS leaf index.
+Any remaining member that is authorized to commit the resulting state MAY commit a valid retained SelfRemove proposal.
+Marmot does not elect one deterministic SelfRemove committer.
 
-Initially, eligible member position `0` SHOULD auto-commit the proposal promptly when the group lifecycle permits
-local group-state commits.
+A client that observes a valid peer SelfRemove proposal SHOULD schedule a SelfRemove-only Commit after a short
+randomized jitter while the group lifecycle permits local group-state commits. Before preparing the commit, the client
+SHOULD re-check whether an accepted commit already consumed that SelfRemove. If the group lifecycle or convergence
+status does not allow local group-state commits when the jitter expires, the client waits until local group-state
+commits are allowed and then re-checks the retained SelfRemove.
 
-If no accepted commit consumes the SelfRemove, later members MAY auto-commit through deterministic fallback rounds:
-
-- round `0` selects eligible member position `0`;
-- round `1` selects eligible member position `1` after one fallback quiescence window;
-- round `n` selects eligible member position `n` after `n` fallback quiescence windows.
-
-If a fallback round has no eligible member at its selected position, automatic fallback rounds are exhausted. The retained
-SelfRemove then awaits an explicit user or recovery action; this draft defines no further automatic committer.
-
-The fallback quiescence window is the pinned convergence-policy `settlement_quiescence_ms`. It is a local scheduling
-gate only: it tells a client when it is allowed to try a later-round commit. It MUST NOT enter branch scoring, same-epoch
-commit ordering, message identity, duplicate handling, or validation. If several fallback commits are published, ordinary
+The jitter is local scheduling only. It MUST NOT enter branch scoring, same-epoch commit ordering, message identity,
+duplicate handling, or validation. If several members publish SelfRemove-only commits for the same proposal, ordinary
 convergence chooses the canonical branch from their MLS-valid commit bytes.
 
-A client starts counting fallback windows for a retained SelfRemove only while it is allowed to prepare local group-state
-commits and has no accepted commit that consumes that SelfRemove. If new convergence-relevant input for the proposal's
-source epoch arrives before the client's next fallback round opens, the client SHOULD re-run convergence before preparing
-a fallback commit. A client whose own fallback publish fails MUST follow the normal publish-before-apply failure rule:
-discard the pending state, keep the SelfRemove available if it is still valid, and wait for another fallback quiescence
-window before retrying automatically.
+A client whose own SelfRemove-only commit publish fails MUST follow the normal publish-before-apply failure rule:
+discard the pending state and keep the SelfRemove available if it is still valid and unconsumed.
 
-The leaver MAY rebroadcast the same serialized SelfRemove proposal bytes while no accepted commit consumes it. The
-leaver MUST NOT generate an unbounded stream of fresh SelfRemove proposals for the same source epoch. A client that
-receives multiple SelfRemove proposals from the same leaving member for the same source epoch before one is consumed
-MUST bound storage and commit eligibility to one retained proposal; byte-identical rebroadcasts are duplicates under
-[inbound-processing.md](./inbound-processing.md), and non-identical redundant proposals are stale unless a future
+A client that receives multiple SelfRemove proposals from the same leaving member for the same source epoch before one
+is consumed MUST bound storage and commit eligibility to one retained proposal. Byte-identical repeats are duplicates
+under [inbound-processing.md](./inbound-processing.md), and non-identical redundant proposals are stale unless a future
 protocol version defines a distinct retry identity.
 
 ## Validation

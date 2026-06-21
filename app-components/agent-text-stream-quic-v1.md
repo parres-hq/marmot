@@ -122,7 +122,7 @@ content regardless of the live-preview transport.
 
 ## Authorization
 
-Any current member MAY send a standalone agent text stream QUIC update proposal.
+Only an active admin MAY send a standalone agent text stream QUIC update proposal.
 
 Only an active admin MAY commit an update.
 

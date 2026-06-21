@@ -102,7 +102,7 @@ Mixed partial states are invalid. For example, a state with `image_hash` set and
 
 ## Authorization
 
-Any current member MAY send a standalone image update proposal.
+Only an active admin MAY send a standalone image update proposal.
 
 Only an active admin MAY commit an image update.
 

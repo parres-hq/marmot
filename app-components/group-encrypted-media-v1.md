@@ -97,7 +97,7 @@ those endpoints are unusable, and attachments that rely on them are unfetchable.
 
 ## Authorization
 
-Any current member MAY send a standalone encrypted-media policy update proposal.
+Only an active admin MAY send a standalone encrypted-media policy update proposal.
 
 Only an active admin MAY commit an encrypted-media policy update. The admin check is evaluated against the prior epoch
 state.

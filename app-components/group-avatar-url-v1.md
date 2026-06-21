@@ -84,7 +84,7 @@ this component (empty state) falls back to the Blossom image if one is present.
 
 ## Authorization
 
-Any current member MAY send a standalone avatar update proposal.
+Only an active admin MAY send a standalone avatar update proposal.
 
 Only an active admin MAY commit an avatar update.
 

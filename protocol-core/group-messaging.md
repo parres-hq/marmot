@@ -64,6 +64,10 @@ Those two non-admin commit shapes MUST NOT be combined with each other or with o
 
 All other Commits from non-admins are invalid.
 
+Non-admin members can send standalone MLS proposals only where the spec explicitly allows them. In v1 protocol core,
+that proposal flow is SelfRemove. A request for an admin-gated group-state change is an application payload or
+feature-owned request flow, not a standalone MLS proposal.
+
 ## Publish before apply
 
 A locally generated Commit MUST NOT become the sender's canonical local state until its publish obligation succeeds.

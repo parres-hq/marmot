@@ -69,7 +69,7 @@ admin key with no member leaf is invalid.
 
 ## Authorization
 
-Any current member MAY send a standalone admin policy proposal.
+Only an active admin MAY send a standalone admin policy proposal.
 
 Only an active admin MAY commit an admin policy update.
 
@@ -102,6 +102,7 @@ SelfRemove is special:
 - a SelfRemove proposal whose sender is an active admin in the prior epoch is invalid
 - a departing admin first commits an admin-policy update that removes it from `admins` (valid only if at least one
   other active admin remains), then uses SelfRemove
+- any remaining authorized member MAY commit a SelfRemove proposal
 - the committer of a SelfRemove proposal MUST NOT be the leaving member
 
 [../protocol-core/member-departure.md](../protocol-core/member-departure.md) owns the full SelfRemove flow.

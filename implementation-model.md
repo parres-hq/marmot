@@ -94,6 +94,7 @@ This repository maps the model above to code using names such as:
 - `CgkaEngine`;
 - `PendingStateRef`;
 - `drain_auto_publish`;
+- `drain_auto_proposals`;
 - `confirm_published`;
 - `publish_failed`;
 - retained snapshots;

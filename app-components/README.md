@@ -126,8 +126,11 @@ Update rules MUST be deterministic. They MUST NOT read local wall-clock time, tr
 state, or local storage order.
 
 AppDataUpdate proposals MAY appear inline in a Commit or as standalone MLS proposals later referenced by a Commit.
-Inline updates are the default when the committer is authorized. Standalone proposals are for cases where a member MAY
-request a component change but another member MUST commit it.
+Inline updates are the default when the committer is authorized. A standalone MLS proposal is not the default request
+mechanism for an admin-gated component change: the component's proposal authorization defines who may create it, and v1
+group-level components default to the same active-admin role that may commit it. A non-admin request for an admin-gated
+component change, if a feature defines one, is carried as a Marmot app payload or feature-owned request flow rather than
+as an MLS AppDataUpdate proposal.
 
 For a Commit, a Marmot client evaluates all AppDataUpdate proposals for a component in commit order. The component
 validates the proposal sender, the committer, the prior state, and the ordered updates. It returns the new state bytes
@@ -152,9 +155,10 @@ client MUST NOT parse, normalize, sort inside, partially copy, or re-encode unkn
 The component validates authorization. OpenMLS validates the MLS message shape; Marmot validates whether the sender MAY
 make the requested semantic change.
 
-Each component document defines who MAY propose an update and who MAY commit an update. These MAY be different roles.
+Each component document defines who MAY propose an update and who MAY commit an update. These MAY be different roles
+only when the component explicitly defines a separate proposal role.
 
-Group-level component commits are admin-gated by default.
+Group-level component proposals and commits are admin-gated by default.
 
 A component can define a looser rule, but it MUST do so explicitly. In v1, the admin set is defined by
 `marmot.group.admin-policy.v1`.
@@ -183,6 +187,7 @@ Assigned component ids are registered in [../foundation/registries.md](../founda
 - Application profiles MAY require `marmot.group.agent-text-stream.quic.v1` by default for agent-ready groups. Its
   `receive` role is final-message fallback compatibility, not a requirement to implement the raw QUIC live-preview data
   plane.
-- AppDataUpdate proposals MAY be inline or standalone. Inline is the default path when the committer is authorized.
+- AppDataUpdate proposals MAY be inline or standalone. Inline is the default path when the committer is authorized;
+  standalone MLS proposals are not the default non-admin request path for admin-gated component changes.
 - `marmot.group.encrypted-media.v1` owns the group media policy. Individual media attachments remain message metadata
   and are described in [encrypted-media.md](../features/encrypted-media.md).

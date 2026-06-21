@@ -44,7 +44,7 @@ empty.
 
 ## Authorization
 
-Any current member MAY send a standalone profile update proposal.
+Only an active admin MAY send a standalone profile update proposal.
 
 Only an active admin MAY commit a profile update.
 

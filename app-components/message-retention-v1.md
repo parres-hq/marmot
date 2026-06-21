@@ -51,7 +51,7 @@ to be discarded.
 
 ## Authorization
 
-Any current member MAY send a standalone message-retention proposal.
+Only an active admin MAY send a standalone message-retention proposal.
 
 Only an active admin MAY commit a message-retention update.
 

@@ -23,6 +23,11 @@ more group traffic.
 `Stable` is the only state where a client MAY prepare a new local group-state commit. Outbound app payloads are also
 held while convergence input is unresolved, because they MUST be encrypted against the selected canonical state.
 
+A member that has sent a SelfRemove proposal also enters the local `Leaving` gate defined in
+[member-departure.md](./member-departure.md). `Leaving` is not a canonical group lifecycle state: the MLS group state
+still contains the member until a commit removes it. It is a durable outbound restriction on the leaving client and may
+span multiple epoch-bound SelfRemove proposals.
+
 ## Legal transitions
 
 ```text

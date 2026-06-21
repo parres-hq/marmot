@@ -17,12 +17,14 @@ This rule applies to:
 - group profile update
 - capability upgrade
 - admin policy update
-- policy-generated commits, including SelfRemove auto-commits
+- policy-generated commits
+- SelfRemove-only commits prepared by remaining members
 
 A member's own departure is a SelfRemove *proposal*, not a local commit. The leaver publishes the proposal and does not
 apply any pending state, because another authorized member commits it (see
-[member-departure.md](./member-departure.md)). Publish-before-apply binds the committer of that SelfRemove, which is
-covered by the auto-commit entry above, not the leaver.
+[member-departure.md](./member-departure.md)). Publish-before-apply binds any remaining member that prepares a
+SelfRemove-only Commit, not the leaver. If the leaver's durable leave request later requires a fresh SelfRemove proposal
+for a newer epoch, that proposal is another standalone proposal publish and still has no pending state.
 
 ## Shape
 
@@ -72,25 +74,24 @@ Consumed KeyPackage material for founding invitees cannot be restored on Welcome
 cannot be delivered, the founding creator MAY re-invite the unreachable member using a new Add commit against
 the now-canonical group with a fresh KeyPackage.
 
-## Auto-commit handling
+## Proposal-driven commits
 
-Policy-generated commits produce publish obligations too.
+Commits prepared in response to retained proposals produce publish obligations too.
 
-When a client receives a proposal and policy selects that client to commit it, the client prepares the commit, retains
-pending state, and exposes a publish obligation. The pending state does not become canonical until publication is
-confirmed.
+When a client prepares a commit that consumes a retained proposal, the client retains pending state and exposes a publish
+obligation. The pending state does not become canonical until publication is confirmed.
 
-This applies to SelfRemove auto-commits, including later fallback-round commits described in
-[member-departure.md](./member-departure.md). A fallback round only selects who may try to publish next; it does not
-weaken publish-before-apply and it does not decide canonical group state.
+For SelfRemove, [member-departure.md](./member-departure.md) defines which remaining members may attempt a
+SelfRemove-only Commit and the local jitter before they do. That scheduling does not weaken publish-before-apply and
+does not decide canonical group state.
 
 ## Failure
 
 If publication fails, the client discards the pending state and keeps the inbound proposal or local action available if
 retry is valid.
 
-For a SelfRemove auto-commit, publication failure leaves the SelfRemove proposal available for retry or for a later
-eligible fallback committer, as long as the proposal has not been consumed by an accepted commit and remains inside
+For a SelfRemove-only commit, publication failure leaves the SelfRemove proposal available for another attempt by any
+eligible remaining member, as long as the proposal has not been consumed by an accepted commit and remains inside
 retained history.
 
 If another member publishes an equivalent or conflicting commit first, ordinary convergence decides the result.
