@@ -317,7 +317,7 @@ Push notifications draw a sharp line between two failure classes:
   message remains valid.
 - **Protocol-invalid group data.** The only protocol-invalid conditions are the ones the owning foundation/transport
   docs already define for the carrying surface: an inner app payload whose canonical app-event `id` does not match its
-  bytes, a forbidden `sig` member, a duplicate object key, or a forbidden transport routing tag (see
+  bytes, a forbidden `sig` member, or a duplicate object key (see
   [../foundation/application-messages.md](../foundation/application-messages.md)). Those are decided by the app-payload
   decoder, not by this feature, and they are not specific to push. This feature adds no new way for push content to
   invalidate a group message.

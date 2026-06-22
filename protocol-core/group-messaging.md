@@ -38,15 +38,7 @@ Common app payload kinds include:
 - kind `1210` for group system rows;
 - feature-specific app events such as push-notification token events.
 
-The inner app event has an `id` but no `sig`. It MUST NOT include transport routing tags. Transport routing tags are the
-tags the active transport binding places on the outer envelope to address, route, or expire it, as opposed to tags that
-carry application content. For the Nostr binding they are exactly the `h` (group routing id), `p` (recipient), `relays`
-(relay hints), and `expiration` (NIP-40 relay expiry hint) tags defined in
-[../transports/nostr.md](../transports/nostr.md); a future transport binding names its own set. Tags that carry
-application content — for example the `e` tag of a kind `1009` edit, an `imeta` media tag, or a kind `1210` `system`
-tag — are not transport routing tags and are permitted. A sender MUST NOT place a transport routing tag on the inner app
-event, and a decoder MUST reject an inner app event that carries one (see
-[../foundation/application-messages.md](../foundation/application-messages.md), "Encoding").
+The inner app event has an `id` but no `sig`. The active transport binding owns the outer envelope and builds its routing tags — the tags that address, route, or expire it — from canonical group state, never from the inner app event (the Nostr binding's routing tags are defined in [../transports/nostr.md](../transports/nostr.md)). An inner tag therefore carries application content only: it never affects addressing, routing, expiry, or branch selection. The inner event's structural rules are in [../foundation/application-messages.md](../foundation/application-messages.md), "Encoding".
 
 Receivers validate that the inner app event `pubkey` matches the Marmot account identity authenticated by MLS.
 Unsupported app-event kinds do not change group state unless the owning feature says otherwise.
