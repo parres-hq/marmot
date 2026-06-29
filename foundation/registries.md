@@ -64,7 +64,8 @@ These three extension types are capability markers only: v1 defines no extension
 `LeafNode.capabilities.extensions` to advertise role support and are never emitted as LeafNode or GroupContext
 extension bodies.
 
-`0xf2ef` and `0xf2f0` are reserved for the branch-draft multi-device feature (MIP-06) and are not yet implemented;
+`0xf2ef` and `0xf2f0` are reserved for the draft multi-device feature (see [../features/multi-device.md](../features/multi-device.md))
+and are not yet implemented;
 confirm the values when that feature lands. `0xf2f1` is implemented and required on every Marmot member LeafNode.
 
 ## Marmot custom proposal types

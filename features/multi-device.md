@@ -2,14 +2,15 @@
 
 Status: draft for internal review.
 
-Byte-level definitions in this document are placeholders pending MIP-06. They MUST NOT be implemented for interop yet.
-SHA-256 is the hash function throughout this document; named key derivations use HKDF-SHA256.
+Byte-level definitions in this document are placeholders and not yet finalized. They MUST NOT be implemented for
+interop yet. SHA-256 is the hash function throughout this document; named key derivations use HKDF-SHA256.
 
 Multi-device support lets one Marmot account participate in a group from more than one MLS leaf.
 
 Marmot account identity is still the Nostr public key. Devices are separate MLS clients bound to that account identity.
 
-This feature is based on MIP-06 branch draft work. It is not part of the merged canonical MIP set yet.
+This feature is still a draft. Its wire bytes are not yet normative and are subject to change before they become part
+of the interop surface.
 
 ## Surfaces
 
@@ -55,11 +56,11 @@ The Nostr identity proof is a signature over a canonical local-only Nostr event 
 published to relays. The challenge binds the account credential identity, the new MLS signature key, and the current
 GroupContext.
 
-Placeholder: the exact kind `450` challenge bytes — field layout, tag contents, and signing input — are pending MIP-06
-and not yet normative.
+Placeholder: the exact kind `450` challenge bytes — field layout, tag contents, and signing input — are not yet
+finalized and not yet normative.
 
-For all non-MIP-06 Commits, `FramedContent.authenticated_data` stays empty unless another Marmot feature defines a
-non-empty value.
+For all Commits outside this multi-device join flow, `FramedContent.authenticated_data` stays empty unless another
+Marmot feature defines a non-empty value.
 
 ## Join PSK
 
@@ -82,7 +83,7 @@ join_psk    = MLS-Exporter("marmot", join_psk_id, KDF.Nh)
 ([../foundation/canonical-encoding.md](../foundation/canonical-encoding.md)): `label` carries a QUIC variable-length
 integer length prefix, and `group_context_hash` is a fixed 32-byte array with no length prefix. The label is 31 bytes,
 so its length prefix is the single byte `0x1f`. `GroupContext` is TLS-serialized as defined by MLS. This is the
-proposed encoding pending MIP-06 confirmation.
+proposed encoding and is not yet finalized.
 
 Existing members recompute the same PSK from current group state before processing the External Commit. If the new
 device used stale state, confirmation-tag validation fails.
@@ -96,7 +97,7 @@ exporter output for any other PSK, app component, media, or transport key.
 An existing device transfers current-epoch join material to the new device over an authenticated out-of-band pairing
 channel.
 
-The MIP-06 draft payload carries, per group:
+The draft pairing payload carries, per group:
 
 - `group_event_key`: the exact 32-byte current-epoch key used for Nostr kind `445` outer encryption. Its derivation is
   owned by [../transports/nostr.md](../transports/nostr.md) (`MLS-Exporter("marmot", "group-event", 32)`); the pairing
@@ -109,7 +110,7 @@ The payload is encrypted with X25519, HKDF-SHA256, and ChaCha20-Poly1305. Pairin
 rejects all-zero shared secrets.
 
 Placeholder: the exact pairing payload construction — ephemeral key encoding, HKDF salt and info bytes, nonce rule, and
-ciphertext layout — is pending MIP-06 and not yet normative.
+ciphertext layout — is not yet finalized and not yet normative.
 
 Group entries are epoch-specific. A failed stale-epoch join MUST be retried with fresh current-epoch material.
 
@@ -139,7 +140,7 @@ A multi-device join is invalid if:
 - the Commit includes any proposal beyond the required ExternalInit and Marmot multi-device External PSK;
 - the External Commit fails normal MLS validation.
 
-## Migration notes
+## Remaining work
 
-MIP-06 SHOULD become this feature doc plus exact identity-proof bytes, PSK derivation bytes, pairing payload bytes,
-capability rules, and legacy extension migration rules.
+Before this feature becomes normative it needs exact identity-proof bytes, PSK derivation bytes, pairing payload bytes,
+capability rules, and legacy extension migration rules to replace the placeholders called out above.

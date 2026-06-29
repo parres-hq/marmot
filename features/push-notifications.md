@@ -45,7 +45,7 @@ therefore tied to the application it serves, and this feature defines no protoco
 
 When a device enables native push, it encrypts its platform token to the notification server's Nostr public key.
 
-The current MIP-era encrypted token format is:
+The encrypted token format is:
 
 ```text
 TokenPlaintext = platform[1] || token_length[2] || device_token[token_length] || random_padding
@@ -64,13 +64,13 @@ The encryption key is derived with secp256k1 ECDH and HKDF-SHA256:
 
 ```text
 shared_x       = secp256k1_ecdh(ephemeral_privkey, server_pubkey)
-prk            = HKDF-SHA256-Extract(salt = "mip05-v1", IKM = shared_x)
-encryption_key = HKDF-SHA256-Expand(prk, info = "mip05-token-encryption", 32)
+prk            = HKDF-SHA256-Extract(salt = "marmot-push-token-v1", IKM = shared_x)
+encryption_key = HKDF-SHA256-Expand(prk, info = "marmot-push-token-encryption", 32)
 ```
 
-The HKDF hash is SHA-256 in both steps. `shared_x` is input keying material passed through Extract with the 8-byte
-ASCII salt `mip05-v1`; it is not used as a precomputed PRK. The Expand info is the 22-byte ASCII string
-`mip05-token-encryption` with no length prefix, and the output is a 32-byte key.
+The HKDF hash is SHA-256 in both steps. `shared_x` is input keying material passed through Extract with the 20-byte
+ASCII salt `marmot-push-token-v1`; it is not used as a precomputed PRK. The Expand info is the 28-byte ASCII string
+`marmot-push-token-encryption` with no length prefix, and the output is a 32-byte key.
 
 `server_pubkey` is a 32-byte x-only secp256k1 key. ECDH lifts it to the curve point with even Y, following the BIP-340
 convention. `shared_x` is the 32-byte big-endian X coordinate of the resulting shared point, with no Y parity byte and
@@ -94,9 +94,9 @@ Token distribution uses Marmot app events carried inside ordinary group messages
 These are unsigned Marmot app payloads like all inner app events; the envelope shape is owned by
 [../foundation/application-messages.md](../foundation/application-messages.md). This section defines their `content`.
 
-The `content` of each kind is a JSON object carrying a version member `v` that MUST be the string `mip05-v1`. A
+The `content` of each kind is a JSON object carrying a version member `v` that MUST be the string `marmot-push-v1`. A
 recipient MUST reject a payload with any other `v` value, and ignores unknown members. Senders also tag each gossip
-event with `["v", "mip05-v1"]`; the content member is the validated value.
+event with `["v", "marmot-push-v1"]`; the content member is the validated value.
 
 ### Token entries (kinds 447 and 448)
 
@@ -104,7 +104,7 @@ Kinds `447` and `448` share one content shape:
 
 ```json
 {
-  "v": "mip05-v1",
+  "v": "marmot-push-v1",
   "tokens": [
     {
       "member_id_hex": "<64 lowercase hex characters>",
@@ -113,7 +113,9 @@ Kinds `447` and `448` share one content shape:
       "token_fingerprint": "sha256:<24 hex characters>",
       "server_pubkey_hex": "<64 lowercase hex characters>",
       "relay_hint": "wss://relay.example.com",
-      "encrypted_token": "<standard base64 of one 1084-byte EncryptedToken>"
+      "encrypted_token": "<standard base64 of one 1084-byte EncryptedToken>",
+      "owner_ts": 1735680000000,
+      "owner_sig": "<128 lowercase hex characters>"
     }
   ]
 }
@@ -130,10 +132,59 @@ Kinds `447` and `448` share one content shape:
 - `relay_hint` is an optional relay URL where the server accepts notification triggers. It is omitted when not set,
   and a recipient treats an empty or whitespace-only value as absent.
 - `encrypted_token` is one 1084-byte `EncryptedToken` as standard base64 with padding.
+- `owner_ts` is the owning member's claimed Unix time in milliseconds as an unsigned-integer JSON number. It is the
+  owner-signed ordering stamp for this record (see "Owner authentication" and "Record key and ordering primitive"); a
+  recipient MUST NOT substitute the carrying event's `created_at` for it.
+- `owner_sig` is the owner's BIP-340 Schnorr signature over the record, as 64-byte (128 lowercase hex character)
+  signature bytes (see "Owner authentication"). It binds every other field to `member_id_hex`, so the record stays
+  verifiable no matter which member relays it.
 
 A recipient MUST reject an entry whose `member_id_hex` or `server_pubkey_hex` is not 32-byte lowercase hex, whose
-`token_fingerprint` is not `sha256:` followed by exactly 24 hex characters, whose `platform` is unknown, or whose
-`encrypted_token` does not decode to exactly 1084 bytes.
+`token_fingerprint` is not `sha256:` followed by exactly 24 hex characters, whose `platform` is unknown, whose
+`encrypted_token` does not decode to exactly 1084 bytes, whose `owner_sig` is not 64-byte lowercase hex, or whose
+`owner_sig` does not verify under "Owner authentication".
+
+### Owner authentication
+
+Each token entry and each removal entry is self-authenticated by the member that owns it, independent of the member
+that carries it. This lets one member relay another member's records (see "List response") so a group converges on the
+full token set without requiring every owner to be online, while preventing a relaying member from forging, repointing,
+or rolling back another member's routing.
+
+An owner signs the canonical byte string
+
+```text
+SignedRecord = domain_tag
+            || group_id_len[2]            big-endian u16
+            || group_id[group_id_len]     the carrying group's MLS group id
+            || member_id[32]
+            || leaf_index[4]              big-endian u32
+            || platform_byte[1]
+            || server_pubkey[32]
+            || token_fingerprint[12]      the 12 bytes the sha256: prefix encodes
+            || owner_ts[8]                big-endian u64, milliseconds
+            || relay_hint_len[2]          big-endian u16, 0 when absent
+            || relay_hint[relay_hint_len] UTF-8 bytes of the relay hint, empty when absent
+            || encrypted_token[1084]      removal entries omit this field
+```
+
+`domain_tag` is the 27-byte ASCII string `marmot-push-token-record-v1` for token entries (kinds `447`/`448`) and the
+28-byte ASCII string `marmot-push-token-removal-v1` for removal entries (kind `449`); a removal omits the trailing
+`encrypted_token`. `group_id` is the raw MLS group id of the carrying group and is length-prefixed because the MLS group
+id is variable-length. `member_id` and `server_pubkey` are the raw 32-byte values the corresponding hex fields encode
+(both are Nostr x-only public keys). The signature is a BIP-340 Schnorr signature over `SHA-256(SignedRecord)`, produced
+with the secret key for `member_id_hex` and carried as `owner_sig`.
+
+A recipient verifies `owner_sig` against `member_id_hex` over the same canonical bytes, reconstructing `group_id` from
+the carrying group message. An entry whose signature does not verify is dropped as advisory-invalid and never mutates
+`group_push_tokens`. Because the signature binds `group_id`, `server_pubkey_hex`, `relay_hint`, `encrypted_token`, and
+`owner_ts`, a relaying member cannot move the record to another group, repoint it at a different notification server or
+relay, swap the token, or restamp it. The carrying event stays an ordinary unsigned Marmot app payload (it MUST NOT
+carry a `sig` member, see "Validation"); `owner_sig` lives inside each record, not on the event.
+
+A record's authority comes only from `owner_sig` and current group membership, not from the carrying event's sender. A
+recipient applies a verified entry regardless of whether `message.sender` equals `member_id_hex`, but MUST still drop
+any entry — verified or not — whose `member_id_hex` is not a current group member.
 
 ### Request and update (kind 447)
 
@@ -141,36 +192,59 @@ A kind `447` event with a non-empty `tokens` array is a self-update: the sender 
 record, normally as exactly one entry. A kind `447` event whose `tokens` array is empty is a token request: it carries
 no records and asks other members to share theirs.
 
-A recipient processes both forms with the same rule — apply every listed entry — so an empty request changes no state.
+A recipient applies each listed entry that passes "Owner authentication" and names a current member, and ignores the
+rest, so an empty request changes no state. A self-update normally signs over `message.sender`'s own `member_id_hex`,
+but the apply decision is the signature check, not a sender-equality check.
 
 ### List response (kind 448)
 
 A kind `448` event is a response listing the responder's current view of the group's active token records, one entry
-per record, including its own. A recipient applies the same entry rule as for kind `447`.
+per record, including records the responder learned from other members. Each entry carries the original owner's
+`owner_sig` and `owner_ts`, so a recipient applies it under the same "Owner authentication" rule as kind `447`: any
+entry whose owner signature verifies and whose `member_id_hex` is a current member is applied, even when the responder
+is not its owner. Entries that fail verification or name a non-member are dropped. To relay another member's record, a
+responder MUST reproduce that member's `owner_sig` and `owner_ts` unchanged; it cannot mint records for members whose
+signatures it does not hold.
 
 ### Removal (kind 449)
 
 ```json
 {
-  "v": "mip05-v1",
+  "v": "marmot-push-v1",
   "removals": [
     {
       "member_id_hex": "<64 lowercase hex characters>",
       "leaf_index": 3,
       "platform": "apns",
       "token_fingerprint": "sha256:<24 hex characters>",
-      "server_pubkey_hex": "<64 lowercase hex characters>"
+      "server_pubkey_hex": "<64 lowercase hex characters>",
+      "owner_ts": 1735680000000,
+      "owner_sig": "<128 lowercase hex characters>"
     }
   ]
 }
 ```
 
 - `removals` is an array of removal entries. A missing `removals` member is read as an empty array.
-- The five members identify the token record being removed and use the encodings defined for token entries. A removal
-  entry MUST carry `leaf_index` so it targets exactly one device's record and cannot revoke a sibling leaf's active
-  token for the same account, platform, and server.
+- The first five members identify the token record being removed and use the encodings defined for token entries. A
+  removal entry MUST carry `leaf_index` so it targets exactly one device's record and cannot revoke a sibling leaf's
+  active token for the same account, platform, and server.
+- `owner_ts` and `owner_sig` are the owner-signed ordering stamp and signature, using the removal `domain_tag` and the
+  removal `SignedRecord` form (no `encrypted_token`) from "Owner authentication".
 
-A recipient deletes the stored token record matching all five values.
+A recipient deletes the stored token record for the removal's record key (`member_id_hex`, `leaf_index`, `platform`,
+`server_pubkey_hex`) only when the removal passes "Owner authentication", `member_id_hex` is a current member, and the
+removal wins the record key's ordering primitive (see "Record key and ordering primitive"). A removal that fails
+verification, names a non-member, or loses the ordering race is dropped as advisory-invalid.
+
+The `token_fingerprint` is part of the owner-signed `SignedRecord`, so it is authenticated and states which token
+instance the owner intends to revoke, but it is **not** part of the record key and does not gate the delete: the
+`(owner_ts, record digest)` stamp is the single arbiter of which write to a record key wins. This is deliberate. A
+removal only deletes a record older than itself (it must win the ordering race), so the realistic re-registration race —
+an old token, its removal, and a newer token with a different fingerprint on the same key — converges correctly on the
+newest record by stamp alone, and a relayed stale removal can never revoke a newer token because it loses the race. A
+fingerprint-gated delete would not improve this and would weaken tombstones (a fingerprint-scoped tombstone could not
+suppress a differently-fingerprinted stale record from resurrecting the key).
 
 ### Record state
 
@@ -191,37 +265,39 @@ exists per key per group. `leaf_index` is part of the key because one Marmot acc
 leaves (see [multi-device.md](multi-device.md)); omitting it would collapse sibling devices, letting one leaf's list
 entry or removal overwrite or suppress another leaf's active token.
 
-Every kind `447`, `448`, and `449` event carries the unsigned Marmot app-event members from
-[../foundation/application-messages.md](../foundation/application-messages.md), including an inner `created_at` and a
-content-derived app-event `id`. The ordering primitive for a record key is the pair `(created_at, app-event id)`,
-compared as the integer `created_at` first and the lowercase-hex app-event `id` as the lexicographic tie-breaker. The
-`created_at` half is the same sender-clock, latest-wins basis that kind `1009` edits use; the app-event `id`
-tie-breaker is added here so that records with an equal `created_at` still converge deterministically. It inherits the
-trust already placed in the MLS-authenticated sender and is deliberately advisory. A client MUST NOT substitute
-transport arrival order, outer transport event ids, relay metadata, or local receive time for this primitive.
+Each entry carries its owner's `owner_ts` and `owner_sig` (see "Owner authentication"). The ordering primitive for a
+record key is the pair `(owner_ts, record digest)`, compared as the integer `owner_ts` first and the lowercase-hex
+`SHA-256(SignedRecord)` as the tie-breaker. The `owner_ts` half is an owner-supplied, latest-wins clock; the digest
+tie-breaker makes two distinct records with an equal `owner_ts` converge deterministically. The primitive lives inside
+the owner-signed bytes, so it inherits the trust of `owner_sig` rather than the carrying event's sender, and it stays
+deliberately advisory. A client MUST NOT substitute the carrying event's `created_at`, transport arrival order, outer
+transport event ids, relay metadata, or local receive time for this primitive. Using `owner_ts` rather than the
+carrying `created_at` is what makes the primitive relay-safe: a member relaying another member's record in a kind `448`
+cannot advance or rewind that record's position, because it cannot re-sign `owner_ts`.
 
-A client stamps each stored record with the `(created_at, app-event id)` of the event that last wrote it. Apply an
-incoming entry or removal to a record key only when its event's ordering primitive is strictly greater than the stored
-stamp for that key; otherwise ignore it as stale. Within a single event the array-order rule above still holds, so the
-last matching entry in one event's array wins and shares that event's stamp.
+A client stamps each stored record with the `(owner_ts, record digest)` of the entry that last wrote it. Apply an
+incoming entry or removal to a record key only when its ordering primitive is strictly greater than the stored stamp
+for that key; otherwise ignore it as stale. Within a single event the array-order rule above still holds, but ordering
+is decided per entry by its own primitive, so a lower-stamped entry never overwrites a higher-stamped one even when it
+appears later in the array.
 
 #### Removal and tombstones
 
 A kind `449` removal does not merely delete the matching record: it writes a tombstone for the record key stamped with
-the removal event's `(created_at, app-event id)`. A tombstone suppresses any later-arriving but earlier-stamped kind
+the removal entry's `(owner_ts, record digest)`. A tombstone suppresses any later-arriving but earlier-stamped kind
 `447`/`448` entry for that key, so a token list assembled before the removal cannot resurrect a revoked token. A
 subsequent kind `447`/`448` entry whose stamp is strictly greater than the tombstone re-establishes an active record
 for the key and clears the tombstone.
 
 A tombstone is durable: it persists until a strictly-greater-stamped kind `447`/`448` entry clears it (as above) or
-the owning member is removed from the group (see member cleanup below). A client MUST NOT garbage-collect a tombstone
-merely because it looks old by wall clock or sender `created_at`: record stamps are sender-supplied and uncorrelated
-with MLS epoch, so a later-arriving but earlier-stamped kind `448` could otherwise resurrect a revoked token. A client
-MAY drop a tombstone only once the MLS application message that would carry any competing token record can no longer be
-accepted — that is, once the carrying epoch falls outside the retained app-payload window defined by
-`app_payload_past_epoch_limit` in [../protocol-core/retained-history.md](../protocol-core/retained-history.md). Beyond
-that window the application message is rejected outright (`BeyondAnchor`), so no surviving kind `447`/`448` can deliver
-a competing record for the key and dropping the tombstone cannot resurrect a revoked token.
+the owning member is removed from the group (see member cleanup below). It MUST NOT be garbage-collected on any
+wall-clock, `owner_ts`, or MLS-epoch basis. Owner authentication makes records relay-portable: any current member can
+re-emit another member's still-valid `owner_sig`/`owner_ts` record inside a fresh, in-window kind `448` at any later
+epoch. So a tombstone (and, equivalently, the stored ordering stamp for a live record) is the only durable high-water
+mark that stops a relayed but stale signed record from resurrecting a revoked or superseded token, and it cannot be
+bounded by the retained app-payload window: unlike a record that could only ever arrive in its original carrying epoch,
+a relayed record's carrying epoch is unbounded. The per-key stamp and tombstone therefore persist for the owning
+member's whole lifetime in the group, and are cleared only when that member leaves (see member cleanup below).
 
 #### Race handling
 
@@ -231,10 +307,11 @@ a competing record for the key and dropping the tombstone cannot resurrect a rev
 - **Removal versus a stale trigger.** A kind `446` trigger whose target token record has been removed or superseded is
   ignored as a stale trigger (see "Replay and freshness"). The trigger never deletes or mutates a record.
 - **Concurrent self-updates.** Two kind `447` self-updates for the same key from re-registration are ordered by their
-  primitives; the higher-stamped record is the active one. Equal `created_at` is broken by app-event id, so clients
+  primitives; the higher-stamped record is the active one. Equal `owner_ts` is broken by the record digest, so clients
   converge.
-- **Equal stamps.** Two distinct events cannot share an app-event id under the canonical id rule, so the tie-breaker is
-  always decisive. An exact-duplicate event (same id) is idempotent: applying it again is a no-op.
+- **Equal stamps.** Two records that differ in any signed field have distinct digests, so the tie-breaker is decisive.
+  Two entries with the same `owner_ts` and the same digest are the same signed record: applying it again is idempotent,
+  whether it arrives as a fresh self-update or relayed in a kind `448`.
 
 When a member is removed from the group, clients delete every stored token record and tombstone for that member as part
 of local cleanup. No kind `449` event is required for that cleanup.
@@ -252,7 +329,7 @@ kind 1059 gift wrap
 The kind `446` rumor contains:
 
 - `content`: one standard-base64 string with one or more concatenated 1084-byte `EncryptedToken` values;
-- a `["v", "mip05-v1"]` tag, and no other tag;
+- a `["v", "marmot-push-v1"]` tag, and no other tag;
 - `pubkey`: a fresh ephemeral key.
 
 The content field follows the Nostr transport byte-encoding rule: standard base64 with padding and no `encoding` tag.
@@ -309,12 +386,13 @@ because a related push hint was missing, delayed, duplicated, or malformed.
 
 Push notifications draw a sharp line between two failure classes:
 
-- **Advisory push hygiene.** Everything in this document — a malformed or unsupported token entry, a removal that
-  matches no record, a stale or replayed kind `446` trigger, a token list that loses an ordering race, a missing relay
-  hint, a failed token decrypt at the server — is advisory. The correct response is to drop the offending datum and
-  continue. None of it rejects a group message, mutates group state, or changes which commit wins. A single bad entry
-  in a kind `447`/`448`/`449` event is dropped on its own; the rest of the array still applies and the carrying group
-  message remains valid.
+- **Advisory push hygiene.** Everything in this document — a malformed or unsupported token entry, an entry whose
+  `owner_sig` fails to verify or names a non-member, a removal that matches no record, a stale or replayed kind `446`
+  trigger, a token list that loses an ordering race, a missing relay hint, a failed token decrypt at the server — is
+  advisory. The correct response is to drop the offending datum and continue. None of it rejects a group message,
+  mutates group state, or changes which commit wins. A single bad entry in a kind `447`/`448`/`449` event is dropped on
+  its own; the rest of the array still applies and the carrying group message remains valid. In particular, an
+  `owner_sig` that fails verification fails the entry, never the carrying group message.
 - **Protocol-invalid group data.** The only protocol-invalid conditions are the ones the owning foundation/transport
   docs already define for the carrying surface: an inner app payload whose canonical app-event `id` does not match its
   bytes, a forbidden `sig` member, or a duplicate object key (see
@@ -337,11 +415,14 @@ Notification servers MUST reject or ignore malformed notification triggers, incl
 - token chunks with invalid ephemeral keys, failed ECDH/HKDF, failed AEAD authentication, invalid platform bytes, or
   invalid token lengths.
 
-## Migration notes
+## Status and interop surface
 
-MIP-05 is still Draft in the merged MIP set. This feature SHOULD stay optional and MUST NOT change group state.
+Push notifications are an optional feature. A group MUST keep working when no member supports them, and nothing in this
+document changes group state.
 
-This document supersedes the MIP-05 draft event shapes where they differ. The MIP-05 draft carried token gossip in
-`token` tags with empty content, left the sender's leaf implicit, defined no removal entries, and required an
-`["encoding", "base64"]` tag on the kind `446` rumor. The shapes above — JSON content with explicit member ids, leaf
-indexes, fingerprints, and removal entries, and a kind `446` rumor whose only tag is `v` — are the interop surface.
+The `marmot-push-v1` shapes above are the interop surface: JSON content with explicit member ids, leaf indexes,
+fingerprints, owner-signed token and removal entries, and a kind `446` rumor whose only tag is `v`. Earlier exploratory
+drafts that carried token gossip in `token` tags with empty content, left the sender's leaf implicit, defined no
+removal entries, or required an `["encoding", "base64"]` tag on the kind `446` rumor are not interoperable with this
+version and predate the owner-authentication and per-record ordering rules; clients MUST reject any `v` other than
+`marmot-push-v1`.
