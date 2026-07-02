@@ -1,104 +1,66 @@
-# 🦫 Marmot Protocol
+# Marmot v2 Protocol Draft
 
-![Marmot Protocol](https://blossom.primal.net/d9f2c5746e6b20e12517a5d775cb5f35c82b531dbe028a3bc8dca6d3bd90b344.png)
+Status: draft for internal review.
 
-**Secure, decentralized group messaging that protects both content and metadata**
+This directory contains the proposed Marmot v2 protocol text. The existing MIP documents remain the current production
+reference until this draft is adopted.
 
-Marmot combines the [MLS Protocol](https://www.rfc-editor.org/rfc/rfc9420.html) with [Nostr's](https://github.com/nostr-protocol/nostr) decentralized network to deliver truly private group messaging without relying on centralized servers or legacy identity systems.
+The draft is organized by protocol surface. Foundation documents define stable Marmot invariants. Protocol-core
+documents define how Marmot groups move through MLS flows. Transport documents define how Marmot bytes move over a
+network. App component documents define versioned group-state payloads. Feature documents describe optional or
+user-visible flows and point to the surfaces they touch.
 
-## Why Marmot?
+## What is Marmot?
 
-- 🔒 **End-to-End Encrypted**: Messages are encrypted on your device and can only be read by intended recipients
-- 🌐 **Decentralized**: No central servers to shut down or compromise
-- 🛡️ **Metadata Protection**: Hides who you're talking to, not just what you're saying
-- ⚡ **Scalable**: Efficient group messaging for small teams to large communities
-- 🔗 **Interoperable**: Works across different clients and implementations
-- 🆔 **Identity Freedom**: No phone numbers or email addresses required
+Marmot is a protocol for end-to-end encrypted group messaging. It uses Nostr public keys for identity, Nostr
+event-shaped app payloads inside MLS, and MLS as the continuous group key agreement layer. Those three choices are the
+core protocol invariants; [principles.md](./principles.md) lists the full set, including redundant delivery and metadata
+minimization.
 
-Marmot addresses critical limitations in existing messaging systems:
+Transport beyond that stays agnostic. Marmot clients currently move messages over Nostr relays, but the identity,
+content, and key agreement layers do not depend on Nostr relays as the only possible transport.
 
-- **Signal**: Excellent E2EE but centralized infrastructure vulnerable to shutdown
-- **NIP-04/NIP-17**: Basic encryption but lacks forward secrecy and group messaging
-- **Traditional Platforms**: Vulnerable to mass surveillance and censorship
+Marmot is designed for group messaging that keeps working when parts of the transport fail. With Nostr, clients connect
+to several relays at once, so a relay that goes down, gets blocked, or turns malicious does not break the group. Any
+future transport binding needs the same redundancy and failover properties.
 
-By combining MLS's proven cryptography with Nostr's decentralized architecture, Marmot provides the security of Signal with the censorship resistance of decentralized protocols.
+The protocol also tries to expose as little metadata as the design allows. Perfect metadata privacy is not possible in a
+decentralized messaging system, but Marmot SHOULD avoid new metadata leaks unless a feature cannot work without them.
 
-## Security Overview
+## Review Status
 
-Marmot maintains strong security guarantees through MLS:
+This is not adopted spec text yet. Treat it as the working v2 draft for team review.
 
-- **Forward Secrecy**: Past messages remain secure even if current keys are compromised
-- **Post-Compromise Security**: Key rotation limits impact of future compromises
-- **Identity Separation**: MLS signing keys are distinct from Nostr identity keys
-- **Regular Key Rotation**: Automatic key updates enhance security over time
+For review, focus on these questions:
 
-## Protocol Specifications
+- Are rules in the right surface?
+- Are byte encodings exact enough?
+- Are authorization and validation rules clear?
+- Are transport-specific rules kept out of foundation and protocol-core docs?
+- Could another implementation build the behavior and write conformance tests from the text?
 
-Before implementing Marmot, you should have:
+## Draft Map
 
-- **Nostr Knowledge**: Understanding of keys, kinds, tags, and relays ([Learn Nostr](https://github.com/nostr-protocol/nostr))
-- **MLS Basics**: Familiarity with the MLS protocol concepts ([MLS Overview](https://www.rfc-editor.org/rfc/rfc9750.html), [ELI5 Video](https://www.youtube.com/watch?v=FESp2LHd42U))
+The canonical directory tree and per-surface ownership rules live in [layout.md](./layout.md). Start there when deciding
+where new protocol text belongs. The writing rules behind that split live in [principles.md](./principles.md). Use
+[mip-coverage.md](./mip-coverage.md) only as a historical map from current MIPs to the v2 surfaces, and
+[implementation-model.md](./implementation-model.md) for the non-normative mapping to this repository's code.
 
-### Experimental
+The surfaces, each with its own section README (human orientation) and `AGENTS.md` (agent operating rules):
 
-**⚠️ Important: Marmot is currently experimental software.**
+- [foundation/](./foundation/README.md) - stable Marmot invariants: identity, encodings, registries, errors.
+- [protocol-core/](./protocol-core/README.md) - required group flows and group-state transitions.
+- [app-components/](./app-components/README.md) - versioned MLS `app_data_dictionary` component bytes.
+- [transports/](./transports/README.md) - how Marmot bytes move over a network (Nostr, QUIC).
+- [features/](./features/README.md) - optional or user-visible flows that span surfaces.
 
-While the protocol is based on proven cryptographic foundations (MLS and Nostr), the Marmot specification itself is still under active development. Key considerations:
+## Working Rules
 
-- **Breaking Changes**: The protocol may undergo breaking changes as we refine the specification
-- **Security Review**: The protocol has not yet undergone formal security auditing
-- **Implementation Maturity**: Reference implementations are functional but may contain bugs
-- **Interoperability**: Cross-client compatibility is a goal but not yet fully tested
-
-**Use in Production**: We recommend against using Marmot for production applications until the protocol reaches stable status. Current implementations are suitable for:
-- Research and development
-- Proof-of-concept applications
-- Contributing to protocol development
-- Educational purposes
-
-We welcome feedback, security analysis, and contributions to help mature the protocol toward production readiness.
-
-
-### Marmot Implementation Proposals (MIPs)
-
-Required MIPs must be implemented for Marmot compatibility. Implementations may choose which optional MIPs to implement based on their application's needs.
-
-| MIP | Description | Status | Required? |
-|-----|-------------|--------|----------|
-| [MIP-00](00.md) | Credentials & Key Packages | 👀 Review | ✅ Yes |
-| [MIP-01](01.md) | Group Construction & Marmot Group Data Extension | 👀 Review | ✅ Yes |
-| [MIP-02](02.md) | Welcome Events | 👀 Review | ✅ Yes |
-| [MIP-03](03.md) | Group Messages | 👀 Review | ✅ Yes |
-| [MIP-04](04.md) | Encrypted Media | 👀 Review | ❌ No |
-| [MIP-05](05.md) | Push Notifications | 🚧 Draft | ❌ No |
-
-
-## Protocol Implementations
-
-- [MDK - Marmot Development Kit](https://github.com/parres-hq/mdk): Reference implementation in Rust
-- [marmot-ts](https://github.com/parres-hq/marmot-ts): TypeScript implementation (still very early, please contribute!)
-
-## Projects using Marmot
-
-- [whitenoise](https://github.com/parres-hq/whitenoise): Rust crate using MDK to build a fully featured messenger client
-- [whitenoise_flutter](https://github.com/parres-hq/whitenoise_flutter): Flutter app, using the `whitenoise` crate.
-
-## Contributing
-
-This protocol is actively developed and welcomes contributions:
-
-- 🐛 **Issues**: Report bugs or suggest improvements
-- 📖 **Documentation**: Help improve specifications and guides
-- 🔧 **Implementation**: Build clients and libraries
-- 🧪 **Testing**: Help verify interoperability
-
-## References
-
-- [RFC 9420: Messaging Layer Security](https://datatracker.ietf.org/doc/rfc9420/)
-- [MLS Architecture Overview](https://www.rfc-editor.org/rfc/rfc9750.html)
-- [MLS Extensions](https://www.ietf.org/archive/id/draft-ietf-mls-extensions-08.txt)
-- [Nostr NIPs](https://github.com/nostr-protocol/nips)
-
-### Legacy Documentation
-
-- [NIP-EE](EE.md) - Original Nostr NIP (now superseded by this protocol specification)
+- Keep implementation architecture out of normative protocol documents.
+- Prefer short normative rules over long explanation.
+- Use `MUST`, `SHOULD`, and `MAY` only when the sentence is meant to become normative.
+- Put transport-specific fields in transport-specific components or transport docs.
+- Put group flow semantics in protocol-core docs or group app components.
+- A feature SHOULD usually point to one app component or add one component version.
+- A feature SHOULD name every surface it changes.
+- App component docs own component bytes. Feature docs own user-visible flows and the surfaces those flows touch.
