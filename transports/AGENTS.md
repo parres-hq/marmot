@@ -1,4 +1,4 @@
-# AGENTS.md - spec/transports
+# AGENTS.md - transports
 
 Agent operating rules for the transport surface. Read [`README.md`](README.md) for the human orientation and the
 transport-document checklist; the cross-surface map is in [`../AGENTS.md`](../AGENTS.md).

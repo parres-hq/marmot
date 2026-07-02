@@ -1,4 +1,4 @@
-# AGENTS.md - spec/app-components
+# AGENTS.md - app-components
 
 Agent operating rules for the app-component surface. Read [`README.md`](README.md) for the full human-facing model
 (component ids, negotiation, common rules, update processing, default authorization); the cross-surface map is in

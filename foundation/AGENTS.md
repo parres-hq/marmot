@@ -1,4 +1,4 @@
-# AGENTS.md - spec/foundation
+# AGENTS.md - foundation
 
 Agent operating rules for the foundation surface. Read [`README.md`](README.md) for the human orientation; the
 cross-surface map is in [`../AGENTS.md`](../AGENTS.md).

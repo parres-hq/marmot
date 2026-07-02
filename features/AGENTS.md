@@ -1,4 +1,4 @@
-# AGENTS.md - spec/features
+# AGENTS.md - features
 
 Agent operating rules for the feature surface. Read [`README.md`](README.md) for the human orientation and the
 feature-document checklist; the cross-surface map is in [`../AGENTS.md`](../AGENTS.md).

@@ -1,4 +1,4 @@
-# AGENTS.md - spec/protocol-core
+# AGENTS.md - protocol-core
 
 Agent operating rules for the protocol-core surface. Read [`README.md`](README.md) for the human orientation; the
 cross-surface map is in [`../AGENTS.md`](../AGENTS.md).

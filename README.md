@@ -2,7 +2,7 @@
 
 Status: draft for internal review.
 
-This directory contains the proposed Marmot v2 protocol text. The existing MIP documents remain the current production
+This repository contains the proposed Marmot v2 protocol text. The existing MIP documents remain the current production
 reference until this draft is adopted.
 
 The draft is organized by protocol surface. Foundation documents define stable Marmot invariants. Protocol-core

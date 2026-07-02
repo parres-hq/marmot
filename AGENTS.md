@@ -1,14 +1,14 @@
-# AGENTS.md - spec
+# AGENTS.md - marmot
 
 Agent map for the Marmot v2 protocol draft.
 
 ## Scope
 
-This directory is internal draft spec text for protocol surfaces a clean-room implementation would need. The canonical
+This repository is internal draft spec text for protocol surfaces a clean-room implementation would need. The canonical
 directory tree, surface ownership model, and feature/component split live in `layout.md`.
 
 Do not put darkmatter module names, database schemas, queue mechanics, local API shapes, or crate-specific test plans in
-normative spec files. Put those in `implementation-model.md`, `docs/marmot-architecture/`, or crate docs.
+normative spec files. Put those in `implementation-model.md` or implementation-repository docs.
 
 ## Surface map
 
@@ -54,19 +54,18 @@ top-level file stays cross-surface only.
 
 ## Verification
 
-After editing spec text, review matches from these commands (run from the repository root, where the `spec` path
-resolves):
+After editing spec text, review matches from these commands from the repository root:
 
 ```sh
 rg -n \
   "the spec should|spec MUST|Spec-Defined|GroupEvent|\\bengine\\b|darkmatter" \
-  spec
+  .
 rg -n \
   "PendingStateRef|drain_auto_publish|confirm_published|publish_failed" \
-  spec
+  .
 rg -n \
   "relay hints|internal version|public registry" \
-  spec
+  .
 ```
 
 Matches in `implementation-model.md` may be intentional. Matches in principles, component dictionaries, or lifecycle

@@ -10,54 +10,53 @@ MIPs remain useful history. They SHOULD point to the stable docs they changed.
 ## Top Level
 
 ```text
-spec/
+README.md
+layout.md
+principles.md
+mip-coverage.md
+foundation/
   README.md
-  layout.md
-  principles.md
-  mip-coverage.md
-  foundation/
-    README.md
-    identity.md
-    account-identity-proof-v1.md
-    key-packages.md
-    canonical-encoding.md
-    application-messages.md
-    wire-envelopes.md
-    mls-protocol.md
-    errors.md
-    registries.md
-  protocol-core/
-    README.md
-    group-setup.md
-    joining.md
-    group-messaging.md
-    member-departure.md
-    group-state.md
-    publish-lifecycle.md
-    inbound-processing.md
-    convergence.md
-    retained-history.md
-  app-components/
-    README.md
-    group-profile-v1.md
-    group-blossom-image-v1.md
-    admin-policy-v1.md
-    nostr-routing-v1.md
-    message-retention-v1.md
-    agent-text-stream-quic-v1.md
-    group-avatar-url-v1.md
-    group-encrypted-media-v1.md
-  transports/
-    README.md
-    nostr.md
-    quic.md
-  features/
-    README.md
-    encrypted-media.md
-    push-notifications.md
-    multi-device.md
-    agent-text-streams-quic.md
-  implementation-model.md
+  identity.md
+  account-identity-proof-v1.md
+  key-packages.md
+  canonical-encoding.md
+  application-messages.md
+  wire-envelopes.md
+  mls-protocol.md
+  errors.md
+  registries.md
+protocol-core/
+  README.md
+  group-setup.md
+  joining.md
+  group-messaging.md
+  member-departure.md
+  group-state.md
+  publish-lifecycle.md
+  inbound-processing.md
+  convergence.md
+  retained-history.md
+app-components/
+  README.md
+  group-profile-v1.md
+  group-blossom-image-v1.md
+  admin-policy-v1.md
+  nostr-routing-v1.md
+  message-retention-v1.md
+  agent-text-stream-quic-v1.md
+  group-avatar-url-v1.md
+  group-encrypted-media-v1.md
+transports/
+  README.md
+  nostr.md
+  quic.md
+features/
+  README.md
+  encrypted-media.md
+  push-notifications.md
+  multi-device.md
+  agent-text-streams-quic.md
+implementation-model.md
 ```
 
 This tree is the canonical file list. When you add, rename, or remove a doc, update this tree in the same change, and
