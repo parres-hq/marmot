@@ -1,8 +1,8 @@
 # Principles for writing Marmot specs
 
-Status: draft for internal review.
+Status: adopted.
 
-These principles are for the Marmot v2 draft. They explain how we decide where rules belong and how much detail a spec
+These principles are for the Marmot spec. They explain how we decide where rules belong and how much detail a spec
 document needs before another implementation could build from it.
 
 They are intentionally more prescriptive than style notes. When a principle starts defining exact client behavior, move

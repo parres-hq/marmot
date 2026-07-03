@@ -1,6 +1,6 @@
 # marmot.group.admin-policy.v1
 
-Status: draft for internal review.
+Status: adopted.
 
 ## Registry
 

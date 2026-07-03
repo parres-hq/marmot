@@ -1,6 +1,6 @@
 # Push notifications
 
-Status: draft for internal review.
+Status: adopted.
 
 Push notifications let a sender give a recipient a delivery hint outside the normal group-message fetch path.
 
@@ -422,7 +422,7 @@ document changes group state.
 
 The `marmot-push-v1` shapes above are the interop surface: JSON content with explicit member ids, leaf indexes,
 fingerprints, owner-signed token and removal entries, and a kind `446` rumor whose only tag is `v`. Earlier exploratory
-drafts that carried token gossip in `token` tags with empty content, left the sender's leaf implicit, defined no
+versions that carried token gossip in `token` tags with empty content, left the sender's leaf implicit, defined no
 removal entries, or required an `["encoding", "base64"]` tag on the kind `446` rumor are not interoperable with this
 version and predate the owner-authentication and per-record ordering rules; clients MUST reject any `v` other than
 `marmot-push-v1`.

@@ -1,6 +1,6 @@
 # Wire envelopes
 
-Status: draft for internal review.
+Status: adopted.
 
 Marmot separates application payloads, MLS security bytes, and transport delivery.
 

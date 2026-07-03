@@ -1,6 +1,6 @@
 # Nostr transport
 
-Status: draft for internal review.
+Status: adopted.
 
 This document defines the first Marmot transport binding: MLS bytes carried over Nostr relays.
 

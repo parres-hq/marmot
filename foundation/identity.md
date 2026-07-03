@@ -1,6 +1,6 @@
 # Identity, credentials, and capabilities
 
-Status: draft for internal review.
+Status: adopted.
 
 Marmot account identity is a Nostr public key.
 

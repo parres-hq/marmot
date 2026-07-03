@@ -1,6 +1,6 @@
 # Multi-device
 
-Status: draft for internal review.
+Status: adopted.
 
 Byte-level definitions in this document are placeholders and not yet finalized. They MUST NOT be implemented for
 interop yet. SHA-256 is the hash function throughout this document; named key derivations use HKDF-SHA256.

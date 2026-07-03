@@ -1,6 +1,6 @@
 # Protocol core
 
-Status: draft for internal review.
+Status: adopted.
 
 Protocol core describes what Marmot clients do with MLS group state.
 

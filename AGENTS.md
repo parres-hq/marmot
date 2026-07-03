@@ -1,10 +1,10 @@
 # AGENTS.md - marmot
 
-Agent map for the Marmot v2 protocol draft.
+Agent map for the Marmot protocol.
 
 ## Scope
 
-This repository is internal draft spec text for protocol surfaces a clean-room implementation would need. The canonical
+This repository is the spec text for protocol surfaces a clean-room implementation would need. The canonical
 directory tree, surface ownership model, and feature/component split live in `layout.md`.
 
 Do not put darkmatter module names, database schemas, queue mechanics, local API shapes, or crate-specific test plans in
@@ -25,7 +25,7 @@ top-level file stays cross-surface only.
 | Optional or user-visible flows that span surfaces | `features/AGENTS.md` |
 | Where new text belongs (canonical tree + ownership) | `layout.md` |
 | How to write the spec (placement + detail rules) | `principles.md` |
-| Map from current MIPs to v2 surfaces | `mip-coverage.md` |
+| Map from deprecated MIPs to this spec's surfaces | `mip-coverage.md` |
 | Non-normative mapping to this repo's code | `implementation-model.md` |
 
 ## Read Order
@@ -34,7 +34,7 @@ top-level file stays cross-surface only.
 2. `layout.md`
 3. `principles.md`
 4. The `AGENTS.md` for the surface you are changing (it links its README and the owning docs).
-5. `mip-coverage.md` only when mapping from current MIPs.
+5. `mip-coverage.md` only when mapping from deprecated MIPs.
 6. `implementation-model.md` only when local implementation guidance matters.
 
 ## Rules

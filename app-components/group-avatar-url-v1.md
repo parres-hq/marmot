@@ -1,6 +1,6 @@
 # marmot.group.avatar-url.v1
 
-Status: draft for internal review.
+Status: adopted.
 
 ## Registry
 
@@ -94,5 +94,5 @@ Removal is equivalent to the empty avatar state for application rendering.
 
 ## Migration
 
-This component is new in v2 and has no MIP-era predecessor. v1 is the first versioned form; a breaking change gets a new
-component id and file.
+This component is new in this spec and has no MIP-era predecessor. v1 is the first versioned form; a breaking change
+gets a new component id and file.

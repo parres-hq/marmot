@@ -1,18 +1,18 @@
 # MIP coverage
 
-Status: draft for internal review.
+Status: adopted.
 
-This file maps the current Marmot MIPs to the v2 draft. It is a review aid, not a normative surface.
+This file maps the deprecated Marmot MIPs to this spec. It is a review aid, not a normative surface.
 
 The merged canonical MIP set currently lives on the old Marmot repo's `origin/master`. MIP-06 exists as branch draft
-work and is tracked here because it affects the likely v2 design.
+work and is tracked here because it affects this spec's design.
 
-## Current MIPs
+## Deprecated MIPs
 
 - MIP-00, Credentials & Key Packages: Review and required.
   - Foundation: [foundation/identity.md](./foundation/identity.md) and
     [foundation/key-packages.md](./foundation/key-packages.md);
-    [foundation/account-identity-proof-v1.md](./foundation/account-identity-proof-v1.md) is new in v2 and breaking
+    [foundation/account-identity-proof-v1.md](./foundation/account-identity-proof-v1.md) is new in this spec and breaking
   - Transport binding: [transports/nostr.md](./transports/nostr.md)
   - Protocol flow: [protocol-core/joining.md](./protocol-core/joining.md)
 - MIP-01, Group Construction & Marmot Group Data Extension: Review and required.
@@ -39,10 +39,10 @@ work and is tracked here because it affects the likely v2 design.
 
 ## MIP-01 field split
 
-MIP-01 used one monolithic MLS extension, `marmot_group_data`. The v2 draft keeps the same semantics but splits that
+MIP-01 used one monolithic MLS extension, `marmot_group_data`. This spec keeps the same semantics but splits that
 state into smaller app components.
 
-| MIP-era field               | v2 owner                            |
+| MIP-era field               | Owner in this spec                  |
 | --------------------------- | ----------------------------------- |
 | `name`                      | `marmot.group.profile.v1`           |
 | `description`               | `marmot.group.profile.v1`           |
@@ -55,7 +55,7 @@ state into smaller app components.
 | `image_upload_key`          | `marmot.group.blossom.image.v1`     |
 | `disappearing_message_secs` | `marmot.group.message-retention.v1` |
 
-The component docs own the exact v2 bytes. This table only records where the old fields went.
+The component docs own the exact bytes. This table only records where the old fields went.
 
 ## Transport-specific MIP details
 

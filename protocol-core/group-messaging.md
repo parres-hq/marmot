@@ -1,6 +1,6 @@
 # Group messaging
 
-Status: draft for internal review.
+Status: adopted.
 
 This document describes group control messages and encrypted app payloads.
 
@@ -83,6 +83,6 @@ replaces retention data so the on-wire behavior is determined by group state.
 
 ## Migration notes
 
-This document is the v2 home for MIP-03 group-message behavior; the [MIP coverage map](../mip-coverage.md) records where
-each MIP-03 concern moved. As with the whole draft, the merged MIP set stays the production reference until v2 is
-adopted (see the [spec README](../README.md)).
+This document is the home for MIP-03 group-message behavior; the [MIP coverage map](../mip-coverage.md) records where
+each MIP-03 concern moved. The MIP-era documents are a deprecated version of the protocol (see the
+[spec README](../README.md)).

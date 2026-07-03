@@ -1,6 +1,6 @@
 # marmot.group.agent-text-stream.quic.v1
 
-Status: experimental draft for internal review.
+Status: adopted.
 
 ## Registry
 

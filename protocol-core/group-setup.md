@@ -1,6 +1,6 @@
 # Group construction and settings
 
-Status: draft for internal review.
+Status: adopted.
 
 This document describes group creation and the signed settings every member MUST agree on.
 

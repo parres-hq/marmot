@@ -1,6 +1,6 @@
 # Registries
 
-Status: draft for internal review.
+Status: adopted.
 
 This file collects Marmot-owned ids so new documents do not accidentally reuse a value.
 
@@ -70,7 +70,7 @@ confirm the values when that feature lands. `0xf2f1` is implemented and required
 
 ## Marmot custom proposal types
 
-No Marmot-owned custom MLS proposal type is assigned in this draft yet.
+No Marmot-owned custom MLS proposal type is assigned in this spec yet.
 
 `IdentityRemove` is the first likely candidate. It MUST claim a proposal type here before becoming normative.
 

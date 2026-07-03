@@ -1,6 +1,6 @@
 # Canonical encoding
 
-Status: draft for internal review.
+Status: adopted.
 
 When Marmot signs, hashes, stores, compares, or names protocol values by bytes, those bytes MUST have one encoding.
 

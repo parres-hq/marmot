@@ -1,6 +1,6 @@
 # Member departure
 
-Status: draft for internal review.
+Status: adopted.
 
 Member departure covers two paths: a member leaving on its own through SelfRemove, and an admin removing another
 member. This document specifies the SelfRemove path in full. Ordinary admin-initiated removal is an admin-gated
@@ -86,5 +86,5 @@ A SelfRemove flow is invalid if:
 
 ## Migration notes
 
-MIP-era Marmot treated SelfRemove as part of group messaging behavior. In the v2 draft it lives in protocol core because
+MIP-era Marmot treated SelfRemove as part of group messaging behavior. In this spec it lives in protocol core because
 SelfRemove affects the required group-state flow.

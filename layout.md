@@ -1,9 +1,9 @@
 # Spec layout
 
-Status: draft for internal review.
+Status: adopted.
 
-The current MIP set mixes stable protocol surfaces with feature behavior. The
-v2 draft organizes docs around the surface an implementer is building.
+The deprecated MIP set mixes stable protocol surfaces with feature behavior. This
+spec organizes docs around the surface an implementer is building.
 
 MIPs remain useful history. They SHOULD point to the stable docs they changed.
 
@@ -147,7 +147,7 @@ local APIs, queues, storage choices, and diagnostics.
 
 ## MIP Coverage
 
-The v2 draft keeps MIP history separate from normative organization.
+This spec keeps MIP history separate from normative organization.
 
-Use [mip-coverage.md](./mip-coverage.md) to see where current MIP-era concerns moved. The stable spec SHOULD be readable
+Use [mip-coverage.md](./mip-coverage.md) to see where MIP-era concerns moved. The stable spec SHOULD be readable
 without replaying the MIP history.

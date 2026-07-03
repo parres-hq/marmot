@@ -1,6 +1,6 @@
 # Raw QUIC transport (agent text stream previews)
 
-Status: experimental draft for internal review.
+Status: adopted.
 
 This document defines the raw QUIC transport binding for live agent text stream previews. It is the transport companion
 to the feature document [../features/agent-text-streams-quic.md](../features/agent-text-streams-quic.md): the feature

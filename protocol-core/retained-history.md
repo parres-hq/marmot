@@ -1,6 +1,6 @@
 # Retained history
 
-Status: draft for internal review.
+Status: adopted.
 
 Marmot clients need retained group state so they can recover from forks and late delivery.
 

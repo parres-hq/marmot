@@ -1,6 +1,6 @@
 # Encrypted Media
 
-Status: draft for internal review.
+Status: adopted.
 
 Encrypted media lets a Marmot app payload refer to one or more encrypted blobs stored outside the MLS message.
 
@@ -21,7 +21,7 @@ Blob upload and download are outside MLS group state. A failed upload or failed 
 The current media format is `encrypted-media-v1`.
 
 New media references MUST use `encrypted-media-v1`. Legacy media version strings are not compatibility formats in this
-draft and MUST be rejected by V1 clients.
+spec and MUST be rejected by V1 clients.
 
 ## Message Shape
 

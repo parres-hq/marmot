@@ -1,6 +1,6 @@
 # Welcomes
 
-Status: draft for internal review.
+Status: adopted.
 
 This document describes the member join flow built around MLS Welcomes.
 
@@ -58,7 +58,7 @@ After unwrapping a Welcome, the receiver:
 13. performs a self-update as soon as practical.
 
 A new member SHOULD perform the post-join self-update before sending application payloads when feasible, and SHOULD do
-so promptly after joining. This carries forward the MIP-02 post-join rotation guidance; the v2 draft keeps it as a
+so promptly after joining. This carries forward the MIP-02 post-join rotation guidance; this spec keeps it as a
 `SHOULD` because a member who never rotates is a forward-secrecy weakness for itself, not a correctness break for the
 group. The concrete recommended completion window is operational, not interop-visible, so it lives in
 [../implementation-model.md](../implementation-model.md) rather than here.

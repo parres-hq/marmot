@@ -1,6 +1,6 @@
 # MLS protocol
 
-Status: draft for internal review.
+Status: adopted.
 
 Marmot currently uses MLS as its continuous group key agreement (CGKA) protocol.
 
@@ -83,5 +83,5 @@ Registered Marmot exporter labels are listed in [registries.md](./registries.md)
 
 ## Exporter research
 
-Before this draft becomes normative, research whether the MLS Extensions Safe framework's exporter APIs are useful for
-any Marmot secret derivation. This draft does not assign one.
+Research whether the MLS Extensions Safe framework's exporter APIs are useful for
+any Marmot secret derivation. This spec does not assign one.

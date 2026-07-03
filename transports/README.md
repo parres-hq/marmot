@@ -1,6 +1,6 @@
 # Transport specs
 
-Status: draft for internal review.
+Status: adopted.
 
 Transport specs describe how a network carries Marmot MLS bytes.
 

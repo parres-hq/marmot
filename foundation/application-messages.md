@@ -1,6 +1,6 @@
 # Application payloads
 
-Status: draft for internal review.
+Status: adopted.
 
 Marmot app payloads use a Nostr event shape inside MLS.
 

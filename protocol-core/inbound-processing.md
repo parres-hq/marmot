@@ -1,6 +1,6 @@
 # Inbound processing
 
-Status: draft for internal review.
+Status: adopted.
 
 Inbound processing accepts bytes from a transport, turns them into Marmot protocol input, and gives each input a
 disposition.
