@@ -57,8 +57,13 @@ Until such a component exists, there is no mechanism to change the active policy
 
 A client builds candidate branches by replaying MLS commit bytes from retained group states.
 
-A commit creates a candidate edge only when it validates against exactly one parent state. A commit whose parent is not
-available remains deferred until the parent appears or the input expires.
+A commit creates a candidate edge only when it validates against exactly one parent state. Validation here is full
+commit validity: MLS validation plus Marmot component validation, including cross-component resulting-epoch checks such
+as the admin/leaf coupling in [../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md)
+("Validation"). A commit whose resulting state fails those checks is invalid on every branch and MUST NOT create a
+candidate edge, so convergence can never select a branch that contains it.
+
+A commit whose parent is not available remains deferred until the parent appears or the input expires.
 
 A client MUST NOT trust transport-provided parent metadata when building a branch. Parentage is derived by replaying MLS
 bytes against retained candidate states.
@@ -208,6 +213,12 @@ The client then assigns dispositions (the disposition vocabulary is pinned in
 Applying the selected branch also produces application-visible state notifications for changes the application MAY need
 to render or act on. Examples include epoch advancement, member additions, member removals, app component changes,
 branch recovery, and app payload invalidation.
+
+State notifications are derived only from accepted commits on the selected branch and the canonical resulting state
+they produce. When branch selection supersedes a commit the client previously applied — including the client's own
+published and confirmed commit — state notifications derived from that commit MUST be withdrawn from application
+output, symmetric with app-payload invalidation. A group-state change that lost branch selection MUST NOT remain
+visible to the application as a completed change.
 
 If the required retained state is missing, the client MUST report the missing retained anchor and MUST NOT mutate
 canonical group state. If the missing state is inside the rollback horizon, the client enters `Unrecoverable` until it

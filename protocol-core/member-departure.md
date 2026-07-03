@@ -6,7 +6,8 @@ Member departure covers two paths: a member leaving on its own through SelfRemov
 member. This document specifies the SelfRemove path in full. Ordinary admin-initiated removal is an admin-gated
 group-state change whose authorization is owned by
 [../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md) ("remove another member"); it otherwise
-follows the normal commit, publish-lifecycle, and convergence rules.
+follows the normal commit, publish-lifecycle, and convergence rules. Both paths end with the removed member realizing
+its own removal; that flow is "Realizing removal" below.
 
 SelfRemove lets a current member leave a group without asking an admin to remove them. It uses the MLS SelfRemove
 proposal from the MLS extensions work and does not define a Marmot custom proposal type.
@@ -72,6 +73,40 @@ A client that receives multiple SelfRemove proposals from the same leaving membe
 is consumed MUST bound storage and commit eligibility to one retained proposal. Byte-identical repeats are duplicates
 under [inbound-processing.md](./inbound-processing.md), and non-identical redundant proposals are stale unless a future
 protocol version defines a distinct retry identity.
+
+## Realizing removal
+
+Both departure paths end the same way for the removed member: its client realizes that its membership ended, tells the
+application, and stops treating the group as active. Realization has a primary input and a fallback input.
+
+The primary input is the removing commit. When an accepted commit on the selected canonical branch removes the local
+member's last leaf — an admin-initiated Remove or a committed SelfRemove — the client MUST emit a self-removed state
+notification (see [inbound-processing.md](./inbound-processing.md), "Application-visible output") and mark the local
+group copy removed.
+
+The fallback input covers a client that never applied the removing commit. If processing later group input yields
+authenticated evidence that the local member's membership already ended — the local group state records the member's
+own removal while the client is still presenting the group as active — the client MUST treat that evidence as
+realization of its own removal: the same self-removed state notification and the same removed group condition. The
+triggering input receives the `SelfEvicted` outcome (`stale` disposition, `stale_epoch` category, see
+[../foundation/errors.md](../foundation/errors.md)). The client MUST NOT report such input as ordinary stale traffic
+and keep presenting the group as active.
+
+Failure to decrypt group traffic is not, by itself, evidence of removal. Without authenticated evidence that the local
+member's own leaf was removed, undecryptable input is a missing-history or repair condition (see
+[retained-history.md](./retained-history.md) and [group-state.md](./group-state.md), "Unrecoverable cases"), and the
+client MUST NOT present the group as removed.
+
+A removed group copy is retained inactive, not deleted. The removed member:
+
+- MUST NOT prepare or publish commits, proposals, or MLS application messages for the group;
+- MUST NOT present the group to the user as active or sendable;
+- MAY retain previously delivered content and group history for local display;
+- MAY discard the local group copy at any time.
+
+Removal is terminal for that group copy. Rejoining happens only through a new Welcome, which creates a new local group
+state under [joining.md](./joining.md). Retention does not weaken forward secrecy: a removed member cannot decrypt
+traffic from epochs after its removal.
 
 ## Validation
 

@@ -28,6 +28,10 @@ A member that has sent a SelfRemove proposal also enters the local `Leaving` gat
 still contains the member until a commit removes it. It is a durable outbound restriction on the leaving client and may
 span multiple epoch-bound SelfRemove proposals.
 
+A member whose own removal has been realized holds the group as a removed, inactive copy per
+[member-departure.md](./member-departure.md) ("Realizing removal"). Like `Leaving`, this is not a canonical lifecycle
+state; it is a terminal local condition for that group copy.
+
 ## Legal transitions
 
 ```text

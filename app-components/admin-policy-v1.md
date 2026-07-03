@@ -67,6 +67,12 @@ The last check is cross-component: it validates this component against the resul
 against the component bytes alone. Commit validity already spans components, so a commit whose resulting epoch lists an
 admin key with no member leaf is invalid.
 
+The cross-component check is a property of the resulting epoch, not of the commits that carry admin-policy bytes. It
+runs on every commit that changes the member leaf set or this component's state. When a commit carries no admin-policy
+update, the resulting epoch's admin set is the prior epoch's admin set carried forward, and the check is evaluated
+against that carried-forward set. A commit that removes a listed account's last member leaf without also updating this
+component is therefore invalid whether or not the commit re-serializes this component's bytes.
+
 ## Authorization
 
 Only an active admin MAY send a standalone admin policy proposal.

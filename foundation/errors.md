@@ -61,11 +61,15 @@ Protocol-core documents name some outcomes in `PascalCase`. Each maps to one dis
 | ----------------------- | ----------- | ----------------- | ----------------------------------------------------------- |
 | `BeyondAnchor`          | `stale`     | `stale_epoch`     | [retained-history.md](../protocol-core/retained-history.md) |
 | `MissingRetainedAnchor` | `deferred`  | `missing_history` | [retained-history.md](../protocol-core/retained-history.md) |
+| `SelfEvicted`           | `stale`     | `stale_epoch`     | [member-departure.md](../protocol-core/member-departure.md) |
 
 `BeyondAnchor` is window exclusion by design: the source epoch is older than the retained anchor, and the input will
 never be processed. `MissingRetainedAnchor` is storage loss: required retained state inside the rollback horizon is
 gone, canonical group state does not change, and the group moves to `Unrecoverable` (a group lifecycle state, not a
-disposition) until a verified repair path exists; the input stays deferred rather than terminal.
+disposition) until a verified repair path exists; the input stays deferred rather than terminal. `SelfEvicted` is
+terminal for the group on that client: the input is from an epoch past the local member's own removal, and the required
+side effect — realizing the removal — is defined in
+[member-departure.md](../protocol-core/member-departure.md) ("Realizing removal").
 
 ## Protocol and local errors
 
