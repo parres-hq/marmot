@@ -215,10 +215,17 @@ to render or act on. Examples include epoch advancement, member additions, membe
 branch recovery, and app payload invalidation.
 
 State notifications are derived only from accepted commits on the selected branch and the canonical resulting state
-they produce. When branch selection supersedes a commit the client previously applied — including the client's own
-published and confirmed commit — state notifications derived from that commit MUST be withdrawn from application
-output, symmetric with app-payload invalidation. A group-state change that lost branch selection MUST NOT remain
-visible to the application as a completed change.
+they produce. A state notification derived from a commit is attributed to that commit's `commit_digest` (the same
+`SHA-256` over the commit's MLS bytes defined in "Same-epoch races"). When branch selection supersedes a commit the
+client previously applied — including the client's own published and confirmed commit — the client MUST emit a
+group-state-change invalidation naming the superseded commit, and every state notification attributed to that commit
+is withdrawn: the application treats the changes it announced as not having happened. This is the state-notification
+counterpart of app-payload invalidation.
+
+Notification objects are local API surface, so their exact shape is implementation-defined; the conformance
+requirement is the resulting view. Once convergence is settled, the state notifications still in effect are exactly
+those derivable from the accepted commits on the selected branch, and a group-state change that lost branch selection
+MUST NOT remain visible to the application as a completed change.
 
 If the required retained state is missing, the client MUST report the missing retained anchor and MUST NOT mutate
 canonical group state. If the missing state is inside the rollback horizon, the client enters `Unrecoverable` until it

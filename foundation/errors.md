@@ -67,8 +67,8 @@ Protocol-core documents name some outcomes in `PascalCase`. Each maps to one dis
 never be processed. `MissingRetainedAnchor` is storage loss: required retained state inside the rollback horizon is
 gone, canonical group state does not change, and the group moves to `Unrecoverable` (a group lifecycle state, not a
 disposition) until a verified repair path exists; the input stays deferred rather than terminal. `SelfEvicted` is
-terminal for the group on that client: the input is from an epoch past the local member's own removal, and the required
-side effect — realizing the removal — is defined in
+terminal for the group on that client: it attaches to later input for a group whose retained canonical state records
+the local member's own removal, and the required side effect — realizing the removal — is defined in
 [member-departure.md](../protocol-core/member-departure.md) ("Realizing removal").
 
 ## Protocol and local errors

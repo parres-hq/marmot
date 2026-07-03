@@ -77,20 +77,25 @@ protocol version defines a distinct retry identity.
 ## Realizing removal
 
 Both departure paths end the same way for the removed member: its client realizes that its membership ended, tells the
-application, and stops treating the group as active. Realization has a primary input and a fallback input.
+application, and stops treating the group as active.
 
-The primary input is the removing commit. When an accepted commit on the selected canonical branch removes the local
-member's last leaf — an admin-initiated Remove or a committed SelfRemove — the client MUST emit a self-removed state
-notification (see [inbound-processing.md](./inbound-processing.md), "Application-visible output") and mark the local
-group copy removed.
+The authenticated evidence of removal is always the same bytes: an accepted commit on the selected canonical branch
+that removes the local member's last leaf — an admin-initiated Remove or a committed SelfRemove — recorded in retained
+canonical state. When the client applies such a commit, it MUST emit a self-removed state notification (see
+[inbound-processing.md](./inbound-processing.md), "Application-visible output") and mark the local group copy removed.
 
-The fallback input covers a client that never applied the removing commit. If processing later group input yields
-authenticated evidence that the local member's membership already ended — the local group state records the member's
-own removal while the client is still presenting the group as active — the client MUST treat that evidence as
-realization of its own removal: the same self-removed state notification and the same removed group condition. The
-triggering input receives the `SelfEvicted` outcome (`stale` disposition, `stale_epoch` category, see
-[../foundation/errors.md](../foundation/errors.md)). The client MUST NOT report such input as ordinary stale traffic
-and keep presenting the group as active.
+Realization is a state-derived obligation, not a one-shot event at commit-apply time: whenever retained canonical group
+state records the local member's removal and the local group copy is not yet marked removed, the client MUST perform
+the realization above. A client MAY have recorded the removing commit without the application ever observing the
+resulting notification; the obligation stands until the group copy is marked removed.
+
+Later group input for such a group is the fallback trigger. It receives the `SelfEvicted` outcome (`stale`
+disposition, `stale_epoch` category, see [../foundation/errors.md](../foundation/errors.md)). `SelfEvicted` attaches
+to that later input, not to the removing commit and not to a local presentation mismatch; the input itself proves
+nothing and need not be decrypted or authenticated, because the evidence of removal is the retained canonical state —
+the input is classified by its group, like other stale input for groups the client cannot process further. Processing
+it MUST perform the realization above when it has not already happened. The client MUST NOT classify such input as
+ordinary stale traffic while continuing to present the group as active.
 
 Failure to decrypt group traffic is not, by itself, evidence of removal. Without authenticated evidence that the local
 member's own leaf was removed, undecryptable input is a missing-history or repair condition (see
