@@ -34,7 +34,7 @@ top-level file stays cross-surface only.
 2. `layout.md`
 3. `principles.md`
 4. The `AGENTS.md` for the surface you are changing (it links its README and the owning docs).
-5. `mip-coverage.md` only when mapping from current MIPs.
+5. `mip-coverage.md` only when mapping from deprecated MIPs.
 6. `implementation-model.md` only when local implementation guidance matters.
 
 ## Rules
