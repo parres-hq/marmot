@@ -77,7 +77,11 @@ Input that cannot affect the group MUST receive a stale disposition. This includ
   `app_payload_past_epoch_limit` past epochs, see [convergence.md](./convergence.md));
 - commits that fork from outside the rollback horizon: these are ineligible for branch selection (see
   [convergence.md](./convergence.md), "Eligibility") and, when their source epoch is also older than the retained
-  anchor, are reported as `BeyondAnchor`.
+  anchor, are reported as `BeyondAnchor`;
+- group input for a group whose retained canonical state records the local member's own removal (`SelfEvicted` ->
+  `stale_epoch`, per [member-departure.md](./member-departure.md), "Realizing removal"): stale for convergence, but
+  processing it MUST also surface the member's removal as a state notification when the application has not yet
+  observed it, instead of failing silently.
 
 The `snake_case` names in parentheses are the shared categories in [../foundation/errors.md](../foundation/errors.md);
 `BeyondAnchor` is a named convergence outcome that maps to the `stale` disposition and the `stale_epoch` category.
@@ -95,12 +99,19 @@ State notifications include events such as:
 
 - group joined;
 - epoch advanced;
-- member added or removed;
+- member added or removed, including the local member's own removal (see
+  [member-departure.md](./member-departure.md), "Realizing removal");
 - component state changed;
 - branch recovered;
-- app payload invalidated because its MLS application message belonged only to a losing branch.
+- app payload invalidated because its MLS application message belonged only to a losing branch;
+- group-state change invalidated because the commit it was derived from was superseded by branch selection.
 
 A state notification is not a delivered app payload. It tells the application what changed in the group state.
+
+State notifications track the selected canonical branch. When convergence supersedes a commit the client previously
+applied, the client MUST emit a group-state-change invalidation naming the superseded commit, and state notifications
+attributed to that commit are withdrawn from application output (see [convergence.md](./convergence.md), "Applying the
+selected branch"), so the application never keeps rendering a group-state change that the canonical state contradicts.
 
 ## Delivered app payloads
 

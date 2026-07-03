@@ -6,7 +6,8 @@ Member departure covers two paths: a member leaving on its own through SelfRemov
 member. This document specifies the SelfRemove path in full. Ordinary admin-initiated removal is an admin-gated
 group-state change whose authorization is owned by
 [../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md) ("remove another member"); it otherwise
-follows the normal commit, publish-lifecycle, and convergence rules.
+follows the normal commit, publish-lifecycle, and convergence rules. Both paths end with the removed member realizing
+its own removal; that flow is "Realizing removal" below.
 
 SelfRemove lets a current member leave a group without asking an admin to remove them. It uses the MLS SelfRemove
 proposal from the MLS extensions work and does not define a Marmot custom proposal type.
@@ -72,6 +73,45 @@ A client that receives multiple SelfRemove proposals from the same leaving membe
 is consumed MUST bound storage and commit eligibility to one retained proposal. Byte-identical repeats are duplicates
 under [inbound-processing.md](./inbound-processing.md), and non-identical redundant proposals are stale unless a future
 protocol version defines a distinct retry identity.
+
+## Realizing removal
+
+Both departure paths end the same way for the removed member: its client realizes that its membership ended, tells the
+application, and stops treating the group as active.
+
+The authenticated evidence of removal is always the same bytes: an accepted commit on the selected canonical branch
+that removes the local member's last leaf — an admin-initiated Remove or a committed SelfRemove — recorded in retained
+canonical state. When the client applies such a commit, it MUST emit a self-removed state notification (see
+[inbound-processing.md](./inbound-processing.md), "Application-visible output") and mark the local group copy removed.
+
+Realization is a state-derived obligation, not a one-shot event at commit-apply time: whenever retained canonical group
+state records the local member's removal and the local group copy is not yet marked removed, the client MUST perform
+the realization above. A client MAY have recorded the removing commit without the application ever observing the
+resulting notification; the obligation stands until the group copy is marked removed.
+
+Later group input for such a group is the fallback trigger. It receives the `SelfEvicted` outcome (`stale`
+disposition, `stale_epoch` category, see [../foundation/errors.md](../foundation/errors.md)). `SelfEvicted` attaches
+to that later input, not to the removing commit and not to a local presentation mismatch; the input itself proves
+nothing and need not be decrypted or authenticated, because the evidence of removal is the retained canonical state —
+the input is classified by its group, like other stale input for groups the client cannot process further. Processing
+it MUST perform the realization above when it has not already happened. The client MUST NOT classify such input as
+ordinary stale traffic while continuing to present the group as active.
+
+Failure to decrypt group traffic is not, by itself, evidence of removal. Without authenticated evidence that the local
+member's own leaf was removed, undecryptable input is a missing-history or repair condition (see
+[retained-history.md](./retained-history.md) and [group-state.md](./group-state.md), "Unrecoverable cases"), and the
+client MUST NOT present the group as removed.
+
+A removed group copy is retained inactive, not deleted. The removed member:
+
+- MUST NOT prepare or publish commits, proposals, or MLS application messages for the group;
+- MUST NOT present the group to the user as active or sendable;
+- MAY retain previously delivered content and group history for local display;
+- MAY discard the local group copy at any time.
+
+Removal is terminal for that group copy. Rejoining happens only through a new Welcome, which creates a new local group
+state under [joining.md](./joining.md). Retention does not weaken forward secrecy: a removed member cannot decrypt
+traffic from epochs after its removal.
 
 ## Validation
 
