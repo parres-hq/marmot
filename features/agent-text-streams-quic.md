@@ -1,6 +1,6 @@
 # Agent text streams over QUIC
 
-Status: experimental draft for internal review.
+Status: adopted.
 
 This feature adds live text previews for agent output in an existing Marmot group. MLS remains the membership,
 authentication, epoch, and durable-message layer. QUIC carries only transient preview records. Live preview delivery is a

@@ -1,6 +1,6 @@
 # Account identity proof v1
 
-Status: draft for internal review.
+Status: adopted.
 
 `marmot.account-identity-proof.v1` is a Marmot custom MLS LeafNode extension that binds the Marmot account identity in
 an MLS `BasicCredential` to that leaf's MLS signature public key.
@@ -87,4 +87,4 @@ A client MUST reject a LeafNode or KeyPackage if:
 - `mls_signature_public_key` does not exactly match the LeafNode MLS signature public key;
 - `schnorr_signature` is not a valid BIP-340 signature for the signing input digest and `account_identity`.
 
-There is no legacy fallback. A member without a valid proof is not a Marmot member for this draft.
+There is no legacy fallback. A member without a valid proof is not a Marmot member under this spec.

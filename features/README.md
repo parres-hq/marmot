@@ -1,6 +1,6 @@
 # Feature specs
 
-Status: draft for internal review.
+Status: adopted.
 
 Feature specs describe user-visible Marmot behavior that spans several surfaces.
 

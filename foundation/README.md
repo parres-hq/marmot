@@ -1,6 +1,6 @@
 # Marmot foundation
 
-Status: draft for internal review.
+Status: adopted.
 
 These files define the shared choices that make a Marmot implementation a Marmot implementation. Feature docs,
 transport docs, and protocol-core docs SHOULD point here instead of restating these rules.

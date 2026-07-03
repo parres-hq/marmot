@@ -1,6 +1,6 @@
 # Host safety
 
-Status: draft for internal review.
+Status: adopted.
 
 Several Marmot surfaces validate a URL whose host a client may reach over the network — encrypted-media `blossom-v1`
 locators, encrypted-media blob endpoints, and the group avatar URL. A fetchable URL pointing at a private, internal, or

@@ -1,6 +1,6 @@
 # Convergence
 
-Status: draft for internal review.
+Status: adopted.
 
 Convergence chooses one canonical branch from unordered group input.
 

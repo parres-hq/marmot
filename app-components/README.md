@@ -1,6 +1,6 @@
 # Marmot app components
 
-Status: draft for internal review.
+Status: adopted.
 
 Marmot group state is split into custom MLS app components carried by the MLS `app_data_dictionary` extension. Each
 component has a `ComponentID` and owns the opaque state bytes stored under that id.
@@ -30,7 +30,7 @@ canonical encoding profile. Marmot does not wrap every entry in another generic 
 
 ## Upstream Basis
 
-This draft follows:
+This spec follows:
 
 - [draft-ietf-mls-extensions-09](https://datatracker.ietf.org/doc/html/draft-ietf-mls-extensions-09)
 - [OpenMLS AppData handling](https://book.openmls.tech/user_manual/app_data_updates.html)

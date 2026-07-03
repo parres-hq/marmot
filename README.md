@@ -1,11 +1,11 @@
-# Marmot v2 Protocol Draft
+# Marmot Protocol
 
-Status: draft for internal review.
+Status: adopted.
 
-This repository contains the proposed Marmot v2 protocol text. The existing MIP documents remain the current production
-reference until this draft is adopted.
+This repository contains the Marmot protocol text, the version of the protocol ready for adoption. The MIP-era
+documents describe a deprecated version of the protocol.
 
-The draft is organized by protocol surface. Foundation documents define stable Marmot invariants. Protocol-core
+The spec is organized by protocol surface. Foundation documents define stable Marmot invariants. Protocol-core
 documents define how Marmot groups move through MLS flows. Transport documents define how Marmot bytes move over a
 network. App component documents define versioned group-state payloads. Feature documents describe optional or
 user-visible flows and point to the surfaces they touch.
@@ -27,11 +27,9 @@ future transport binding needs the same redundancy and failover properties.
 The protocol also tries to expose as little metadata as the design allows. Perfect metadata privacy is not possible in a
 decentralized messaging system, but Marmot SHOULD avoid new metadata leaks unless a feature cannot work without them.
 
-## Review Status
+## Review Guidance
 
-This is not adopted spec text yet. Treat it as the working v2 draft for team review.
-
-For review, focus on these questions:
+When reviewing changes to the spec, focus on these questions:
 
 - Are rules in the right surface?
 - Are byte encodings exact enough?
@@ -39,11 +37,11 @@ For review, focus on these questions:
 - Are transport-specific rules kept out of foundation and protocol-core docs?
 - Could another implementation build the behavior and write conformance tests from the text?
 
-## Draft Map
+## Spec Map
 
 The canonical directory tree and per-surface ownership rules live in [layout.md](./layout.md). Start there when deciding
 where new protocol text belongs. The writing rules behind that split live in [principles.md](./principles.md). Use
-[mip-coverage.md](./mip-coverage.md) only as a historical map from current MIPs to the v2 surfaces, and
+[mip-coverage.md](./mip-coverage.md) only as a historical map from the deprecated MIPs to this spec's surfaces, and
 [implementation-model.md](./implementation-model.md) for the non-normative mapping to this repository's code.
 
 The surfaces, each with its own section README (human orientation) and `AGENTS.md` (agent operating rules):

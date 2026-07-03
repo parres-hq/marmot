@@ -1,6 +1,6 @@
 # KeyPackages
 
-Status: draft for internal review.
+Status: adopted.
 
 This document defines KeyPackage meaning, discovery requirements, and lifecycle.
 

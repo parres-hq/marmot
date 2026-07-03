@@ -1,6 +1,6 @@
 # Group state
 
-Status: draft for internal review.
+Status: adopted.
 
 Each Marmot group has one canonical MLS state at a time. A client MAY temporarily hold candidate or pending state, but
 only one state is visible as the group's canonical state.

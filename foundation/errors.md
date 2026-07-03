@@ -1,6 +1,6 @@
 # Results and rejections
 
-Status: draft for internal review.
+Status: adopted.
 
 Marmot clients SHOULD be able to describe why an input did not produce application content.
 
@@ -47,8 +47,8 @@ therefore has exactly one outcome: a convergence disposition when it was structu
 otherwise a rejection category.
 
 `delivered` is not a disposition. It names the application-visible output of an `accepted` MLS application message: the
-Marmot app payload handed to the application. `dropped` is not a disposition either; where older drafts said an input
-was dropped, this vocabulary says `stale`.
+Marmot app payload handed to the application. `dropped` is not a disposition either; where older versions of this
+document said an input was dropped, this vocabulary says `stale`.
 
 A disposition says what happened to an input. The categories above say why. A `stale` or `deferred` input SHOULD carry
 a category, such as `duplicate` or `stale_epoch`.
