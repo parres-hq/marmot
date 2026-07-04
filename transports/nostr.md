@@ -56,14 +56,14 @@ valid relay URL, but it does not rewrite signed group state.
 
 ## Event identity and tag cardinality
 
-A receiver MUST verify a signed Nostr event's NIP-01 id and signature before treating its `id`, `pubkey`, `created_at`,
-`kind`, `tags`, or `content` as authenticated transport metadata. Before that verification succeeds, those fields are
-untrusted bytes and MUST NOT be used as trusted routing, replay, telemetry, or KeyPackage evidence.
+**CRITICAL:** A receiver MUST verify a signed Nostr event's NIP-01 id and signature before treating its `id`, `pubkey`,
+`created_at`, `kind`, `tags`, or `content` as authenticated transport metadata. Before that verification succeeds, those
+fields are untrusted bytes and MUST NOT be used as trusted routing, replay, telemetry, or KeyPackage evidence.
 
-Required Marmot transport tags have exact cardinality. If a required singleton tag is missing, repeated, has no value,
-or has extra values beyond the one defined here, the event is malformed. If a required list tag is missing, repeated,
-empty, or contains duplicate values after validation, the event is malformed. A receiver MUST NOT read only the first
-matching tag and ignore later duplicates.
+**CRITICAL:** Required Marmot transport tags have exact cardinality. If a required singleton tag is missing, repeated,
+has no value, or has extra values beyond the one defined here, the event is malformed. If a required list tag is missing,
+repeated, empty, or contains duplicate values after validation, the event is malformed. A receiver MUST NOT read only the
+first matching tag and ignore later duplicates.
 
 | Event shape | Tag | Cardinality and value rule |
 | --- | --- | --- |
@@ -79,9 +79,9 @@ matching tag and ignore later duplicates.
 | kind `30443` KeyPackage | `mls_proposals` | exactly one id-list tag |
 | kind `30443` KeyPackage | `app_components` | exactly one id-list tag |
 
-The kind `444` `e` tag is a claim about which KeyPackage event was consumed. It is not proof that the event exists, was
-authored by the invitee account, or carried the decoded KeyPackage. A client that needs those facts MUST fetch and
-verify the referenced kind `30443` event and then verify the decoded KeyPackageRef under
+The kind `444` `e` tag sits on the trust boundary: it is a claim about which KeyPackage event was consumed. It is not
+proof that the event exists, was authored by the invitee account, or carried the decoded KeyPackage. A client that needs
+those facts MUST fetch and verify the referenced kind `30443` event and then verify the decoded KeyPackageRef under
 [../foundation/key-packages.md](../foundation/key-packages.md).
 
 ## Group message delivery

@@ -70,9 +70,9 @@ MUST NOT override decoded KeyPackage validity, account identity proof validity, 
 author binding.
 
 The MLS `Lifetime` extension is part of KeyPackage validity. A Marmot KeyPackage candidate MUST carry a `Lifetime`
-extension, MUST be current at validation time (`not_before < now < not_after`), and MUST have
-`not_after - not_before <= 7,261,200` seconds. The range is 84 days plus a one-hour clock-skew margin. A `last_resort`
-KeyPackage does not relax this limit.
+extension, MUST be current at validation time (the validation time is not before `not_before` and not after `not_after`),
+and MUST have `not_after - not_before <= 7,261,200` seconds. The range is 84 days plus a one-hour clock-skew margin. A
+`last_resort` KeyPackage does not relax this limit.
 
 When a transport exposes a publication timestamp or replacement rule, clients SHOULD use it to avoid consuming stale
 single-use KeyPackages. If two otherwise equivalent candidates remain, clients SHOULD use a deterministic
@@ -93,8 +93,8 @@ available so the inviter can retry or choose another candidate.
 A client MUST reject a published KeyPackage when:
 
 - the decoded content is not a valid MLS KeyPackage;
-- the KeyPackage `Lifetime` extension is missing, expired, not yet valid, or has a total range longer than
-  7,261,200 seconds;
+- the KeyPackage `Lifetime` extension is missing, the validation time is before `not_before` or after `not_after`, or
+  the total range is longer than 7,261,200 seconds;
 - the credential identity is not a valid Marmot account identity;
 - the account identity proof extension is missing or invalid;
 - the transport author or sender does not match the credential identity under the active transport binding;
