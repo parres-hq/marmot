@@ -41,6 +41,17 @@ concatenated encoded items. The maximum byte length is `2^62 - 1`. A decoder MUS
 body decodes to a whole number of items with no trailing bytes. Owning documents SHOULD give a tighter bound when one
 applies. An unbounded `<V>` means only the QUIC variable-length integer maximum applies.
 
+## Tuple and preimage boundaries
+
+When a Marmot-owned value combines more than one field into bytes for signing, hashing, key derivation, replay storage,
+comparison, or naming, every field boundary MUST be unambiguous. A variable-length field MUST be encoded with an
+explicit length prefix, carried inside an upstream canonical encoding that already preserves its boundary, or be
+separated by an owning-document rule that cannot collide with any legal value.
+
+A producer MUST NOT create a collision-prone preimage by bare-concatenating adjacent variable-length fields. A domain
+separator, text label, or version suffix is useful for separating one construction from another, but it does not by
+itself mark the boundary between two variable-length fields inside the same construction.
+
 ## QUIC length prefixes
 
 A QUIC variable-length integer length prefix uses the two high bits of the first byte to say how many bytes encode the
