@@ -54,6 +54,36 @@ Producers SHOULD use `wss`, lowercase DNS hostnames, omit default ports, and avo
 compare relay URL byte strings exactly after validation. Local safety policy MAY refuse to connect or publish to a
 valid relay URL, but it does not rewrite signed group state.
 
+## Event identity and tag cardinality
+
+**CRITICAL:** A receiver MUST verify a signed Nostr event's NIP-01 id and signature before treating its `id`, `pubkey`,
+`created_at`, `kind`, `tags`, or `content` as authenticated transport metadata. Before that verification succeeds, those
+fields are untrusted bytes and MUST NOT be used as trusted routing, replay, telemetry, or KeyPackage evidence.
+
+**CRITICAL:** Required Marmot transport tags have exact cardinality. If a required singleton tag is missing, repeated,
+has no value, or has extra values beyond the one defined here, the event is malformed. If a required list tag is missing,
+repeated, empty, or contains duplicate values after validation, the event is malformed. A receiver MUST NOT read only the
+first matching tag and ignore later duplicates.
+
+| Event shape | Tag | Cardinality and value rule |
+| --- | --- | --- |
+| kind `445` group message | `h` | exactly one tag, exactly one value: lowercase hex `nostr_group_id` |
+| kind `1059` welcome gift wrap | `p` | exactly one tag, exactly one value: lowercase hex account identity of the recipient |
+| kind `444` welcome rumor | `e` | exactly one tag, exactly one value: lowercase hex Nostr event id of the claimed KeyPackage event |
+| kind `444` welcome rumor | `relays` | exactly one tag, one or more relay URL values using the relay URL profile |
+| kind `30443` KeyPackage | `d` | exactly one tag, exactly one non-empty slot id value |
+| kind `30443` KeyPackage | `mls_protocol_version` | exactly one tag, exactly one value: `1.0` |
+| kind `30443` KeyPackage | `i` | exactly one tag, exactly one value: lowercase hex KeyPackageRef |
+| kind `30443` KeyPackage | `mls_ciphersuite` | exactly one id-list tag |
+| kind `30443` KeyPackage | `mls_extensions` | exactly one id-list tag |
+| kind `30443` KeyPackage | `mls_proposals` | exactly one id-list tag |
+| kind `30443` KeyPackage | `app_components` | exactly one id-list tag |
+
+The kind `444` `e` tag sits on the trust boundary: it is a claim about which KeyPackage event was consumed. It is not
+proof that the event exists, was authored by the invitee account, or carried the decoded KeyPackage. A client that needs
+those facts MUST fetch and verify the referenced kind `30443` event and then verify the decoded KeyPackageRef under
+[../foundation/key-packages.md](../foundation/key-packages.md).
+
 ## Group message delivery
 
 Nostr group messages use Nostr kind `445`.
@@ -204,10 +234,11 @@ The current tag set is:
 whose values follow the tag name in a single tag array, for example `["mls_extensions", "0x0006", "0xf2f1", "0x000a"]`.
 A producer MUST NOT split the ids of one list across repeated tags. Each value is the `0x`-prefixed lowercase
 hexadecimal encoding of the 16-bit id, zero-padded to four hex digits, such as `0x0001` or `0xf2f1`. Each id-list tag
-MUST carry at least one value. Consumers compare id-list values as exact strings; under the text rule in
-[../foundation/canonical-encoding.md](../foundation/canonical-encoding.md), the producer emits exactly this form. A
-consumer MUST reject a KeyPackage event that carries more than one tag with the same id-list name (so the producer's
-"exactly one tag" rule is enforced, not assumed); it MUST NOT read only the first occurrence and ignore the rest.
+MUST carry at least one value and MUST NOT repeat a value inside the same tag. Consumers compare id-list values as exact
+strings; under the text rule in [../foundation/canonical-encoding.md](../foundation/canonical-encoding.md), the producer
+emits exactly this form. A consumer MUST reject a KeyPackage event that carries more than one tag with the same id-list
+name (so the producer's "exactly one tag" rule is enforced, not assumed); it MUST NOT read only the first occurrence
+and ignore the rest.
 
 The `i` tag is the KeyPackageRef, not the account identity. Receivers MUST verify it against the decoded KeyPackage.
 
@@ -269,12 +300,12 @@ lifecycle defines when locally created MLS work MAY be applied.
 
 A Nostr transport client MUST validate the outer event enough to classify it before passing bytes to the MLS peeler:
 
-- kind `445` group messages MUST be signed Nostr events with a valid id/signature, MUST have exactly one `h` tag, and
-  MUST have base64 content whose decoded length is at least 28 bytes;
-- kind `1059` welcomes MUST be signed Nostr events and MUST have a `p` tag;
-- kind `444` welcome rumors MUST have `e` and `relays` tags after NIP-59 unwrapping;
+- kind `445` group messages MUST be signed Nostr events with a valid id/signature, MUST satisfy the `h` tag rule above,
+  and MUST have base64 content whose decoded length is at least 28 bytes;
+- kind `1059` welcomes MUST be signed Nostr events with a valid id/signature and MUST satisfy the `p` tag rule above;
+- kind `444` welcome rumors MUST satisfy the `e` and `relays` tag rules above after NIP-59 unwrapping;
 - kind `30443` KeyPackage event content MUST be base64-encoded `MLSMessage` bytes whose wire format is
-  `mls_key_package`;
+  `mls_key_package`, and MUST satisfy the KeyPackage tag rules above;
 - fields that claim to be hex or base64 MUST decode successfully;
 - unsupported Nostr kinds are ignored or reported as malformed transport input.
 
