@@ -14,7 +14,6 @@ An input that does not produce application content SHOULD map to one of these ca
 - `own_echo`: the input is the client's own already-accounted-for output.
 - `wrong_recipient`: the input targets another account, device, group, or routing id.
 - `unknown_group`: the client has no group state that can process the input.
-- `already_applied`: the input is represented by the current canonical state.
 - `stale_epoch`: the input is from an epoch the client will not process.
 - `invalid_encoding`: bytes failed the owning document's parser or length rules.
 - `invalid_signature`: a required MLS, Nostr, or component signature check failed.
