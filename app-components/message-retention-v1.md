@@ -35,6 +35,17 @@ own `created_at`, so a sender that backdates or forward-dates `created_at` shift
 Disappearing-message expiry is therefore advisory and inherits the trust already placed in the MLS-authenticated
 sender. It is not a deletion guarantee enforced against a hostile sender.
 
+The expiry calculation uses exact, checked unsigned-64-bit addition:
+
+```text
+expiry_timestamp = checked_u64(app_payload.created_at + disappearing_message_secs)
+```
+
+It is defined only when `created_at` is a non-negative integer representable as `uint64` and the sum is no greater than
+`2^64 - 1`. An implementation MUST NOT wrap, saturate, or compute through an inexact JSON number. When the calculation
+is undefined or the active transport cannot represent the exact result, the sender omits the transport expiry hint; the
+component state and application message remain valid.
+
 ## Update
 
 The update payload is a full replacement state:
