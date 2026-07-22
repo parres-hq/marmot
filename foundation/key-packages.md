@@ -82,8 +82,14 @@ After a client successfully processes a Welcome that consumed a published KeyPac
 replacement according to the active transport binding.
 
 The private `init_key` material for a consumed non-`last_resort` KeyPackage MUST be deleted after successful Welcome
-processing. A `last_resort` KeyPackage keeps its `init_key` until a replacement has been safely published or the local
-grace policy allows deletion.
+processing. A `last_resort` KeyPackage MAY keep its `init_key` after a successful Welcome so that the published package
+remains usable, but it MUST delete that material at the earlier of:
+
+- confirmed publication of a replacement under the active transport binding;
+- the KeyPackage `Lifetime.not_after` time.
+
+A client MAY delete the material earlier after it stops publishing or accepting that KeyPackage. Local retention policy
+MUST NOT extend either bound.
 
 ## Failure behavior
 
