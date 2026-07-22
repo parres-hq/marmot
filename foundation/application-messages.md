@@ -126,12 +126,12 @@ removed, or left; an admin granted or revoked; the group renamed; the group avat
 A client MUST render them separately from kind `9` chat bubbles and MUST NOT treat their `content` as a chat body.
 
 A kind `1210` row is **synthesized locally** from canonical group state, not sent as a message. When a client applies a
-commit and the protocol surfaces a state-change notification (see
+commit and the protocol surfaces a state notification (see
 [`../protocol-core/inbound-processing.md`](../protocol-core/inbound-processing.md)), the client MAY derive the
 corresponding kind `1210` row from that authenticated change. Because the row is derived from MLS-authenticated state
 rather than a separately delivered message, it cannot be forged by a single member and converges across clients that
 apply the same commit. A client MUST NOT depend on receiving a kind `1210` *message* over the wire to know that group
-state changed; the state-change notification is authoritative. (A client or connector MAY still *send* a kind `1210`
+state changed; the state notification is authoritative. (A client or connector MAY still *send* a kind `1210`
 event to post an explicit free-text notice; such a sent event is an assertion by its author, not a derived state fact.)
 
 The `content` is JSON:
