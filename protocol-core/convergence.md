@@ -125,10 +125,11 @@ Each candidate branch has:
 
 - `fork_epoch`: the epoch where the branch diverged from retained canonical state;
 - `tip_epoch`: the epoch reached after replaying the branch's valid commits;
-- `tip_priority`: the authenticated ordering class of the branch's tip commit. `privileged` commits are valid commits
-  that require an administrator according to the group's application policy (membership changes, app-data component
-  updates, and any other admin-only staged commit). `ordinary` commits are valid member commits that do not require an
-  administrator (for example member self-updates and self-removes).
+- `tip_priority`: the authenticated ordering class of the branch's tip Commit. A Commit is `privileged` exactly when
+  its applicable Marmot authorization rule requires its committer to be an active admin in the candidate parent state.
+  A Commit is `ordinary` when its authorization rule permits the authenticated committer without admin authority. A
+  component change whose owning document explicitly permits a non-admin committer is therefore `ordinary`, not
+  `privileged`; the operation's category does not override its actual authorization rule.
 - `tip_committer`: the authenticated Marmot account identity of the branch's tip commit sender, derived from the MLS
   credential/leaf that authenticated the commit, not from transport metadata.
 - `tip_digest`: `SHA-256` of the serialized MLS message bytes of the branch's tip commit (the same Commit
