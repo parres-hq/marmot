@@ -58,15 +58,15 @@ After editing spec text, review matches from these commands from the repository 
 
 ```sh
 rg -n \
-  "the spec should|spec MUST|Spec-Defined|GroupEvent|\\bengine\\b|darkmatter" \
+  "Rust crate|database table|queue shape|retry worker|local API|test harness|\\bengine\\b|darkmatter" \
   .
 rg -n \
   "PendingStateRef|drain_auto_publish|confirm_published|publish_failed" \
   .
 rg -n \
-  "relay hints|internal version|public registry" \
-  .
+  "Nostr kind|event id|relay URL|gift wrap|h tags?" \
+  protocol-core
 ```
 
-Matches in `implementation-model.md` may be intentional. Matches in principles, component dictionaries, or lifecycle
-docs usually need review.
+Matches in `AGENTS.md`, `principles.md`, and `implementation-model.md` may be intentional. Matches in normative
+foundation, component, or lifecycle documents need review.
