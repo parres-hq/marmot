@@ -95,8 +95,8 @@ Examples include:
 A client in `Unrecoverable` MUST NOT choose the current local state merely because it is the only state available. It
 MUST stop applying group-state changes until it has a verified repair path.
 
-A repair path MAY restore retained state, import a verified current snapshot, rejoin through MLS, or use another
-recovery method defined by a future protocol-core document.
+A repair path MAY restore retained state, rejoin through MLS, or use another recovery method defined by a future
+protocol-core document.
 
 ## Convergence status
 
