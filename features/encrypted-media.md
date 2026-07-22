@@ -182,5 +182,4 @@ merely unfetchable per the rule above.
 
 Fetchability is judged at fetch time against the group's current `allowed_locator_kinds` and the receiving client's
 current support and configuration, not against the source epoch. Because the locator policy no longer gates delivery,
-validation needs no source-epoch policy snapshot. (This supersedes the earlier rule that a locator whose kind is outside
-the group policy makes the media reference invalid.)
+validation needs no source-epoch policy snapshot.
