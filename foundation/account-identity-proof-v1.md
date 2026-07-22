@@ -59,8 +59,9 @@ opaque mls_signature_public_key[mls_signature_public_key_len]
 The signature is a 64-byte BIP-340 Schnorr signature over that digest, verified with `account_identity`. The 32-byte
 `SHA-256` digest above is itself the BIP-340 message: the account key signs and a verifier checks it as a prehashed
 32-byte value. Marmot reuses only the account key's BIP-340 scheme here; it does NOT apply the Nostr canonical
-event-id construction (`[0, pubkey, created_at, kind, tags, content]`) to build this preimage. This proof is not a Nostr
-event and is never published.
+event-id construction (`[0, pubkey, created_at, kind, tags, content]`) to build this preimage. This signing preimage is
+not a Nostr event and is not serialized on the wire. The resulting extension payload, including the signature, is
+carried in LeafNodes and published KeyPackages.
 
 The signing input is a standalone, domain-separated preimage, not the extension payload re-serialized. It length-prefixes
 `account_identity` only to make that field boundary explicit; the payload and preimage both cover the same 32 account-key
