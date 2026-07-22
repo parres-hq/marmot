@@ -45,7 +45,7 @@ top-level file stays cross-surface only.
 - Component payloads are direct bytes for that component id. Do not add a generic Marmot envelope inside each component.
 - Keep transport data in transport components. Nostr routing belongs in `marmot.transport.nostr.routing.v1`.
 - Treat Nostr relays in the Nostr routing component as canonical signed routing state for Nostr-routed groups.
-- Keep app components in `app-components/`. Feature docs may require and reference them.
+- Keep app components in `app-components/`. Feature docs MAY require and reference them.
 - Transport docs own outer envelopes, delivery addressing, publish targets, fetch rules, and transport validation.
 - Protocol-core docs own required group flows and group-state transitions.
 - Feature docs own optional or user-visible flows and cross-reference the surfaces that implement them.
