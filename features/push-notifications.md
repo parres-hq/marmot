@@ -77,6 +77,9 @@ convention. `shared_x` is the 32-byte big-endian X coordinate of the resulting s
 no hashing before HKDF. `ephemeral_privkey` is a fresh secp256k1 scalar; its x-only public key is the
 `ephemeral_pubkey[32]` carried in `EncryptedToken`.
 
+Both encryption and decryption MUST reject an invalid x-only public key, an invalid local scalar, any ECDH failure, or
+an all-zero `shared_x`. A failed or all-zero result MUST NOT be passed to HKDF.
+
 The token is encrypted with ChaCha20-Poly1305, a random 12-byte nonce, and empty AAD. `ciphertext[1040]` is the combined
 AEAD output: the 1024-byte ciphertext of `TokenPlaintext` followed by the 16-byte Poly1305 authentication tag as a
 suffix (1024 + 16 = 1040). A recipient splits off the trailing 16 bytes as the tag and authenticates before decrypting.
