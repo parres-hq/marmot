@@ -183,7 +183,7 @@ only when the component explicitly defines a separate proposal role.
 
 Group-level component proposals and commits are admin-gated by default.
 
-A component can define a looser rule, but it MUST do so explicitly. In v1, the admin set is defined by
+A component MAY define a looser rule, but it MUST do so explicitly. In v1, the admin set is defined by
 `marmot.group.admin-policy.v1`.
 
 ## Current Components
