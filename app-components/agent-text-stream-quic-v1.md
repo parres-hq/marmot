@@ -19,7 +19,7 @@ bytes this component owns are generic group policy (role masks and frame/replay/
 and live-stream behavior it gates are specific to the raw QUIC binding, so a non-QUIC stream profile (WebTransport,
 HTTP/3, WebSocket) gets its own component id and file rather than reusing this one.
 
-It does not store stream transcripts, endpoint candidates, relay URLs, or app-event kinds. Live stream records stay
+It does not store stream transcripts, endpoint candidates, broker URLs, or app-event kinds. Live stream records stay
 transient, and final content is carried by normal Marmot app payloads. A group can require this component so every member
 understands the stream start/final-message contract without requiring every member to open QUIC connections.
 
@@ -82,7 +82,7 @@ For the first user-to-agent profile:
 
 `max_plaintext_frame_len` caps the plaintext bytes in one stream frame before record encryption.
 
-`replay_ttl_secs` is the maximum time a group-approved relay MAY retain encrypted stream records for short replay.
+`replay_ttl_secs` is the maximum time a group-approved broker MAY retain encrypted stream records for short replay.
 `0` means no retained replay.
 
 `padding_bucket_bytes` is reserved in v1. No padding mechanism is defined, and senders MUST NOT emit padding. The field
@@ -97,7 +97,7 @@ The first application profile uses these maximums:
 - `replay_ttl_secs <= 300`;
 - `padding_bucket_bytes <= 4096`.
 
-This component does not store QUIC endpoints or relay URLs. Endpoint discovery, relay discovery, relay authentication,
+This component does not store QUIC endpoints or broker URLs. Endpoint discovery, broker discovery, broker authentication,
 and direct-path probing belong in the raw QUIC transport binding ([../transports/quic.md](../transports/quic.md)).
 Per-stream candidates are carried by the start payload.
 

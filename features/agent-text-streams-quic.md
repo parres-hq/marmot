@@ -79,7 +79,7 @@ For the first user-to-agent profile:
 
 - every member supports `receive`, including clients that only display the final MLS message;
 - the agent member supports `send` when it emits raw QUIC preview records;
-- `fanout` is optional and MAY be advertised by a member or relay helper.
+- `fanout` is optional and MAY be advertised by a member or broker helper.
 
 ## Flow
 
@@ -334,7 +334,7 @@ test vectors for the AAD bytes and record encryption will be published with the 
 
 ## Preview authenticity
 
-The stream secret is group shared. It hides plaintext from a relay or passive outsider, but any current member can derive
+The stream secret is group shared. It hides plaintext from a broker or passive outsider, but any current member can derive
 the same record key.
 
 For v1, preview records are provisional. The final MLS app payload is authoritative because MLS authenticates it as an
@@ -412,12 +412,12 @@ The raw QUIC transport binding, [../transports/quic.md](../transports/quic.md), 
 
 - endpoint candidate formats (the `route` value and `broker` candidate URLs);
 - direct path and broker-relayed discovery;
-- relay authentication and connection setup;
+- broker authentication and connection setup;
 - reconnect and short-replay policy;
 - transport-visible diagnostics;
 - wire framing below `AgentTextStreamRecordV1`.
 
-Relay authentication is only for relay access. It does not make preview records authoritative and does not replace MLS
+Broker authentication is only for broker access. It does not make preview records authoritative and does not replace MLS
 membership.
 
 ## Non-goals

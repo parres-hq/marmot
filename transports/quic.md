@@ -78,7 +78,7 @@ trust is permitted only through explicit dev/test configuration, never as a defa
 
 TLS authenticates and encrypts the QUIC hop only. It does not make preview records authoritative and does not replace
 MLS membership: a current group member still derives the same record key, and the final MLS payload remains the
-authority. Endpoint or broker authentication is access control for the relay hop, nothing more.
+authority. Endpoint or broker authentication is access control for the transport hop, nothing more.
 
 ## Delivery modes
 
@@ -145,7 +145,7 @@ A broker MUST reject a publish envelope on a bidirectional stream and a subscrib
 The room key is exactly `(stream_id, start_event_id)`; a broker MUST NOT merge or cross-deliver records between
 different rooms.
 
-The broker is an untrusted relay. It sees only ciphertext records (encrypted under the group record key) plus the
+The broker is an untrusted forwarder. It sees only ciphertext records (encrypted under the group record key) plus the
 routing pair `(stream_id, start_event_id)`. It cannot read, author, or alter preview plaintext.
 
 ## Record framing
@@ -200,7 +200,7 @@ requires the new start anchor defined by the feature document.
 
 ## Limits
 
-A broker enforces resource bounds so a relay cannot be used to exhaust memory. The first-profile defaults are:
+A broker enforces resource bounds so it cannot be used to exhaust memory. The first-profile defaults are:
 
 - per-subscriber queue depth: `32` records;
 - per-room backlog depth: `1024` records;
