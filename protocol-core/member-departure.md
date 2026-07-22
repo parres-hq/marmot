@@ -94,9 +94,11 @@ Both departure paths end the same way for the removed member: its client realize
 application, and stops treating the group as active.
 
 The authenticated evidence of removal is always the same bytes: an accepted commit on the selected canonical branch
-that removes the local member's last leaf — an admin-initiated Remove or a committed SelfRemove — recorded in retained
-canonical state. When the client applies such a commit, it MUST emit a self-removed state notification (see
-[inbound-processing.md](./inbound-processing.md), "Application-visible output") and mark the local group copy removed.
+that removes this local client's own MLS leaf — an admin-initiated Remove or a committed SelfRemove — recorded in
+retained canonical state. This evidence is leaf-scoped: other current leaves with the same Marmot account identity do
+not prevent this local leaf from realizing its removal. When the client applies such a commit, it MUST emit a
+self-removed state notification (see [inbound-processing.md](./inbound-processing.md), "Application-visible output")
+and mark the local group copy removed.
 
 Realization is a state-derived obligation, not a one-shot event at commit-apply time: whenever retained canonical group
 state records the local member's removal and the local group copy is not yet marked removed, the client MUST perform
