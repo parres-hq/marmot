@@ -224,11 +224,13 @@ retention. `padding_bucket_bytes` is reserved in v1 and caps nothing yet.
 
 ## Metadata exposed to the transport
 
-A direct-path endpoint or a broker sees the routing pair `(stream_id, start_event_id)`, the ciphertext records, their
-sizes and timing, and the connecting peer's network address. It does not see preview plaintext, group ids, account
-ids, or key material. `stream_id` is fresh random per stream and `start_event_id` is an MLS event id; neither is derived
-from a member key, so they do not link members across groups. Senders SHOULD batch output per the feature document to
-blunt token-cadence side channels; this binding does not attempt to hide cadence at high bandwidth cost. Padding is
+A broker sees the routing pair `(stream_id, start_event_id)` in its control envelope, plus the ciphertext records, their
+sizes and timing, and each connecting peer's network address. A direct-path endpoint receives no control envelope: it
+sees `stream_id` in each record, but learns `start_event_id` only if the out-of-band direct-path setup separately supplies
+it. Neither mode exposes preview plaintext, group ids, account ids, or key material. `stream_id` is fresh random per
+stream and `start_event_id` is a Marmot app event id; neither is derived from a member key, so they do not link members
+across groups. Senders SHOULD batch output per the feature document to blunt token-cadence side channels; this binding
+does not attempt to hide cadence at high bandwidth cost. Padding is
 reserved in v1: no padding construction is defined, senders MUST NOT emit padding, and `padding_bucket_bytes` in the
 component document is a forward-compatibility reservation.
 
