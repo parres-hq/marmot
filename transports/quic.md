@@ -85,7 +85,7 @@ In the direct mode, a receiver exposes a QUIC endpoint and the sender dials it, 
 writes the stream's records. This is the point-to-point primitive; it carries no control envelope because the dialed
 endpoint already corresponds to one receiver.
 
-Direct-path connections negotiate ALPN `marmot.quic_stream.v1`. ALPN is a mandatory TLS 1.3 parameter, so both peers
+Direct-path connections negotiate ALPN `marmot.quic_stream.v1`. QUIC requires ALPN on every connection, so both peers
 MUST offer exactly this protocol; a direct-path endpoint MUST reject a connection that does not negotiate it. This is the
 direct-path counterpart to the broker path's `marmot.quic_broker.v1` and gives the direct path its own incompatible
 change hook (see "Versioning").
