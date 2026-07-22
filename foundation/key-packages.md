@@ -91,6 +91,12 @@ remains usable, but it MUST delete that material at the earlier of:
 A client MAY delete the material earlier after it stops publishing or accepting that KeyPackage. Local retention policy
 MUST NOT extend either bound.
 
+Welcome confidentiality depends on the referenced KeyPackage's private `init_key` remaining secret. Compromise of that
+key before deletion lets an attacker decrypt every recorded Welcome encrypted to that KeyPackage and recover the join
+secrets carried by those Welcomes. Reuse makes this exposure apply to multiple joins for a `last_resort` KeyPackage.
+Possession of the `init_key` alone does not let the attacker advance through later commits after the joined leaf's other
+private state has changed or been erased.
+
 ## Failure behavior
 
 A client MUST NOT rotate or delete the consumed KeyPackage if Welcome processing fails. The existing KeyPackage remains
