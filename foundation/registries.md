@@ -105,6 +105,16 @@ Kind `1009` is reserved for message edits — an in-place replacement of a prior
 single `e` tag referencing the edited event id and `content` is the replacement plaintext. Clients render the latest
 replacement onto the original row's body, never as a separate transcript row.
 
+## ALPN and protocol identifiers
+
+| Identifier                    | Use                                      | Document                         |
+| ----------------------------- | ---------------------------------------- | -------------------------------- |
+| `marmot.quic_stream.v1`       | direct-path QUIC ALPN                    | [quic.md](../transports/quic.md) |
+| `marmot.quic_broker.v1`       | broker QUIC ALPN and control identifier  | [quic.md](../transports/quic.md) |
+
+An incompatible transport or control protocol registers a new identifier rather than reinterpreting one of these
+strings.
+
 ## Exporter labels
 
 Existing Marmot exporter uses SHOULD be treated as registered until their owning docs move or replace them.
