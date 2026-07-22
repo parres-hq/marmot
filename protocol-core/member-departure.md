@@ -42,9 +42,17 @@ that group. While `Leaving`, the member MUST NOT send MLS application messages, 
 MLS proposals in that group; it MAY publish a fresh SelfRemove proposal for a newer source epoch when the prior
 SelfRemove becomes stale. Transport-level retries of the same serialized SelfRemove proposal MAY continue, but the
 client MUST NOT generate fresh SelfRemove proposal bytes for the same source epoch. The `Leaving` state is backed by a
-durable leave request and ends only when an accepted commit removes the member, the member repairs or rejoins through a
-future specified recovery flow, a future explicit cancel flow clears the request, or the client discards the local group
-copy.
+durable leave request. While canonical state contains the local leaf, it ends only if the member repairs or rejoins
+through a future specified recovery flow, a future explicit cancel flow clears the request, or the client discards the
+local group copy. An accepted removing Commit moves the copy to the removed condition described below.
+
+Applying an accepted removing Commit suspends `Leaving` while the group copy is in the removed condition, but the client
+MUST retain the durable leave request while that Commit can still be superseded inside the rollback horizon. If branch
+selection later supersedes the removing Commit and the selected canonical state again contains the local leaf, the
+client MUST clear the removed condition and resume `Leaving` from that retained request. Any SelfRemove proposal from
+the earlier source epoch is stale; the client follows the fresh-proposal rule below against the restored canonical
+epoch. Once the removing Commit is permanently outside the rollback horizon, the retained leave request MAY be
+released.
 
 If an accepted commit advances the group to a later epoch without removing the leaving member, the prior SelfRemove is
 stale because MLS proposals are epoch-bound. The client remains in `Leaving`, MUST NOT reuse the old SelfRemove
