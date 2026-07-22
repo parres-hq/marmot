@@ -49,8 +49,10 @@ KeyPackage meaning, discovery requirements, and lifecycle are defined in [key-pa
 
 To ensure interoperability, capability negotiation is part of the Marmot protocol.
 
-Different clients MAY support different features. A group MUST be created with the strongest feature set that every
-intended member can support, and later members MUST support the group's required feature set before they can join.
+Different clients MAY support different features. The creator chooses which supported features the group requires; the
+required set need not be the largest set every intended member could support. A group MUST NOT require a feature that
+an intended initial member cannot process, and later members MUST support the group's required feature set before they
+can join.
 
 Marmot uses MLS capabilities for this:
 
