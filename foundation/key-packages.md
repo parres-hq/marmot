@@ -89,6 +89,11 @@ remains usable, but it MUST delete that material at the earlier of:
 - confirmed publication of a replacement under the active transport binding;
 - the KeyPackage `Lifetime.not_after` time.
 
+An asynchronous transport cannot prove that every Welcome already encrypted to the superseded `last_resort` KeyPackage
+has arrived. Deletion after confirmed replacement publication can therefore make such a delayed Welcome undecryptable.
+This is the deliberate confidentiality-versus-availability trade-off of the deletion bound, not a reason to retain the
+old `init_key` for an unprovable drain period. The inviter can retry with a currently published KeyPackage.
+
 A client MAY delete the material earlier after it stops publishing or accepting that KeyPackage. Local retention policy
 MUST NOT extend either bound.
 

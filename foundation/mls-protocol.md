@@ -34,9 +34,10 @@ that binds that identity to the MLS leaf signature key is defined in
 
 Marmot handshake messages — Commits and Proposals — use a single MLS wire format within a group, so the serialized
 `MLSMessage` bytes of a given commit are deterministic: every member that processes the same commit recovers the same
-bytes. The first profile uses MLS `PublicMessage` for handshake content. The active transport binding owns any
-confidential envelope needed before those bytes reach untrusted delivery infrastructure; see the owning transport
-document for its construction.
+bytes. The first profile uses MLS `PublicMessage` for handshake content. Every active transport binding MUST keep those
+bytes confidential from untrusted delivery infrastructure and MUST define the mechanism it uses. That mechanism may be
+a confidential message envelope or a confidential point-to-point transport; see the owning transport document for its
+construction.
 
 Pinning one wire format matters for convergence. MLS defines a single canonical TLS serialization for an `MLSMessage`,
 and Marmot does not mix `PublicMessage` and `PrivateMessage` carriage for handshake content, so the commit identity used

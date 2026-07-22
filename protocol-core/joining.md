@@ -51,11 +51,13 @@ After unwrapping a Welcome, the receiver:
 8. rejects the Welcome unless the author is an active admin in the resulting group state, per the admin-policy component
    ([../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md)), which is the sole membership-add
    authority for v1 groups;
-9. stores the group state and routing information;
-10. rotates the consumed published KeyPackage when appropriate;
-11. deletes consumed `init_key` material according to the KeyPackage lifecycle rules;
-12. catches up on outstanding Commits as best it can;
-13. performs a self-update as soon as practical.
+9. checks whether the client already retains the resulting MLS group id; outside a separately verified repair or rejoin
+   path, it rejects a match without modifying the existing state or the referenced KeyPackage material;
+10. stores the group state and routing information;
+11. rotates the consumed published KeyPackage when appropriate;
+12. deletes consumed `init_key` material according to the KeyPackage lifecycle rules;
+13. catches up on outstanding Commits as best it can;
+14. performs a self-update as soon as practical.
 
 A new member SHOULD perform the post-join self-update before sending application payloads when feasible, and SHOULD do
 so promptly after joining. This carries forward the MIP-02 post-join rotation guidance; this spec keeps it as a
@@ -63,10 +65,10 @@ so promptly after joining. This carries forward the MIP-02 post-join rotation gu
 group. The concrete recommended completion window is operational, not interop-visible, so it lives in
 [../implementation-model.md](../implementation-model.md) rather than here.
 
-The receiving flow above is a first join for a locally unknown MLS group id. If the resulting MLS group id matches a
-group copy the client already retains, the Welcome MUST NOT silently replace or merge into that group's canonical
-state. The receiver rejects it through this flow without rotating or deleting the referenced KeyPackage. A deliberate
-repair or rejoin may use a Welcome only through a separately verified repair path as defined by
+The group-id check in step 9 makes this receiving flow a first join for a locally unknown MLS group id. If the resulting
+MLS group id matches a group copy the client already retains, the Welcome MUST NOT silently replace or merge into that
+group's canonical state. The receiver rejects it through this flow without rotating or deleting the referenced
+KeyPackage. A deliberate repair or rejoin may use a Welcome only through a separately verified repair path as defined by
 [group-state.md](./group-state.md); otherwise the existing group copy must first be explicitly discarded.
 
 ## Welcome-bootstrap trust

@@ -27,9 +27,9 @@ Protocol-core docs can split these into more detailed outcomes when needed.
 
 ## Dispositions
 
-Inbound protocol input that is structurally valid, authenticated, and supported — it parses, its required signatures
-verify, and the client supports its required features — can enter convergence and receive one of four convergence
-dispositions; the processing flow that assigns them is
+Inbound protocol input that passes the branch-independent admission gate — it parses, its branch-independent required
+signatures verify, and the client supports its required features — can enter convergence and receive one of four
+convergence dispositions; the processing flow that assigns them is
 [../protocol-core/inbound-processing.md](../protocol-core/inbound-processing.md):
 
 - `accepted`: the input is part of, or was consumed by, the selected canonical branch.
@@ -42,9 +42,16 @@ dispositions; the processing flow that assigns them is
 Input that fails a branch-independent gate does not reach convergence and receives no convergence disposition. It is
 rejected before convergence — the `fail closed` path in
 [../protocol-core/inbound-processing.md](../protocol-core/inbound-processing.md) — and is described by
-`unknown_group`, `invalid_encoding`, `invalid_signature`, or `unsupported_required_feature`. An input for an unknown
-group cannot be authenticated against group state the client does not have; `unknown_group` is therefore a
-pre-convergence category, not a `stale` disposition.
+`unknown_group`, `invalid_encoding`, `invalid_signature` when the failed signature check is branch-independent, or
+`unsupported_required_feature`. An input for an unknown group cannot be authenticated against group state the client
+does not have; `unknown_group` is therefore a pre-convergence category, not a `stale` disposition.
+
+Some MLS authentication, including membership-tag or sender-signature checks, requires retained source-epoch or
+candidate-parent state. Those checks run during convergence candidate construction, not in the branch-independent
+admission gate. Failure against one candidate parent prevents an edge from that parent; it does not globally reject the
+input while another available or still-missing matching parent could authenticate it. An input that fails authentication
+against every available matching parent, when no missing parent could change the result, is rejected as
+`invalid_signature` and receives no convergence disposition.
 
 Authorization can depend on the prior group state. A commit's authorization is therefore evaluated against each
 candidate parent state during candidate construction, not as one branch-independent gate. A commit that is authorized

@@ -59,10 +59,12 @@ The absolute pass deadline starts when the pass starts and MUST NOT restart. A c
 1. `settlement_quiescence_ms` elapsing without score-changing input; or
 2. `max_convergence_pass_ms` elapsing.
 
-At that cutoff, the client freezes the pass's retained input batch, reaches a fixed point over that batch, selects and
-applies the canonical branch, and returns to `Stable`. Input retained after the cutoff is not discarded; it belongs to
-a later pass. The local cutoff controls scheduling and batch membership only. Input arrival time, cutoff time, and pass
-membership MUST NOT enter candidate validity or the branch score.
+At that cutoff, the client freezes the pass's retained input batch and reaches a fixed point over that batch. It returns
+to `Stable` only after successfully selecting and applying the canonical branch. If required retained state, including
+the retained anchor, is missing, it does not mutate canonical group state and enters `Unrecoverable` as required below.
+Input retained after the cutoff is not discarded; it belongs to a later pass. The local cutoff controls scheduling and
+batch membership only. Input arrival time, cutoff time, and pass membership MUST NOT enter candidate validity or the
+branch score.
 
 After a bounded pass returns the group to `Stable`, the client MUST give one already-queued, admin-authorized local
 group-state intent an opportunity to be prepared against the selected canonical state before it begins another

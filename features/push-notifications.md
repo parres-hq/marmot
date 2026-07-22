@@ -269,11 +269,12 @@ suppress a differently-fingerprinted stale record from resurrecting the key).
 
 ### Record state
 
-A device keeps one push registration at a time, so a leaf has at most one active token record. Clients store one token
-record per member id, leaf index, platform, and server public key in a group: an incoming entry that matches a stored
-record on those four values addresses the same record key — including its replaceable fingerprint, relay hint, and
-encrypted token — and any other entry addresses a different key. Whether a same-key entry replaces the stored record is
-decided only by the ordering primitive below, never by its array position.
+Push v1 does not impose a one-record-per-leaf invariant. Clients store one token record per member id, leaf index,
+platform, and server public key in a group: an incoming entry that matches a stored record on those four values addresses
+the same record key — including its replaceable fingerprint, relay hint, and encrypted token — and any other entry
+addresses a different key. A leaf may therefore have distinct active records for different platform or server values;
+those records remain separate until individually removed or the leaf leaves the group. Whether a same-key entry replaces
+the stored record is decided only by the ordering primitive below, never by its array position.
 
 Token records are local push state, never group state. The rules below order and revoke them so that two members'
 clients can converge on the same token set without any of it affecting group validity. None of this ordering touches

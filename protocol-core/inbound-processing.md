@@ -49,11 +49,17 @@ rules.
 Malformed input MUST fail closed. Unsupported input MUST fail closed when the active group policy requires support for
 that input (e.g. a welcome requires capabilities the client does not support).
 
-Encoding, required-signature, and required-feature checks are branch-independent and run before convergence. A commit
-authorization check that depends on group state is not: convergence evaluates the authenticated committer against each
-candidate parent state. The same commit can be unauthorized on one retained parent and authorized on another, so a
-client MUST NOT reject it globally as `authorization_failed` before attempting every available matching parent. The
-candidate-edge and terminal-rejection rules are defined in [convergence.md](./convergence.md), "Candidate branches."
+Encoding, branch-independent required-signature, and required-feature checks run before convergence. Required MLS
+authentication that needs retained source-epoch or candidate-parent state — including membership-tag or sender-signature
+validation — instead runs while replaying the input against each candidate parent. Authentication failure against one
+parent rejects only that candidate edge while another available or still-missing matching parent could authenticate the
+input.
+
+A commit authorization check that depends on group state is likewise candidate-relative: convergence evaluates the
+authenticated committer against each candidate parent state. The same commit can be unauthorized on one retained parent
+and authorized on another, so a client MUST NOT reject it globally as `authorization_failed` before attempting every
+available matching parent. The candidate-edge and terminal-rejection rules are defined in
+[convergence.md](./convergence.md), "Candidate branches."
 
 Input naming a group for which the client has no processable group state receives the `unknown_group` category before
 convergence and no convergence disposition. The client cannot authenticate or classify a branch without that state.
