@@ -54,8 +54,10 @@ is never published only at the new address.
 After applying the commit, members use the new routing state for subsequent traffic.
 
 Members MUST continue to accept and fetch traffic at a prior routing address while any epoch that used it remains
-inside the retained app-payload window ([../protocol-core/retained-history.md](../protocol-core/retained-history.md)),
-and MUST be able to map more than one routing id to the same group during that window.
+inside either retained-history window: at or after the retained anchor for commits and proposals, or inside the retained
+app-payload window for application messages
+([../protocol-core/retained-history.md](../protocol-core/retained-history.md)). Members MUST be able to map more than one
+routing id to the same group until both uses of the prior address have expired.
 
 A member catching up across a rotation uses its recorded routing-state history to fetch older epochs at their
 then-active addresses. A new joiner receives the current routing state in its Welcome and needs older addresses only
