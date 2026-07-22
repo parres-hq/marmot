@@ -343,8 +343,9 @@ set:
 - fields that claim to be hex or base64 MUST decode successfully;
 - unsupported Nostr kinds are ignored or reported as malformed transport input.
 
-The peeler validates transport encryption, welcome recipient binding, and MLS bytes. Protocol core validates group
-state.
+The Nostr transport client owns NIP-59 unwrapping, kind `445` outer AEAD authentication, and the outer welcome-recipient
+check. It passes the recovered `MLSMessage` bytes unchanged to the MLS peeler, which validates the MLS wire and security
+rules. Protocol core validates group state and join rules.
 
 ## Duplicate and replay handling
 
