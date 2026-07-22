@@ -134,7 +134,8 @@ Kinds `447` and `448` share one content shape:
 - `encrypted_token` is one 1084-byte `EncryptedToken` as standard base64 with padding.
 - `owner_ts` is the owning member's claimed Unix time in milliseconds as an unsigned-integer JSON number. It is the
   owner-signed ordering stamp for this record (see "Owner authentication" and "Record key and ordering primitive"); a
-  recipient MUST NOT substitute the carrying event's `created_at` for it.
+  recipient MUST NOT substitute the carrying event's `created_at` for it. At entry validation, `owner_ts` MUST NOT be
+  more than `3,600,000` milliseconds (one hour) ahead of the recipient's local wall clock.
 - `owner_sig` is the owner's BIP-340 Schnorr signature over the record, as 64-byte (128 lowercase hex character)
   signature bytes (see "Owner authentication"). It binds every other field to `member_id_hex`, so the record stays
   verifiable no matter which member relays it.
@@ -142,7 +143,10 @@ Kinds `447` and `448` share one content shape:
 A recipient MUST reject an entry whose `member_id_hex` or `server_pubkey_hex` is not 32-byte lowercase hex, whose
 `token_fingerprint` is not `sha256:` followed by exactly 24 hex characters, whose `platform` is unknown, whose
 `encrypted_token` does not decode to exactly 1084 bytes, whose `owner_sig` is not 64-byte lowercase hex, or whose
-`owner_sig` does not verify under "Owner authentication".
+`owner_sig` does not verify under "Owner authentication". It MUST also reject an entry whose `owner_ts` exceeds the
+one-hour future bound above. This local-time check can temporarily differ across clients, but token records are advisory
+local push state and never affect group-message or Commit validity; the finite bound prevents a far-future signed stamp
+from becoming a permanent high-water mark.
 
 ### Owner authentication
 
@@ -230,7 +234,8 @@ signatures it does not hold.
   removal entry MUST carry `leaf_index` so it targets exactly one device's record and cannot revoke a sibling leaf's
   active token for the same account, platform, and server.
 - `owner_ts` and `owner_sig` are the owner-signed ordering stamp and signature, using the removal `domain_tag` and the
-  removal `SignedRecord` form (no `encrypted_token`) from "Owner authentication".
+  removal `SignedRecord` form (no `encrypted_token`) from "Owner authentication". The same one-hour future bound on
+  `owner_ts` applies to removals; a removal beyond it is advisory-invalid.
 
 A recipient deletes the stored token record for the removal's record key (`member_id_hex`, `leaf_index`, `platform`,
 `server_pubkey_hex`) only when the removal passes "Owner authentication", `member_id_hex` is a current member, and the
