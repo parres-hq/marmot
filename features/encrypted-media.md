@@ -65,7 +65,10 @@ For a `blossom-v1` endpoint, let `server_root` be its normalized `base_url` with
 [Blossom BUD-01](https://github.com/hzrd149/blossom/blob/master/buds/01.md) `GET` operation and do not add an extension,
 query, or fragment. The upload URL is `server_root || "/upload"` and uses the
 [Blossom BUD-02](https://github.com/hzrd149/blossom/blob/master/buds/02.md) upload operation. An explicit locator returned
-by the server is stored as received after URL validation; it need not equal the fallback URL.
+by the server is stored exactly as received after structural URL validation; it need not equal the fallback URL or be
+WHATWG-canonical. Explicit locators are authenticated message metadata, not canonical group state or a cryptographic
+input. Whether a client contacts the parsed destination is local application policy and does not affect reference
+validity.
 
 The protocol is not Blossom-specific. Additional locator kinds require component policy support and backend-specific
 upload/fetch rules.
