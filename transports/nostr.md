@@ -248,9 +248,12 @@ validate the decoded KeyPackage LeafNode proof; the tag is only an advertisement
 KeyPackage publication is account transport. It helps other users find fresh KeyPackages. It does not create group
 state.
 
-KeyPackage relay discovery uses the account's kind `10002` NIP-65 relay list. KeyPackages are published to, and fetched
-from, the relays in that list. There is no dedicated KeyPackage relay list, and KeyPackage kind `30443` events do not
-repeat those relays.
+KeyPackage relay discovery uses the account's kind `10002` NIP-65 relay list. For this purpose, the account's
+write-capable relay set contains each `r` entry whose marker is `write` or whose marker is omitted; an entry marked only
+`read` is not in the set. The account publishes its kind `30443` KeyPackage events to its write-capable set, and another
+client fetches that account's KeyPackages from one or more relays in the same set. Fetching from every relay is not an
+interop requirement. Clients MUST apply the markers this way rather than treating every `r` entry as an undifferentiated
+publish-and-fetch target. There is no dedicated KeyPackage relay list, and KeyPackage events do not repeat those relays.
 
 Kind `30443` is a Nostr addressable event. Two events occupy the same slot when their `author`, `kind`, and `d` tag
 value are all equal, comparing the `d` value as exact bytes. For one `(author, kind, d)` slot, clients SHOULD keep the
@@ -295,7 +298,7 @@ policy. A commit that changes routing state is published to the prior epoch's ro
 
 Welcome messages are published to the recipient's inbox relay set ("Account inbox relays" above).
 
-KeyPackage events are published to the account's NIP-65 (kind `10002`) relay set.
+KeyPackage events are published to the account's NIP-65 (kind `10002`) write-capable relay set defined above.
 
 A publish to a relay is acknowledged when the relay returns a NIP-01 `OK` response accepting the event; anything else —
 a rejecting `OK`, an error, a timeout, or no response — is not an acknowledgement. The transport MAY report
