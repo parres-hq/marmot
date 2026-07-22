@@ -198,13 +198,13 @@ binding for delivery to that recipient. Such a hint is local, advisory delivery 
 recipient metadata and does not change event validity. When a sender has no such hint, it publishes to the recipient's
 published kind `10050` list alone.
 
-An account with no published kind `10050` list cannot reliably receive welcomes: the sender publishes to whatever hint
+An account with no published kind `10050` list cannot reliably receive Welcomes: the sender publishes to whatever hint
 relays it has for the recipient, and nothing tells it where the recipient listens. An account SHOULD publish a kind
-`10050` relay list before expecting welcomes or other account-directed delivery.
+`10050` relay list before expecting Welcomes or other account-directed delivery.
 
 ## Welcome delivery
 
-Nostr welcomes use NIP-59 gift wraps.
+Nostr Welcomes use NIP-59 gift wraps.
 
 The outer relay event is kind `1059`. It contains a kind `13` NIP-59 seal. The seal contains an unsigned kind `444`
 Marmot welcome rumor.
@@ -220,7 +220,7 @@ The inner kind `444` rumor MUST include:
 The inner kind `444` rumor MUST NOT have a `sig` field. The kind `13` seal and kind `1059` gift wrap are signed by
 NIP-59.
 
-A receiver MUST reject a welcome that is not addressed to its own account identity.
+A receiver MUST reject a Welcome that is not addressed to its own account identity.
 
 A receiver MUST reject a kind `444` rumor that does not satisfy its `e` and `relays` rows in "Event identity and tag
 cardinality" or whose content is not valid base64-encoded `MLSMessage` bytes with the `mls_welcome` wire format.
@@ -231,7 +231,7 @@ Nostr KeyPackages use kind `30443`.
 
 The event content is serialized `MLSMessage` bytes whose wire format is `mls_key_package`, encoded as base64. The
 `MLSMessage` wraps the public `KeyPackage`; private `init_key` material is never published. This mirrors the kind `444`
-welcome framing above, where the content is an `MLSMessage` with `mls_welcome` wire format. The event is authored by the
+Welcome framing above, where the content is an `MLSMessage` with `mls_welcome` wire format. The event is authored by the
 account identity that owns the KeyPackage. The event MUST be signed as a normal Nostr event.
 
 The current tag set is:
@@ -336,16 +336,16 @@ set:
 
 - kind `445` group messages MUST satisfy every envelope, tag, content, and signature rule in "Group message delivery"
   before outer decryption;
-- kind `1059` welcomes and their kind `444` rumors MUST satisfy every recipient, envelope, tag, content, and signature
+- kind `1059` Welcomes and their kind `444` rumors MUST satisfy every recipient, envelope, tag, content, and signature
   rule in "Welcome delivery" as each NIP-59 layer is unwrapped;
 - kind `30443` KeyPackage events MUST satisfy every envelope, tag, content, signature, and decoded-KeyPackage rule in
   "KeyPackage publication";
 - fields that claim to be hex or base64 MUST decode successfully;
 - unsupported Nostr kinds are ignored or reported as malformed transport input.
 
-The Nostr transport client owns NIP-59 unwrapping, kind `445` outer AEAD authentication, and the outer welcome-recipient
-check. It passes the recovered `MLSMessage` bytes unchanged to the MLS peeler, which validates the MLS wire and security
-rules. Protocol core validates group state and join rules.
+The Nostr transport client owns NIP-59 unwrapping, kind `445` outer AEAD authentication, and the outer recipient check
+for a Welcome. It passes the recovered `MLSMessage` bytes unchanged to the MLS peeler, which validates the MLS wire and
+security rules. Protocol core validates group state and join rules.
 
 ## Duplicate and replay handling
 
@@ -369,7 +369,7 @@ Relays see only transport-envelope metadata, never plaintext or MLS secrets:
   message, because commits and proposals never carry it. Tag absence is not conclusive: the tag is a `SHOULD`, and an
   application message omits it when the exact expiry is unrepresentable. The MLS message is encrypted under the
   per-epoch group-event key.
-- welcomes are NIP-59 gift wraps addressed to the invitee's account public key; the inbox address is the deliberate
+- Welcomes are NIP-59 gift wraps addressed to the invitee's account public key; the inbox address is the deliberate
   account-addressing exception ([../foundation/identity.md](../foundation/identity.md)). The gift wrap and seal hide the
   sender and the inner `kind 444` rumor.
 - kind `30443` KeyPackage events are authored by the account identity, because their purpose is to let others find that
