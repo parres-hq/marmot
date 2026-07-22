@@ -64,6 +64,20 @@ within the retained-history rules.
 A group MAY be reachable at more than one Nostr routing address over its lifetime. v1 state carries exactly one current
 `nostr_group_id`; a future component version MAY carry multiple concurrent routing ids.
 
+Routing rotation after a member removal is optional. The removed member already knows the routing id and relay list
+that were active before removal, so it can continue observing ciphertext metadata published at that address.
+
+When a group chooses to hide its replacement routing id from that member, it uses two accepted commits:
+
+1. a membership commit removes the member without changing `nostr_group_id` for this privacy purpose;
+2. after that removal is canonical, a later commit rotates `nostr_group_id` from the post-removal epoch.
+
+Changing membership and `nostr_group_id` in the same commit does not provide this property: the removed member can
+decrypt the removal commit under the source epoch and read its routing update. The later rotation commit is still
+published to the prior routing address under the publish rule above, but its Nostr group envelope uses the
+post-removal epoch key, so the removed member learns only that ciphertext was published at the address it already knew.
+This sequence does not require automatic rotation after every removal.
+
 ## Validation
 
 A Nostr routing state is valid if:
