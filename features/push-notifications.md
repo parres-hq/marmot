@@ -167,17 +167,18 @@ SignedRecord = domain_tag
             || server_pubkey[32]
             || token_fingerprint[12]      the 12 bytes the sha256: prefix encodes
             || owner_ts[8]                big-endian u64, milliseconds
-            || relay_hint_len[2]          big-endian u16, 0 when absent
+            || relay_hint_len[2]          big-endian u16, 0 when absent or for a removal
             || relay_hint[relay_hint_len] UTF-8 bytes of the relay hint, empty when absent
             || encrypted_token[1084]      removal entries omit this field
 ```
 
 `domain_tag` is the 27-byte ASCII string `marmot-push-token-record-v1` for token entries (kinds `447`/`448`) and the
-28-byte ASCII string `marmot-push-token-removal-v1` for removal entries (kind `449`); a removal omits the trailing
-`encrypted_token`. `group_id` is the raw MLS group id of the carrying group and is length-prefixed because the MLS group
-id is variable-length. `member_id` and `server_pubkey` are the raw 32-byte values the corresponding hex fields encode
-(both are Nostr x-only public keys). The signature is a BIP-340 Schnorr signature over `SHA-256(SignedRecord)`, produced
-with the secret key for `member_id_hex` and carried as `owner_sig`.
+28-byte ASCII string `marmot-push-token-removal-v1` for removal entries (kind `449`). A removal encodes
+`relay_hint_len` as zero, includes no `relay_hint` bytes, and omits the trailing `encrypted_token`. `group_id` is the raw
+MLS group id of the carrying group and is length-prefixed because the MLS group id is variable-length. `member_id` and
+`server_pubkey` are the raw 32-byte values the corresponding hex fields encode (both are Nostr x-only public keys). The
+signature is a BIP-340 Schnorr signature over `SHA-256(SignedRecord)`, produced with the secret key for `member_id_hex`
+and carried as `owner_sig`.
 
 A recipient verifies `owner_sig` against `member_id_hex` over the same canonical bytes, reconstructing `group_id` from
 the carrying group message. An entry whose signature does not verify is dropped as advisory-invalid and never mutates
@@ -234,8 +235,8 @@ signatures it does not hold.
   removal entry MUST carry `leaf_index` so it targets exactly one device's record and cannot revoke a sibling leaf's
   active token for the same account, platform, and server.
 - `owner_ts` and `owner_sig` are the owner-signed ordering stamp and signature, using the removal `domain_tag` and the
-  removal `SignedRecord` form (no `encrypted_token`) from "Owner authentication". The same one-hour future bound on
-  `owner_ts` applies to removals; a removal beyond it is advisory-invalid.
+  removal `SignedRecord` form (zero-length relay hint and no `encrypted_token`) from "Owner authentication". The same
+  one-hour future bound on `owner_ts` applies to removals; a removal beyond it is advisory-invalid.
 
 A recipient deletes the stored token record for the removal's record key (`member_id_hex`, `leaf_index`, `platform`,
 `server_pubkey_hex`) only when the removal passes "Owner authentication", `member_id_hex` is a current member, and the
