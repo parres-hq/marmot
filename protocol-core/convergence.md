@@ -200,20 +200,24 @@ in branch selection.
 
 ## Same-epoch races
 
-When two commits both advance the same source epoch, the lower authenticated ordering key wins:
+Two commits that advance the same candidate parent create competing one-commit branches. They use the branch-selection
+algorithm above; same-epoch ordering is not a second algorithm that bypasses depth or witness criteria.
+
+Only after `effective_commit_depth`, `witness_quorum_met`, and `app_witness_score` are tied does branch selection compare
+the authenticated tip metadata:
 
 ```text
-CommitOrderingKey {
-  source_epoch,
+CommitOrderingSuffix {
   priority,       // privileged < ordinary
   committer,      // authenticated Marmot account id
   commit_digest = SHA-256(mls_bytes)
 }
 ```
 
-For same-epoch races, `source_epoch` is equal. A valid privileged commit wins over an ordinary commit before byte
-ordering, so an admin removal or other authorized membership change is not defeated by a targeted member's concurrent
-self-update solely by choosing different commit bytes. If both commits have the same `priority`, lower `committer`
+For a same-epoch race, `source_epoch` is equal by definition and is not another comparison field. When the preceding
+branch criteria tie, a valid privileged tip wins over an ordinary tip before byte ordering. This prevents commit-byte
+choice alone from making an ordinary self-update beat a tied admin removal; it does not let priority override a branch
+that already won on bounded depth or witness evidence. If both tips have the same `priority`, lower `committer`
 lexicographically wins. The lower `commit_digest` decides only when the same authenticated committer produced multiple
 same-priority commits for the same source epoch.
 
