@@ -21,6 +21,10 @@ struct {
 
 Any nonzero value is a requested application retention duration in seconds.
 
+Each application message pins the retention state from its own MLS source epoch. Later component updates or removal do
+not shorten, extend, or restore that message's expiry. A retry or transport republication of the same MLS message uses
+the same pinned duration and expiry value.
+
 The retention duration is signed group state, but the transport-level expiry timestamp is computed from the sender's
 app-payload `created_at` plus this duration (see [../protocol-core/group-setup.md](../protocol-core/group-setup.md) and
 the active transport binding; for the Nostr binding that is "Message expiration" in
