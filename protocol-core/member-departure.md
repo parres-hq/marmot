@@ -28,9 +28,8 @@ in the prior epoch is invalid (see [../app-components/admin-policy-v1.md](../app
 definition of an active admin).
 
 A departing admin MUST first complete an accepted admin-policy update that removes its account from the admin list
-before creating a SelfRemove proposal. The admin-policy update is an ordinary admin-gated group-state change and is
-valid only if at least one other active admin remains, so the last active admin MUST designate another admin before
-leaving.
+before creating a SelfRemove proposal. The admin-policy update is an admin-gated group-state change and is valid only
+if at least one other active admin remains, so the last active admin MUST designate another admin before leaving.
 
 This two-step flow applies to voluntary departure through SelfRemove only. An admin removed by another admin does not
 use it: the removing commit drops the account's last leaf and its `admins` key together, under the coupling rule in

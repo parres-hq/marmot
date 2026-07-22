@@ -45,7 +45,7 @@ Unsupported app-event kinds do not change group state unless the owning feature 
 
 ## Commit authorization
 
-Admins can commit ordinary group-state changes.
+An active admin MAY commit a group-state change when its owning rule authorizes that admin.
 
 Non-admin members can commit only the narrow flows that the spec explicitly allows:
 
