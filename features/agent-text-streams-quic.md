@@ -396,6 +396,11 @@ A v1 stream is pinned to one MLS epoch. If an accepted Commit changes the sender
 active, the sender closes the old stream. The sender MAY publish a new start payload in the new epoch and link it to the
 previous stream in local UI or a future extension.
 
+If convergence later invalidates the kind `1200` start payload because its MLS application message existed only on a
+losing branch, the sender and every receiver MUST stop that live preview and withdraw its provisional text. Its records,
+checkpoints, and transcript hash remain bound to the invalidated start anchor and MUST NOT be reused for another start
+payload or treated as authenticated by a later final message.
+
 This keeps stream access aligned with MLS membership changes.
 
 ## Transport binding boundary
