@@ -55,9 +55,10 @@ app payload. The id is exactly 32 bytes (the raw `SHA-256` output; there is no d
 computes it over the recovered bytes without re-encoding, so two transport copies of the same MLS message yield the same
 id.
 
-This is the same `SHA-256`-over-`MLSMessage`-bytes construction used for `commit_digest` / `tip_digest` in
-[../protocol-core/convergence.md](../protocol-core/convergence.md) ("Same-epoch races"): for a commit, its dedup
-`message_id` is byte-for-byte its `commit_digest`. The dedup/replay use of the id is separate from its use as the
-same-epoch ordering tie-breaker, but the bytes are computed identically, so an implementation needs only one hash.
+This is the same `SHA-256`-over-`MLSMessage`-bytes construction used for `commit_digest` in
+[../protocol-core/convergence.md](../protocol-core/convergence.md) ("Same-epoch races") and for `tip_digest` there
+("Candidate branches"). For a commit, its dedup `message_id` is byte-for-byte its `commit_digest`. The dedup/replay use
+of the id is separate from its use as the same-epoch ordering tie-breaker, but the bytes are computed identically, so
+an implementation needs only one hash.
 
 A Nostr event id is transport evidence. It is not a Marmot consensus id.

@@ -351,7 +351,7 @@ rules. Protocol core validates group state and join rules.
 
 Relays MAY redeliver the same event, and a client subscribing to several relays will receive the same group message
 more than once. The Nostr event id is transport evidence and MUST NOT be used as the Marmot deduplication id: the id
-used for dedup and replay is defined over the recovered Marmot or MLS bytes (see
+used for dedup and replay is defined over the recovered MLS message bytes (see
 [../foundation/wire-envelopes.md](../foundation/wire-envelopes.md), "Message ids", and
 [../protocol-core/inbound-processing.md](../protocol-core/inbound-processing.md), "Message identity"). A client peels
 the transport envelope, recovers the MLS message, and deduplicates on that stable id before applying state, so relay
