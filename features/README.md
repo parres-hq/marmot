@@ -5,7 +5,7 @@ Status: adopted.
 Feature specs describe user-visible Marmot behavior that spans several surfaces.
 
 A feature doc SHOULD explain the flow, name the protocol surfaces involved, and point to the documents that own exact
-bytes. It SHOULD avoid copying component schemas, MLS structures, transport event shapes, or foundation rules.
+bytes. It MUST NOT copy component schemas, MLS structures, transport event shapes, or foundation rules.
 
 Features are optional or user-visible behavior built from foundation, protocol core, transports, and app components.
 
