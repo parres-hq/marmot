@@ -50,17 +50,10 @@ below.
 ## Capabilities
 
 KeyPackages advertise agent-stream roles with normal Marmot capabilities. Each role is an MLS extension-type capability
-listed in the LeafNode capabilities; a member advertises a role by listing its extension type:
-
-| Role      | Capability                                         | Extension type |
-| --------- | -------------------------------------------------- | -------------- |
-| `receive` | `marmot.feature.agent_text_stream_quic.receive.v1` | `0xf2d1`       |
-| `send`    | `marmot.feature.agent_text_stream_quic.send.v1`    | `0xf2d2`       |
-| `fanout`  | `marmot.feature.agent_text_stream_quic.fanout.v1`  | `0xf2d4`       |
-
-The extension type ids are registered in [../foundation/registries.md](../foundation/registries.md), and the
-`required_member_roles` role-mask bits that gate them live in the component table
-([../app-components/agent-text-stream-quic-v1.md](../app-components/agent-text-stream-quic-v1.md)).
+listed in the LeafNode capabilities; a member advertises a role by listing its extension type. The authoritative role,
+capability-name, extension-type, and role-mask mapping is in
+[../app-components/agent-text-stream-quic-v1.md](../app-components/agent-text-stream-quic-v1.md) ("State"); the ids are
+registered in [../foundation/registries.md](../foundation/registries.md).
 
 The `receive` role is the baseline agent-stream compatibility role. A `receive` member understands the component, accepts
 kind `1200` start payloads and final kind `9` stream anchors, and can safely ignore the live QUIC route while waiting for
