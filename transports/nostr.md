@@ -176,9 +176,9 @@ Enabling retention is a trade-off the group accepts:
 
 ## Account inbox relays
 
-Every Marmot account publishes an inbox relay list as a standard Nostr kind `10050` event — the NIP-17 DM inbox relay
-list — with one `relay` tag per inbox relay URL. Kind `10050` is not Marmot-allocated; Marmot reuses the standard kind
-unchanged, and the list is public signed account metadata.
+A Marmot account advertises its inbox relay set by publishing a standard Nostr kind `10050` event — the NIP-17 DM
+inbox relay list — with one `relay` tag per inbox relay URL. Kind `10050` is not Marmot-allocated; Marmot reuses the
+standard kind unchanged, and the list is public signed account metadata.
 
 Gift-wrapped events addressed to an account — including kind `444` welcome rumors — are published to the recipient's
 kind `10050` inbox relay set. A sender MAY also publish to a contextual relay hint it holds for the recipient; when it
