@@ -101,6 +101,8 @@ admin-gated like every other routing update.
 
 ## Removal
 
+Only an active admin MAY commit removal of this component.
+
 This component MUST NOT be removed while the group is Nostr-routed and lists it as required in GroupContext
 `app_components`. It MAY be removed only from a group that no longer routes over Nostr. If it is removed from a group
 that still exists over another transport, the Nostr transport can no longer route group messages from signed group

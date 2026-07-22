@@ -57,6 +57,8 @@ Only an active admin MAY commit a message-retention update.
 
 ## Removal
 
+Only an active admin MAY commit removal of this component.
+
 Removal is equivalent to `disappearing_message_secs = 0`.
 
 ## Migration

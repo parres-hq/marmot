@@ -104,6 +104,8 @@ state.
 
 ## Removal
 
+Only an active admin MAY commit removal of this component.
+
 This component MUST NOT be removed while it is listed as required in GroupContext `app_components`. Under a media-capable
 application profile it is required for new app groups, so removing it from such a group is invalid (see
 [../protocol-core/group-setup.md](../protocol-core/group-setup.md)). A group whose profile does not require encrypted

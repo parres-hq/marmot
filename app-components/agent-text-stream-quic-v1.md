@@ -132,6 +132,8 @@ Only an active admin MAY commit an update.
 
 ## Removal
 
+Only an active admin MAY commit removal of this component.
+
 If removed from a group that no longer requires it, live QUIC text streams are disabled for that group. Existing durable
 Marmot messages and final kind `9` stream messages remain valid.
 

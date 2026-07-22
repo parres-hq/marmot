@@ -52,6 +52,8 @@ The admin check is evaluated against the prior epoch state.
 
 ## Removal
 
+Only an active admin MAY commit removal of this component.
+
 If the component is not required, removal means the group has no signed Marmot display profile.
 
 ## Migration

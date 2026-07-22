@@ -90,6 +90,8 @@ Only an active admin MAY commit an avatar update.
 
 ## Removal
 
+Only an active admin MAY commit removal of this component.
+
 Removal is equivalent to the empty avatar state for application rendering.
 
 ## Migration

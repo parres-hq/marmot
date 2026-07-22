@@ -141,6 +141,10 @@ or an invalid result. If any component update is invalid, the Commit is invalid.
 The MLS AppDataUpdate `remove` operation removes a component entry from the GroupContext dictionary. Each Marmot
 component states whether removal is allowed.
 
+Removal is a component change and inherits that component's commit authorization unless its owning document explicitly
+defines a different removal actor. Each component's Removal section restates the authorized actor so the rule does not
+depend on treating the word "update" as implicit coverage of `remove`.
+
 Required components MUST NOT be removed while still listed in GroupContext `app_components`.
 
 ## Unknown Data

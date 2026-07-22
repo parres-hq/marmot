@@ -108,6 +108,8 @@ Only an active admin MAY commit an image update.
 
 ## Removal
 
+Only an active admin MAY commit removal of this component.
+
 Removal is equivalent to the empty image state for application rendering.
 
 ## Migration
