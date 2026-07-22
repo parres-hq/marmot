@@ -128,6 +128,11 @@ message after decryption.
 Receivers MUST reject kind `445` content that is not valid base64 or that decodes to fewer than 28 bytes. The minimum is
 12 nonce bytes plus the 16-byte ChaCha20-Poly1305 tag.
 
+Marmot v1 does not impose a universal maximum Nostr event or decoded-content size. Relays and clients MAY apply local
+resource limits to kind `445`, `1059`, `444`, and `30443` events and MAY discard an event that exceeds such a limit
+before decoding or decryption. That discard is a transport availability outcome; it does not establish that recovered
+MLS bytes would be protocol-invalid or change canonical group state.
+
 Kind `445` Nostr event ids, relay timestamps, relay arrival order, and subscription order are transport evidence. They
 MUST NOT choose group state.
 
