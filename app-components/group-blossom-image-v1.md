@@ -97,6 +97,8 @@ Updating the image replaces every field. Clearing the image sends the empty stat
 ## Validation
 
 A non-empty image state is valid only if all cryptographic fields have their exact required lengths.
+Its `media_type` MUST be non-empty valid UTF-8, at most 128 bytes, and byte-equal to the canonical media type produced
+by the algorithm referenced under "Image bytes."
 
 Mixed partial states are invalid. For example, a state with `image_hash` set and `image_key` empty is invalid.
 
