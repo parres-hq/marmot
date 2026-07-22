@@ -102,18 +102,9 @@ database schemas, or API boundaries.
 App component documents define custom MLS app components carried in the
 GroupContext `app_data_dictionary`.
 
-Each component document owns:
-
-- component id
-- component name (its `v1` suffix records the major version; the component id is the version, so there is no separate
-  version field in the payload)
-- payload schema
-- update schema
-- canonical encoding
-- authorization
-- update operation
-- removal behavior
-- migration behavior
+The authoritative component-document checklist is
+[app-components/README.md](./app-components/README.md) ("Common Rules"). Component ids carry the major version; there is
+no separate payload version field.
 
 Most feature-owned group state SHOULD land here.
 

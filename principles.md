@@ -132,16 +132,9 @@ A transport doc can say how to find and deliver bytes. It SHOULD NOT define whic
 Feature state SHOULD live in small versioned app components unless the feature changes a shared foundation or
 protocol-core surface.
 
-Each component SHOULD own:
-
-- its component id;
-- state bytes;
-- update bytes;
-- validation;
-- proposal and commit authorization;
-- removal rules;
-- migration rules;
-- compatible and breaking change rules.
+Each component document MUST satisfy the authoritative checklist in
+[app-components/README.md](./app-components/README.md) ("Common Rules"), including the component's migration and
+breaking-change rule.
 
 Large objects SHOULD NOT be stored directly in GroupContext component data. Store hashes, content ids, encrypted media
 references, or application-layer records when the data belongs elsewhere.
