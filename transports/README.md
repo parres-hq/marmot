@@ -21,8 +21,8 @@ Each transport document MUST define:
 - transport name and version;
 - transport-specific group delivery address;
 - recipient inbox address, if the transport has one;
-- envelope bytes for MLS group messages;
-- envelope bytes for MLS Welcome delivery;
+- envelope bytes for MLS group messages, if the transport carries them;
+- envelope bytes for MLS Welcome delivery, if the transport carries Welcomes;
 - publish targets and acknowledgement rules;
 - receive filters or fetch rules;
 - duplicate ids and replay handling inputs;
