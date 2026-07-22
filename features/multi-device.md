@@ -136,8 +136,8 @@ Group entries are epoch-specific. A failed stale-epoch join MUST be retried with
 `marmot.encrypted-device-name.v1` is an optional LeafNode extension for an encrypted device label. It is display
 metadata. It MUST NOT be used as identity or authorization input.
 
-The current branch draft encrypts the device name with NIP-44 to the user's own Nostr identity. Other users SHOULD NOT
-be able to read it.
+The current branch draft encrypts the device name with NIP-44 to the user's own Nostr identity. Under that construction,
+another group member cannot decrypt the label unless it also possesses that account's private key.
 
 ## Removing an account identity
 
