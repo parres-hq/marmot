@@ -35,7 +35,7 @@ work and is tracked here because it affects this spec's design.
 - MIP-06, Multi-Device Support: branch draft and optional.
   - Feature flow: [features/multi-device.md](./features/multi-device.md)
   - Foundation: [foundation/identity.md](./foundation/identity.md)
-  - Protocol flow: [protocol-core/group-messaging.md](./protocol-core/group-messaging.md)
+  - Convergence: [protocol-core/convergence.md](./protocol-core/convergence.md)
 
 ## MIP-01 field split
 
