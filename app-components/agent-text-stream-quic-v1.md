@@ -34,11 +34,11 @@ const uint8 send    = 0x02;
 const uint8 fanout  = 0x04;
 
 struct {
-  uint8 required_member_roles;
-  uint8 allowed_member_roles;
-  uint32 max_plaintext_frame_len;
-  uint32 replay_ttl_secs;
-  uint16 padding_bucket_bytes;
+  MarmotAgentTextStreamQuicRoleMaskV1 required_member_roles;
+  MarmotAgentTextStreamQuicRoleMaskV1 allowed_member_roles;
+  uint32                               max_plaintext_frame_len;
+  uint32                               replay_ttl_secs;
+  uint16                               padding_bucket_bytes;
 } MarmotAgentTextStreamQuicV1;
 ```
 
