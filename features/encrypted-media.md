@@ -136,9 +136,7 @@ reference-level locator rule below. A receiver MUST reject a reference if:
 - the version is absent or not `encrypted-media-v1`
 - no locator is present
 - a locator has an empty kind or an empty value, or its value does not parse as a URL
-- a `blossom-v1` locator points at an unsafe host per [../foundation/host-safety.md](../foundation/host-safety.md)
-  (loopback, private, CGNAT, link-local, unspecified, documentation, benchmarking, reserved/broadcast, multicast, ULA,
-  or an IPv6 transition prefix with an unsafe embedded address), or uses a URL scheme other than `http` or `https`
+- a `blossom-v1` locator uses a URL scheme other than `http` or `https`
 - required MIME type, filename, ciphertext hash, plaintext hash, nonce, or version fields are missing
 - the MIME type or filename does not satisfy its profile above
 - a single-occurrence field appears more than once in the `imeta` tag. Exactly the `locator` field repeats (one or
@@ -169,13 +167,6 @@ endpoint remains. An out-of-policy or unsupported locator MUST NOT invalidate th
 invalidate or drop the containing message. The rationale is that media content is authenticated by its
 `ciphertext_sha256` / `plaintext_sha256` and the AEAD independent of the locator, so an out-of-policy or otherwise wrong
 locator cannot forge content; only the structural conditions above protect integrity.
-
-Host safety is the one locator property that DOES invalidate, and it applies only to `blossom-v1` locators — the kind
-this client fetches over HTTP. An unsafe-host or cleartext-`http` Blossom locator is a hostile request vector: unlike a
-wrong kind, the harm is the fetch request itself (an attempt to make the client reach a private or internal address),
-which content hash-authentication cannot neutralize, so such a reference is rejected as an attachment. A
-non-Blossom locator is never fetched by this client, so it is subject only to the structural checks and is otherwise
-merely unfetchable per the rule above.
 
 Fetchability is judged at fetch time against the group's current `allowed_locator_kinds` and the receiving client's
 current support and configuration, not against the source epoch. Because the locator policy no longer gates delivery,
