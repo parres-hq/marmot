@@ -70,6 +70,30 @@ The signing input is a standalone, domain-separated preimage, not the extension 
 `account_identity` only to make that field boundary explicit; the payload and preimage both cover the same 32 account-key
 bytes. `mls_signature_scheme` is still carried and verified directly, even though the ciphersuite implies it.
 
+## Signing test vector
+
+This fixture uses BIP-340 secret key `3` and all-zero 32-byte auxiliary randomness. The secret is test material only.
+
+```text
+mls_ciphersuite           = 0x0001
+mls_signature_scheme      = 0x0807
+account_identity          = f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9
+mls_signature_public_key  = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+```
+
+The 108-byte signing preimage is:
+
+```text
+6d61726d6f742e6163636f756e742d6964656e746974792d70726f6f662e763100f2f101000108070020f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f90020000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+```
+
+Its `SHA-256` digest and resulting 64-byte BIP-340 signature are:
+
+```text
+digest     = 1567ad994c132d6678bc74b96887380ab93e0351cb2c9f300426195366eee7a5
+signature  = 78c1f3d5ccbe816e01266327a3c68b1f5d4ee1900cbe368ea86dde8d641b69b2ccca423b5db00716be2672f6b345cf5b63fc6939f5b11e295abeb398408eda2f
+```
+
 ## Required capabilities
 
 Every Marmot KeyPackage and group member LeafNode MUST advertise support for extension type `0xf2f1` in MLS
