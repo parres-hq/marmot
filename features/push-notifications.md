@@ -295,14 +295,14 @@ subsequent kind `447`/`448` entry whose stamp is strictly greater than the tombs
 for the key and clears the tombstone.
 
 A tombstone is durable: it persists until a strictly-greater-stamped kind `447`/`448` entry clears it (as above) or
-the owning member is removed from the group (see member cleanup below). It MUST NOT be garbage-collected on any
+the owning member leaf is removed from the group (see leaf-scoped cleanup below). It MUST NOT be garbage-collected on any
 wall-clock, `owner_ts`, or MLS-epoch basis. Owner authentication makes records relay-portable: any current member can
 re-emit another member's still-valid `owner_sig`/`owner_ts` record inside a fresh, in-window kind `448` at any later
 epoch. So a tombstone (and, equivalently, the stored ordering stamp for a live record) is the only durable high-water
 mark that stops a relayed but stale signed record from resurrecting a revoked or superseded token, and it cannot be
 bounded by the retained app-payload window: unlike a record that could only ever arrive in its original carrying epoch,
-a relayed record's carrying epoch is unbounded. The per-key stamp and tombstone therefore persist for the owning
-member's whole lifetime in the group, and are cleared only when that member leaves (see member cleanup below).
+a relayed record's carrying epoch is unbounded. The per-key stamp and tombstone therefore persist for the owning leaf's
+whole lifetime in the group, and are cleared only when that leaf leaves (see leaf-scoped cleanup below).
 
 #### Race handling
 
@@ -319,8 +319,9 @@ member's whole lifetime in the group, and are cleared only when that member leav
   Two entries with the same `owner_ts` and the same digest are the same signed record: applying it again is idempotent,
   whether it arrives as a fresh self-update or relayed in a kind `448`.
 
-When a member is removed from the group, clients delete every stored token record and tombstone for that member as part
-of local cleanup. No kind `449` event is required for that cleanup.
+When an accepted canonical Commit removes a member leaf, clients delete every stored token record and tombstone whose
+`member_id_hex` and `leaf_index` match that removed leaf. Records for another current leaf with the same account identity
+remain active. No kind `449` event is required for this cleanup.
 
 #### Best-effort revocation
 
