@@ -119,7 +119,7 @@ media MAY omit it.
 
 ## Migration
 
-This component is new in this spec; it carries the Encrypted Media V1 group policy (see
-[../mip-coverage.md](../mip-coverage.md)). The media attachment format and key derivation are owned by
+This component is the adopted app-component form of the policy previously specified by the deprecated Encrypted Media
+V1 document (see [../mip-coverage.md](../mip-coverage.md)). The media attachment format and key derivation are owned by
 [../features/encrypted-media.md](../features/encrypted-media.md).
 v1 is the first versioned form; a breaking change gets a new component id and file.
