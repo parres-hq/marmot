@@ -364,7 +364,7 @@ kind 1059 gift wrap
 
 The kind `446` rumor contains:
 
-- `content`: one standard-base64 string with one or more concatenated 1084-byte `EncryptedToken` values;
+- `content`: one standard-base64 string with 1 to 32 concatenated 1084-byte `EncryptedToken` values;
 - a `["v", "marmot-push-v1"]` tag, and no other tag;
 - `pubkey`: a fresh ephemeral key.
 
@@ -448,7 +448,8 @@ Notification servers MUST reject or ignore malformed notification triggers, incl
 
 - missing or unsupported `v` tags;
 - invalid base64 content;
-- decoded content whose length is not a multiple of 1084 bytes;
+- empty decoded content, content whose length is not a multiple of 1084 bytes, or content containing more than 32
+  chunks (`34,688` decoded bytes); this length check occurs before any ECDH or AEAD work;
 - token chunks with invalid ephemeral keys, failed ECDH/HKDF, failed AEAD authentication, invalid platform bytes, or
   invalid token lengths.
 
