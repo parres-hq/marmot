@@ -38,9 +38,9 @@ these assignments, Marmot needs an explicit compatibility plan before changing w
 namespace named in the first column.
 
 The `app_components`, `app_data_dictionary`, `app_data_update`, and `self_remove` values match
-draft-ietf-mls-extensions-09. The `last_resort` value is the extension-type assignment Marmot currently implements
-through OpenMLS. Confirm `last_resort` against draft-09 before relying on it: the draft MAY track last-resort handling
-in the component registry rather than as extension `0x000a`.
+draft-ietf-mls-extensions-09. The `last_resort` value is the extension-type assignment currently pinned by Marmot.
+Confirm `last_resort` against draft-09 before relying on it: the draft MAY track last-resort handling in the component
+registry rather than as extension `0x000a`.
 
 ## Marmot custom MLS extension types
 
