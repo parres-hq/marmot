@@ -27,7 +27,7 @@ work and is tracked here because it affects this spec's design.
   - Member departure: [protocol-core/member-departure.md](./protocol-core/member-departure.md)
   - Transport binding: [transports/nostr.md](./transports/nostr.md)
   - App payloads: [foundation/application-messages.md](./foundation/application-messages.md)
-- Encrypted Media V1: Review and required for new app groups.
+- MIP-04, Encrypted Media: Review and required for new app groups.
   - Feature flow: [features/encrypted-media.md](./features/encrypted-media.md)
   - App component: [app-components/group-encrypted-media-v1.md](./app-components/group-encrypted-media-v1.md)
 - MIP-05, Push Notifications: Draft and optional.
