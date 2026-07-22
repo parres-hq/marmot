@@ -277,9 +277,10 @@ A Nostr transport client subscribes to:
 
 - account inbox gift wraps: kind `1059`, `p` tag equal to the local account pubkey, on the account's own kind `10050`
   inbox relay set ("Account inbox relays" above);
-- group messages: kind `445`, `h` tag equal to the group's `nostr_group_id`, plus any prior routing id the rotation
-  rules still require ([../app-components/nostr-routing-v1.md](../app-components/nostr-routing-v1.md), "Routing
-  rotation");
+- group messages: kind `445`, fetched from one or more relays in the routing state associated with the current
+  `nostr_group_id` and each prior routing id the rotation rules still require
+  ([../app-components/nostr-routing-v1.md](../app-components/nostr-routing-v1.md), "Routing rotation"); fetching from
+  every relay in those states is not an interoperability requirement;
 - NIP-17 inbox relay lists: kind `10050`, author equal to the account being addressed, to discover that account's
   inbox relay set;
 - NIP-65 relay lists: kind `10002`, author equal to the account being queried, to discover where that account
