@@ -20,9 +20,9 @@ have not seen yet.
 
 Founding group creation is the exception, including both one-member creation and creation with initial invitees. There
 are no existing peers that can be forked by a missing creation Commit. A one-member creation has an empty creation
-publish obligation. A founding creation with initial invitees satisfies its creation publish obligation through the
-Welcome deliveries defined in [publish-lifecycle.md](./publish-lifecycle.md), and does not require a separate
-group-message publish of the founding Add commit before those Welcomes are sent.
+publish obligation. A founding creation with initial invitees has the same empty epoch-0 creation obligation: the
+creator makes epoch 0 canonical, then attempts the independent per-invitee Welcome deliveries defined in
+[publish-lifecycle.md](./publish-lifecycle.md). It does not publish the founding Add commit as a group message.
 
 The GroupInfo encrypted in every Marmot Welcome MUST include the `ratchet_tree` extension. Marmot does not support
 out-of-band ratchet tree distribution for the Welcome join path. A joiner MUST reject a Welcome whose GroupInfo does

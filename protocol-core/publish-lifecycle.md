@@ -56,20 +56,15 @@ state) as success.
 
 Group creation is special because there is no existing group recipient set before the group exists.
 
-For one-member group creation, the creation publish obligation has an empty outbound byte set and an empty recipient
-scope. The creator MUST treat the empty obligation as immediately satisfied and make the initial state canonical
-without publishing any group message bytes.
+For every epoch-0 founding creation, with or without initial invitees, the creation publish obligation has an empty
+outbound byte set and an empty recipient scope. The creator MUST treat that empty obligation as immediately satisfied
+and make the initial state canonical without publishing group-message bytes. No existing peer can be forked by a
+missing creation Commit. This exception is limited to the epoch-0 founding commit; every later Commit follows the
+normal publish-before-apply rule.
 
-For founding creation with initial invitees, the creation publish obligation contains the MLS Welcome deliveries for the
-initial invitees whose KeyPackages were consumed. Its recipient scope is exactly those initial invitees, addressed by the
-active transport binding for Welcome delivery. It does not include a group-message publish of the founding Add
-commit to existing members, because no existing peers can be forked by a missing creation Commit. This exception
-is limited to the epoch-0 founding commit. Any further commits — including additional component bootstrapping
-bundled with group creation — follow the normal publish-before-apply rule.
-
-The founding creator's local state becomes canonical immediately after the epoch-0 founding commit, regardless
-of Welcome delivery outcome. Welcome delivery to initial invitees is a separate retryable per-invitee obligation:
-each invitee's Welcome delivery succeeds or fails independently and does not affect the group's canonical state.
+When founding creation includes initial invitees, each MLS Welcome is a separate retryable per-invitee delivery
+obligation after epoch 0 becomes canonical. A Welcome delivery succeeds or fails independently and is not the creation
+publish obligation, so its outcome does not affect the group's canonical state.
 Consumed KeyPackage material for founding invitees cannot be restored on Welcome delivery failure; if a Welcome
 cannot be delivered, the founding creator MAY re-invite the unreachable member using a new Add commit against
 the now-canonical group with a fresh KeyPackage.
