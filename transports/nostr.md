@@ -52,7 +52,7 @@ Relay URL fields and `relay`/`relays` tag values use the Nostr relay URL profile
 
 Producers SHOULD use `wss`, lowercase DNS hostnames, omit default ports, and avoid redundant path spelling. Receivers
 compare relay URL byte strings exactly after validation. Local safety policy MAY refuse to connect or publish to a
-valid relay URL, but it does not rewrite signed group state.
+valid relay URL, but it MUST NOT rewrite signed group state.
 
 ## Event identity and tag cardinality
 
@@ -359,5 +359,5 @@ Relays see only transport-envelope metadata, never plaintext or MLS secrets:
   account's packages.
 
 A client MUST NOT add tags, content, or `encoding` markers that expose account ids, group ids, message ids, payloads,
-or key material beyond what each event shape above already requires. Local safety policy MAY refuse a relay URL, but it
-MUST NOT rewrite signed group state to do so.
+or key material beyond what each event shape above already requires. Refusing a relay URL follows the local-policy rule
+in "Relay URL profile" and does not change these authenticated bytes.
