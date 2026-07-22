@@ -103,7 +103,8 @@ the receiver listens and the sender dials.
 
 ### Broker-relayed
 
-In the broker mode, a group-approved broker is the rendezvous. The sender (publisher) and each receiver (subscriber)
+In the broker mode, a broker candidate advertised by the sender in the MLS-delivered start payload is the rendezvous.
+There is no separate group-level broker approval list in v1. The sender (publisher) and each receiver (subscriber)
 connect to the same broker candidate and name the same `(stream_id, start_event_id)` room. The broker fans records out
 from the publisher to every current subscriber and keeps a small bounded backlog so a subscriber that joins slightly
 late still sees recent records.

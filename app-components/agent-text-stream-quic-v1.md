@@ -82,7 +82,8 @@ For the first user-to-agent profile:
 
 `max_plaintext_frame_len` caps the plaintext bytes in one stream frame before record encryption.
 
-`replay_ttl_secs` is the maximum time a group-approved broker MAY retain encrypted stream records for short replay.
+`replay_ttl_secs` is the group's requested maximum retention time for short replay at a broker advertised in a start
+payload. v1 has no separate group-level broker approval mechanism.
 `0` means no retained replay.
 
 `padding_bucket_bytes` is reserved in v1. No padding mechanism is defined, and senders MUST NOT emit padding. The field
