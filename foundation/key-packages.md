@@ -27,7 +27,7 @@ identity in the credential.
 
 A KeyPackage belongs to the account named by its credential identity.
 
-Every Marmot KeyPackage carries `marmot.account-identity-proof.v1` in its LeafNode extensions. The proof binds the
+Every Marmot KeyPackage MUST carry `marmot.account-identity-proof.v1` in its LeafNode extensions. The proof binds the
 credential identity to the KeyPackage LeafNode's MLS signature public key. A KeyPackage without a valid proof is
 malformed.
 
@@ -45,8 +45,8 @@ over the inner `KeyPackage` (RFC 9420 `MakeKeyPackageRef`), not over the `MLSMes
 KeyPackages advertise what that client/device can support. Group creation and member addition use these capabilities to
 avoid creating a group that some member cannot process.
 
-Every Marmot KeyPackage carries `marmot.account-identity-proof.v1` in its LeafNode extensions and advertises support for
-that extension type as required by [account-identity-proof-v1.md](./account-identity-proof-v1.md). The remaining
+Every Marmot KeyPackage MUST carry `marmot.account-identity-proof.v1` in its LeafNode extensions and advertise support
+for that extension type as required by [account-identity-proof-v1.md](./account-identity-proof-v1.md). The remaining
 current-profile capabilities are listed by namespace in [registries.md](./registries.md): `app_data_dictionary`,
 `app_components`, `last_resort`, `app_data_update`, and `self_remove`. The registry is the source of numeric ids and
 namespaces; this document only requires that those capabilities appear in the appropriate MLS capability lists.
