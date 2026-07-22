@@ -20,7 +20,8 @@ An input that does not produce application content SHOULD map to one of these ca
 - `unsupported_required_feature`: the group requires a feature the client does not understand.
 - `authorization_failed`: the sender or committer is not allowed to make the change.
 - `missing_history`: the client would need retained state it no longer has.
-- `transport_rejected`: publication or delivery failed at the transport layer.
+- `transport_rejected`: an outbound publication or delivery attempt failed at the transport layer. This category does
+  not describe inbound bytes that were never received.
 
 Protocol-core docs can split these into more detailed outcomes when needed.
 
@@ -47,11 +48,12 @@ Authorization can depend on the prior group state. A commit's authorization is t
 candidate parent state during candidate construction, not as one branch-independent gate. A commit that is authorized
 on one candidate parent and unauthorized on another can create an edge only from the authorized parent. When a commit
 is unauthorized for every available matching parent and no missing parent could change that result, it is rejected as
-`authorization_failed` and receives no convergence disposition. `transport_rejected` is likewise a
-publish/delivery outcome, not a convergence disposition. Every inbound input therefore has exactly one current outcome:
-a convergence disposition when convergence classifies it, otherwise a rejection category. A convergence disposition is
-a live classification, not an immutable processing-history label. It MAY change when missing state arrives or a later
-pass selects a different canonical branch; at every point the input still has only one current disposition.
+`authorization_failed` and receives no convergence disposition. `transport_rejected` is an outbound transport outcome,
+not an inbound or convergence disposition. Every received inbound input therefore has exactly one current outcome: a
+convergence disposition when convergence classifies it, otherwise an inbound rejection category. A convergence
+disposition is a live classification, not an immutable processing-history label. It MAY change when missing state
+arrives or a later pass selects a different canonical branch; at every point the input still has only one current
+disposition.
 
 `delivered` is not a disposition. It names the application-visible output of an `accepted` MLS application message: the
 Marmot app payload handed to the application. `dropped` is not a disposition either; where older versions of this
