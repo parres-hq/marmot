@@ -49,8 +49,8 @@ top-level file stays cross-surface only.
 - Transport docs own outer envelopes, delivery addressing, publish targets, fetch rules, and transport validation.
 - Protocol-core docs own required group flows and group-state transitions.
 - Feature docs own optional or user-visible flows and cross-reference the surfaces that implement them.
-- AppDataUpdate proposals may be inline or standalone. Inline is the default when the committer is authorized;
-  standalone MLS proposals are not the default non-admin request path for admin-gated component changes.
+- AppDataUpdate proposal forms and their default request path are defined in
+  [`app-components/README.md`](app-components/README.md) ("Update Processing").
 
 ## Verification
 
