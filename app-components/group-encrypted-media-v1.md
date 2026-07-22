@@ -35,6 +35,9 @@ struct {
 ```
 
 `media_format` MUST be `encrypted-media-v1`.
+It is a fixed format constant retained from the predecessor media-policy schema, not a negotiated component version.
+It cannot select another format under component id `0x8008`; any breaking format change still requires a new component
+id and document.
 
 `allowed_locator_kinds` is the list of locator kinds that media messages MAY use. The initial v1 locator kind is
 `blossom-v1`.

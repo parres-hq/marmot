@@ -104,7 +104,7 @@ GroupContext `app_data_dictionary`.
 
 The authoritative component-document checklist is
 [app-components/README.md](./app-components/README.md) ("Common Rules"). Component ids carry the major version; there is
-no separate payload version field.
+no generic separate payload version field.
 
 Most feature-owned group state SHOULD land here.
 

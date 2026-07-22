@@ -22,8 +22,9 @@ are mechanical and easy to get wrong, so treat this file as the checklist and th
   places in the same change: [`../foundation/registries.md`](../foundation/registries.md), the README "Current
   Components" list, and the [`../layout.md`](../layout.md) tree. This trio is the most frequently missed step — for
   example `avatar-url` (`0x8007`) was once absent from the README list.
-- The component id IS the major version. A breaking change gets a NEW component id and a NEW file; there is no second
-  version field in the payload.
+- The component id IS the major version. A breaking change gets a NEW component id and a NEW file; do not add a generic
+  version field to the payload. A component-specific constant retained by an inherited schema is not version
+  negotiation.
 - Each component doc MUST define the full required set: component id, name, entry location, state bytes, update bytes,
   validation, proposal authorization, commit authorization, removal rule, and migration rule.
 - Group-level component proposals and commits are admin-gated by default. A component may loosen this, but it MUST say

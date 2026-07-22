@@ -54,7 +54,8 @@ changes is:
 
 - a breaking v2 gets a new component id;
 - a breaking v2 gets a new component file;
-- component state and update payloads do not carry a second major-version field.
+- component state and update payloads do not add a generic major-version field. A component-specific format constant
+  retained as part of an inherited byte schema is not version negotiation and MUST NOT replace the component-id rule.
 
 Compatible changes are valid only when the active component document explicitly reserves the needed field, value, or
 behavior.
