@@ -32,6 +32,10 @@ A member whose own removal has been realized holds the group as a removed, inact
 [member-departure.md](./member-departure.md) ("Realizing removal"). Like `Leaving`, this is not a canonical lifecycle
 state; it is a terminal local condition for that group copy.
 
+The optional "unverified" presentation described in [joining.md](./joining.md) ("Welcome-bootstrap trust") is neither
+a lifecycle state nor a protocol condition. It is an application-defined activity heuristic and does not change the
+legal transitions below.
+
 ## Legal transitions
 
 ```text
