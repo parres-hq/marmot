@@ -265,6 +265,8 @@ The client then assigns dispositions (the disposition vocabulary is pinned in
 [../foundation/errors.md](../foundation/errors.md)):
 
 - commits on the selected path are accepted;
+- valid commits retained only on a non-selected eligible branch are deferred while that branch can still participate in
+  a later pass, and become stale once the branch is permanently ineligible;
 - proposals consumed by selected commits are accepted;
 - proposals consumed only by losing branches are stale;
 - MLS application messages that decrypt on the selected branch are accepted, and their Marmot app payloads are
@@ -284,7 +286,8 @@ they produce. A state notification derived from a commit is attributed to that c
 client previously applied — including the client's own published and confirmed commit — the client MUST emit a
 group-state-change invalidation naming the superseded commit, and every state notification attributed to that commit
 is withdrawn: the application treats the changes it announced as not having happened. This is the state-notification
-counterpart of app-payload invalidation.
+counterpart of app-payload invalidation. The superseded Commit's disposition changes from `accepted` to `deferred` if
+its branch remains eligible for a later pass, or to `stale` if that branch is permanently ineligible.
 
 Notification objects are local API surface, so their exact shape is implementation-defined; the conformance
 requirement is the resulting view. Once convergence is settled, the state notifications still in effect are exactly

@@ -32,7 +32,8 @@ dispositions; the processing flow that assigns them is
 [../protocol-core/inbound-processing.md](../protocol-core/inbound-processing.md):
 
 - `accepted`: the input is part of, or was consumed by, the selected canonical branch.
-- `deferred`: the input cannot be processed yet and is retried when missing state arrives or convergence advances.
+- `deferred`: the input cannot yet receive a terminal classification or canonical acceptance and is reconsidered when
+  missing state arrives or convergence advances.
 - `stale`: the input can no longer affect the group.
 - `invalidated`: the input's MLS application message decrypts only on a losing branch, so its app payload is withdrawn
   from application output.
@@ -47,8 +48,10 @@ candidate parent state during candidate construction, not as one branch-independ
 on one candidate parent and unauthorized on another can create an edge only from the authorized parent. When a commit
 is unauthorized for every available matching parent and no missing parent could change that result, it is rejected as
 `authorization_failed` and receives no convergence disposition. `transport_rejected` is likewise a
-publish/delivery outcome, not a convergence disposition. Every inbound input therefore has exactly one outcome: a
-convergence disposition when convergence classifies it, otherwise a rejection category.
+publish/delivery outcome, not a convergence disposition. Every inbound input therefore has exactly one current outcome:
+a convergence disposition when convergence classifies it, otherwise a rejection category. A convergence disposition is
+a live classification, not an immutable processing-history label. It MAY change when missing state arrives or a later
+pass selects a different canonical branch; at every point the input still has only one current disposition.
 
 `delivered` is not a disposition. It names the application-visible output of an `accepted` MLS application message: the
 Marmot app payload handed to the application. `dropped` is not a disposition either; where older versions of this
