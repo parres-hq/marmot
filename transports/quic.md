@@ -47,8 +47,9 @@ document):
 - `["route", "quic"]` selects this binding. A client that does not implement raw QUIC ignores the live preview and
   waits for the final MLS message. Such a client can still advertise the `receive` role defined by the feature if it
   understands the component and final-message fallback semantics.
-- one or more `["broker", "quic://<authority>"]` tags, each carrying one reachable QUIC endpoint candidate. A receiver
-  tries candidates in listed order and MAY race them; the first that yields the matching stream wins.
+- zero or more `["broker", "quic://<authority>"]` tags, each carrying one reachable QUIC endpoint candidate. A receiver
+  tries advertised candidates in listed order and MAY race them; the first that yields the matching stream wins. Zero
+  broker tags is valid for an out-of-band direct path or a start whose live preview is unavailable.
 
 A `quic://` candidate is `quic://` followed by an authority and nothing the receiver relies on after it:
 
