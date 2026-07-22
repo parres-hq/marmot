@@ -84,8 +84,8 @@ Input that cannot affect the group MUST receive a stale disposition. This includ
 - MLS application messages older than the retained app-payload window (`stale_epoch`; the window is
   `app_payload_past_epoch_limit` past epochs, see [convergence.md](./convergence.md));
 - commits that fork from outside the rollback horizon: these are ineligible for branch selection (see
-  [convergence.md](./convergence.md), "Eligibility") and, when their source epoch is also older than the retained
-  anchor, are reported as `BeyondAnchor`;
+  [convergence.md](./convergence.md), "Eligibility") and receive the `stale_epoch` category; when their source epoch is
+  also older than the retained anchor, the named outcome is `BeyondAnchor`;
 
 The `snake_case` names in parentheses are the shared categories in [../foundation/errors.md](../foundation/errors.md);
 `BeyondAnchor` is a named convergence outcome that maps to the `stale` disposition and the `stale_epoch` category.
