@@ -120,7 +120,6 @@ A SelfRemove flow is invalid if:
 - the proposal does not target the sender;
 - the proposal sender is an active admin in the prior epoch;
 - the leaving member commits the proposal;
-- applying the commit would leave the group with no active admin;
 - the committer is not a current member;
 - the commit fails the normal MLS and Marmot convergence checks.
 
