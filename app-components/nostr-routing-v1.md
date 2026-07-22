@@ -91,6 +91,7 @@ A Nostr routing state is valid if:
 
 - `nostr_group_id` is exactly 32 bytes
 - the relay list is not empty
+- the relay list contains at most 16 entries
 - every relay URL satisfies the Nostr relay URL profile in [../transports/nostr.md](../transports/nostr.md)
 - relay URLs are sorted lexicographically over the URL content bytes, per the default sort order in
   [../foundation/canonical-encoding.md](../foundation/canonical-encoding.md) ("Sorting and duplicates")

@@ -63,6 +63,9 @@ An admin policy state is valid if:
 - the admin list is not empty
 - every admin key corresponds to an account with at least one member leaf in the resulting epoch's group state
 
+v1 sets no smaller independent admin-count ceiling: every distinct current account may legitimately be an admin, and
+the uniqueness and membership checks bound the list by the resulting group's distinct account count.
+
 The last check is cross-component: it validates this component against the resulting epoch's member leaves rather than
 against the component bytes alone. Commit validity already spans components, so a commit whose resulting epoch lists an
 admin key with no member leaf is invalid.
