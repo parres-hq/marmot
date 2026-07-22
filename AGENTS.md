@@ -61,7 +61,7 @@ rg -n \
   "Rust crate|database table|queue shape|retry worker|local API|test harness|\\bengine\\b|darkmatter" \
   .
 rg -n \
-  "PendingStateRef|drain_auto_publish|confirm_published|publish_failed" \
+  "CgkaEngine|PendingStateRef|drain_auto_publish|drain_auto_proposals|confirm_published|publish_failed" \
   .
 rg -n \
   "Nostr kind|event id|relay URL|gift wrap|h tags?" \
