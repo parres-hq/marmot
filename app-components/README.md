@@ -36,8 +36,9 @@ This spec follows:
 - [OpenMLS AppData handling](https://book.openmls.tech/user_manual/app_data_updates.html)
 
 OpenMLS exposes this support behind its `extensions-draft-08` feature. Marmot targets the draft-09 code points; the
-pinned ids below match draft-ietf-mls-extensions-09. Where OpenMLS's draft-08 implementation emits a different code
-point or wire layout than draft-09, that gap MUST be reconciled before interop rather than papered over locally.
+pinned ids in [../foundation/registries.md](../foundation/registries.md) match draft-ietf-mls-extensions-09. Where
+OpenMLS's draft-08 implementation emits a different code point or wire layout than draft-09, that gap MUST be reconciled
+before interop rather than papered over locally.
 
 For the profile Marmot currently implements, the pinned upstream ids for `app_components`, `app_data_dictionary`, and
 `app_data_update` are listed in [../foundation/registries.md](../foundation/registries.md). Changing them is a
