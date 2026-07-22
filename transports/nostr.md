@@ -312,7 +312,9 @@ policy. A commit that changes routing state is published to the prior epoch's ro
 ([../app-components/nostr-routing-v1.md](../app-components/nostr-routing-v1.md), "Routing rotation").
 The sender MUST attempt publication to every relay in that target list that local policy permits. The first accepted
 acknowledgement can satisfy the publish lifecycle, but it does not permit the sender to skip the other permitted
-targets.
+targets. Each other permitted target remains outstanding until the sender has made at least one publication attempt to
+it. That later fanout does not keep or return the group to `PendingPublish`, undo canonical apply, or re-stage the
+Commit; retrying a target after its required first attempt is transport or local policy.
 
 Welcome messages are published to the recipient's inbox relay set ("Account inbox relays" above).
 

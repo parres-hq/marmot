@@ -39,10 +39,11 @@ The expiry calculation uses exact, checked unsigned-64-bit addition:
 expiry_timestamp = checked_u64(app_payload.created_at + disappearing_message_secs)
 ```
 
-It is defined only when `created_at` is a non-negative integer representable as `uint64` and the sum is no greater than
-`2^64 - 1`. An implementation MUST NOT wrap, saturate, or compute through an inexact JSON number. When the calculation
-is undefined or the active transport cannot represent the exact result, the sender omits the transport expiry hint; the
-component state and application message remain valid.
+`app_payload.created_at` and `expiry_timestamp` are integer Unix timestamps in seconds. The calculation is defined only
+when `created_at` is a non-negative integer representable as `uint64` and the sum is no greater than `2^64 - 1`. An
+implementation MUST NOT wrap, saturate, or compute through an inexact JSON number. When the calculation is undefined or
+the active transport cannot represent the exact result, the sender omits the transport expiry hint; the component state
+and application message remain valid.
 
 ## Update
 
@@ -68,7 +69,7 @@ Only an active admin MAY send a standalone message-retention update proposal.
 
 Only an active admin MAY commit a message-retention update.
 
-Commit authorization, including removal authorization, follows the shared prior-epoch rule in
+Commit authorization, including removal authorization, follows the shared candidate-parent rule in
 [README.md](./README.md) ("Authorization Evaluation").
 
 ## Removal

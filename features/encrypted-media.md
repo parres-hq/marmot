@@ -77,7 +77,10 @@ upload/fetch rules.
 
 Before using the MIME type in key derivation or AAD, senders and receivers MUST apply the shared Marmot media-type
 algorithm in [../foundation/canonical-encoding.md](../foundation/canonical-encoding.md) ("Media type canonicalization").
-The resulting canonical bytes are the `media_type` input below.
+The producer stores that canonical result in the `m` field. A receiver applies the algorithm to the stored `m` value
+and rejects the reference unless the result is byte-for-byte equal to the stored bytes. Only those verified stored
+bytes are the `media_type` input below; a receiver MUST NOT silently normalize a non-canonical `m` value for key
+derivation or AAD.
 
 ## Filename Profile
 
@@ -141,7 +144,8 @@ reference-level locator rule below. A receiver MUST reject a reference if:
 - a locator has an empty kind or an empty value, or its value does not parse as a URL
 - a `blossom-v1` locator uses a URL scheme other than `http` or `https`
 - required MIME type, filename, ciphertext hash, plaintext hash, nonce, or version fields are missing
-- the MIME type or filename does not satisfy its profile above
+- the MIME type is not byte-for-byte canonical under the shared algorithm, or the MIME type or filename otherwise does
+  not satisfy its profile above
 - a single-occurrence field appears more than once in the `imeta` tag. Exactly the `locator` field repeats (one or
   more); every other field — `v`, `ciphertext_sha256`, `plaintext_sha256`, `nonce`, `m`, `filename`, `dim`, and
   `thumbhash` — occurs at most once. A receiver MUST reject a duplicate rather than picking a first or last occurrence,

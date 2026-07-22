@@ -122,10 +122,11 @@ When an owning document invokes the Marmot media-type algorithm, canonicalize th
 2. trim leading and trailing ASCII whitespace;
 3. lowercase using ASCII case folding only;
 4. require exactly one `/`, with a non-empty type and subtype of at most 64 ASCII bytes each;
-5. require every type and subtype byte to be an ASCII letter, digit, or HTTP token punctuation
+5. require the type, `/`, and subtype together to contain at most 128 bytes;
+6. require every type and subtype byte to be an ASCII letter, digit, or HTTP token punctuation
    ``!#$%&'*+-.^_`|~``;
-6. reject the value if either requirement fails; and
-7. apply the canonical alias `image/jpg` -> `image/jpeg`.
+7. reject the value if any requirement fails; and
+8. apply the canonical alias `image/jpg` -> `image/jpeg`.
 
 The producer stores the canonical result and the receiver requires the stored bytes to equal that result. The algorithm
 is frozen for constructions that invoke it; adding an alias or normalization step requires a new version of each owning

@@ -31,6 +31,11 @@ At creation, the GroupContext MUST include the `required_capabilities` and `app_
 `app_data_dictionary` MUST contain `marmot.group.admin-policy.v1` and the other app components required by the selected
 feature set. The GroupContext `app_components` list MUST mark `marmot.group.admin-policy.v1` as required.
 
+The admin-policy presence and requirement are lifetime invariants, not creation defaults. Every resulting epoch MUST
+retain the `marmot.group.admin-policy.v1` entry in `app_data_dictionary` and MUST retain component id `0x8003` in the
+GroupContext `app_components` list. A Commit that removes either one, including a Commit that changes
+`app_components`, is invalid under [../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md).
+
 Separately, `ratchet_tree` is a per-Welcome GroupInfo extension, not a GroupContext extension. The GroupInfo encrypted
 in every Marmot Welcome carries the ratchet tree inline, as [joining.md](./joining.md) requires.
 

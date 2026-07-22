@@ -30,7 +30,8 @@ span multiple epoch-bound SelfRemove proposals.
 
 A member whose own removal has been realized holds the group as a removed, inactive copy per
 [member-departure.md](./member-departure.md) ("Realizing removal"). Like `Leaving`, this is not a canonical lifecycle
-state; it is a terminal local condition for that group copy.
+state. It is locally inactive and reverses only if convergence supersedes the removing Commit inside the rollback
+horizon under the member-departure rule.
 
 The optional "unverified" presentation described in [joining.md](./joining.md) ("Welcome-bootstrap trust") is neither
 a lifecycle state nor a protocol condition. It is an application-defined activity heuristic and does not change the
@@ -104,8 +105,9 @@ Convergence has a separate derived status:
 
 - `Syncing`: a bounded convergence pass is collecting score-changing input and neither the quiescence window nor the
   absolute pass deadline defined in [convergence.md](./convergence.md) has elapsed.
-- `Resolving`: the quiescence window has elapsed, but the client still has unresolved convergence work, such as a child
-  commit whose parent has not been retained or fetched yet.
+- `Resolving`: the pass input batch is frozen and the client is computing a deterministic fixed point over state already
+  retained in that batch. It does not wait for fetches or admit later input; unresolved children remain deferred to a
+  later pass.
 - `Settled`: candidate processing reached a fixed point and the selected branch, if any, has been applied.
 - `Blocked`: candidate processing cannot safely continue without a repair path or missing retained material.
 
@@ -117,7 +119,7 @@ The legal combinations are:
 | Convergence status | Lifecycle states it can appear in | Notes                                                                 |
 | ------------------ | --------------------------------- | --------------------------------------------------------------------- |
 | `Syncing`          | `Stable`, `Recovering`            | bounded pass still collecting score-changing input                    |
-| `Resolving`        | `Stable`, `Recovering`            | quiescence elapsed, work outstanding (e.g. a child commit's parent)   |
+| `Resolving`        | `Stable`, `Recovering`            | frozen-batch fixed-point work; no waiting or new input                |
 | `Settled`          | `Stable`                          | fixed point reached and any selected branch applied                   |
 | `Blocked`          | `Recovering`, `Unrecoverable`     | needs a repair path or missing retained material                      |
 

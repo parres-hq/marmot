@@ -122,7 +122,7 @@ Only an active admin MAY send a standalone image update proposal.
 
 Only an active admin MAY commit an image update.
 
-Commit authorization, including removal authorization, follows the shared prior-epoch rule in
+Commit authorization, including removal authorization, follows the shared candidate-parent rule in
 [README.md](./README.md) ("Authorization Evaluation").
 
 ## Removal

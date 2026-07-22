@@ -24,8 +24,8 @@ proposal from the MLS extensions work and does not define a Marmot custom propos
 A current member MAY create a SelfRemove proposal for itself.
 
 A non-admin member MAY self-remove if the MLS proposal is valid. A SelfRemove proposal whose sender is an active admin
-in the prior epoch is invalid (see [../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md) for the
-definition of an active admin).
+in its authenticated source-epoch state is invalid (see
+[../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md) for the definition of an active admin).
 
 A departing admin MUST first complete an accepted admin-policy update that removes its account from the admin list
 before creating a SelfRemove proposal. The admin-policy update is an admin-gated group-state change and is valid only
@@ -127,12 +127,16 @@ A removed group copy is retained inactive, not deleted. The removed member:
 
 - MUST NOT prepare or publish commits, proposals, or MLS application messages for the group;
 - MUST NOT present the group to the user as active or sendable;
+- while the removing Commit remains inside the rollback horizon, MUST continue accepting and retaining
+  convergence-relevant inbound input and MUST run the candidate replay and branch selection needed to determine whether
+  another eligible branch supersedes that Commit;
 - MAY retain previously delivered content and group history for local display;
 - MAY discard the local group copy at any time.
 
-The removed condition is terminal only while the removing Commit remains on the selected canonical branch. If a later
-convergence pass supersedes that Commit inside the rollback horizon, the client MUST withdraw the self-removed
-notification, clear the removed marker, and derive membership and sendability from the newly selected canonical state;
+The removed condition is inactive and outbound-prohibited, but remains reversible while the removing Commit is inside
+the rollback horizon. If a later convergence pass supersedes that Commit in that window, the client MUST withdraw the
+self-removed notification, clear the removed marker, and derive membership and sendability from the newly selected
+canonical state;
 that reversal does not require a Welcome. Once the removal remains canonical beyond the rollback horizon, v1 cannot
 reverse it for that group copy. Rejoining then requires a new Welcome, which creates new local group state under
 [joining.md](./joining.md). Retention does not weaken forward secrecy: while removal remains canonical, the removed
@@ -144,7 +148,7 @@ A SelfRemove-only Commit is invalid if:
 
 - it references no SelfRemove proposal or includes a proposal of another type;
 - any referenced proposal does not target its authenticated sender;
-- any referenced proposal sender is an active admin in the prior epoch;
+- any referenced proposal sender is an active admin in the proposal's authenticated source-epoch state;
 - the committer is the sender and target of any referenced SelfRemove proposal;
 - the committer is not a current member;
 - the commit fails the normal MLS and Marmot convergence checks.

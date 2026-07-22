@@ -107,7 +107,7 @@ Only an active admin MAY send a standalone routing update proposal.
 Only an active admin MAY commit a routing update. This includes routing rotations: a `nostr_group_id` change is
 admin-gated like every other routing update.
 
-Commit authorization, including removal authorization, follows the shared prior-epoch rule in
+Commit authorization, including removal authorization, follows the shared candidate-parent rule in
 [README.md](./README.md) ("Authorization Evaluation").
 
 ## Removal

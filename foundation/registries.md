@@ -26,13 +26,13 @@ Marmot app components use MLS private-use component ids.
 These values are pinned for the MLS extensions draft profile currently used by Marmot. If the upstream draft changes
 these assignments, Marmot needs an explicit compatibility plan before changing wire behavior.
 
-| Namespace        | Value    | Name                  | Upstream source                      |
-| ---------------- | -------- | --------------------- | ------------------------------------ |
-| ComponentID      | `0x0001` | `app_components`      | MLS extensions draft `ComponentID`   |
-| ComponentID      | `0x0004` | `last_resort_key_package` | MLS extensions draft `ComponentID` |
-| Extension type   | `0x0006` | `app_data_dictionary` | MLS extensions draft extension type  |
-| Proposal type    | `0x0008` | `app_data_update`     | MLS extensions draft proposal type   |
-| Proposal type    | `0x000a` | `self_remove`         | MLS extensions draft proposal type   |
+| Namespace      | Value    | Name                      | Upstream source                     |
+| -------------- | -------- | ------------------------- | ----------------------------------- |
+| ComponentID    | `0x0001` | `app_components`          | MLS extensions draft `ComponentID`  |
+| ComponentID    | `0x0004` | `last_resort_key_package` | MLS extensions draft `ComponentID`  |
+| Extension type | `0x0006` | `app_data_dictionary`     | MLS extensions draft extension type |
+| Proposal type  | `0x0008` | `app_data_update`         | MLS extensions draft proposal type  |
+| Proposal type  | `0x000a` | `self_remove`             | MLS extensions draft proposal type  |
 
 These values match draft-ietf-mls-extensions-09. In that draft, last-resort KeyPackage marking is the empty-data
 `last_resort_key_package` application component, not an MLS extension type.

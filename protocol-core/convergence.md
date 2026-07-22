@@ -54,17 +54,28 @@ witness score, supplying a missing parent, or making deferred input processable.
 cannot change branch selection does not restart quiescence. Neither do duplicate, invalid, stale, already-dominated, or
 already-fully-counted witness inputs.
 
+A valid Commit that linearly advances the canonical tip starts or joins this bounded pass even when no divergent edge
+is yet known. The canonical tip does not advance while the pass is `Syncing`; the linear Commit is applied only when the
+pass reaches its cutoff and resolves the frozen batch. If an eligible divergent edge becomes available before that
+cutoff, the same pass changes the group lifecycle from `Stable` to `Recovering`. It MUST NOT restart either timer,
+resnapshot `pass_base_epoch`, or briefly apply the formerly linear edge as canonical state.
+
 The absolute pass deadline starts when the pass starts and MUST NOT restart. A client closes the pass at the earlier of:
 
 1. `settlement_quiescence_ms` elapsing without score-changing input; or
 2. `max_convergence_pass_ms` elapsing.
 
-At that cutoff, the client freezes the pass's retained input batch and reaches a fixed point over that batch. It returns
-to `Stable` only after successfully selecting and applying the canonical branch. If required retained state, including
-the retained anchor, is missing, it does not mutate canonical group state and enters `Unrecoverable` as required below.
-Input retained after the cutoff is not discarded; it belongs to a later pass. The local cutoff controls scheduling and
-batch membership only. Input arrival time, cutoff time, and pass membership MUST NOT enter candidate validity or the
-branch score.
+At that cutoff, the client freezes the pass's retained input batch and reaches a deterministic fixed point using only
+already-retained state in that batch. This `Resolving` phase MUST NOT wait for a fetch, admit newly retained input, or
+restart either timer. A Commit whose parent is absent from the frozen batch remains deferred to a later pass; the
+missing parent does not keep this pass open. The original `max_convergence_pass_ms` deadline bounds the entire pass,
+including this fixed-point work, and MUST NOT restart.
+
+The client returns to `Stable` only after successfully selecting and applying the canonical branch. If required
+retained state, including the retained anchor, is missing, it does not mutate canonical group state and enters
+`Unrecoverable` as required below. Input retained after the cutoff is not discarded; it belongs to a later pass. The
+local cutoff controls scheduling and batch membership only. Input arrival time, cutoff time, and pass membership MUST
+NOT enter candidate validity or the branch score.
 
 After a bounded pass returns the group to `Stable`, the client MUST give one already-queued, admin-authorized local
 group-state intent an opportunity to be prepared against the selected canonical state before it begins another
@@ -84,10 +95,10 @@ divergent edge then provide at least two candidate branches from a shared `fork_
 `Recovering` and open a bounded convergence pass before convergence selects and applies a branch.
 
 A valid Commit that advances the current canonical tip, with no divergent eligible edge, is linear advancement and does
-not by itself enter `Recovering`. A Commit with an unavailable parent remains deferred and does not trigger recovery
-until replay against retained state produces a valid divergent edge. Invalid, stale, duplicate, or outside-horizon
-input does not trigger recovery. Fork detection derives parentage from validated MLS bytes and retained states, never
-from transport metadata.
+not by itself enter `Recovering`; it still follows the bounded-pass apply timing above. A Commit with an unavailable
+parent remains deferred and does not trigger recovery until replay against retained state produces a valid divergent
+edge. Invalid, stale, duplicate, or outside-horizon input does not trigger recovery. Fork detection derives parentage
+from validated MLS bytes and retained states, never from transport metadata.
 
 ## Candidate branches
 
@@ -114,6 +125,10 @@ canonical_tip_epoch - commit_source_epoch > max_rewind_commits
 
 Here `canonical_tip_epoch` is the epoch of the client's current canonical group state when it performs the check, and
 `commit_source_epoch` is the epoch authenticated by the deferred MLS handshake message.
+
+Deferred expiry deliberately uses the live canonical tip so obsolete input can age out as canonical state advances
+across completed passes. Branch eligibility uses the frozen `pass_base_epoch` instead so an open pass cannot change its
+rollback horizon while comparing candidates.
 
 When that condition becomes true, the client reclassifies the Commit as stale and MAY release its retained bytes. If
 the parent arrives first, the client replays the Commit and applies the normal candidate validity and `fork_epoch`
@@ -142,7 +157,7 @@ Each candidate branch has:
   both are `SHA-256` over that tip Commit's MLS bytes. `tip_digest` is only a final tie-breaker after fixed authenticated
   metadata.
 - `raw_commit_depth`: the number of valid commits from `fork_epoch` to `tip_epoch`;
-- app-payload witnesses that decrypt at the branch epochs defined below.
+- fully validated app-payload witnesses at the branch epochs defined below.
 
 The branch epochs of a candidate are the epochs strictly greater than `fork_epoch` and at most `tip_epoch`.
 
@@ -164,9 +179,12 @@ A branch that needs a retained state older than the retained anchor MUST NOT be 
 ## App-payload witnesses
 
 An app-payload witness is an MLS application message whose Marmot app payload decrypts against a candidate branch state
-at one of that branch's branch epochs. An MLS application message that decrypts at `fork_epoch` or earlier is not an
-app-payload witness for any candidate. A witness MUST also be inside the retained app-payload window, evaluated with
-the candidate's `tip_epoch` as the reference tip (the window formula is in
+at one of that branch's branch epochs and passes the complete payload checks in
+[../foundation/application-messages.md](../foundation/application-messages.md), including canonical structural
+decoding and receiver authentication requiring the inner author identity to equal the Marmot account identity
+authenticated by the MLS sender leaf. Decryption alone is not a witness. An MLS application message at `fork_epoch` or
+earlier is not an app-payload witness for any candidate. A witness MUST also be inside the retained app-payload window,
+evaluated with the candidate's `tip_epoch` as the reference tip (the window formula is in
 [retained-history.md](./retained-history.md), "App-payload retention").
 
 Witnesses are counted by distinct Marmot sender identity per branch epoch. The sender identity is the account identity

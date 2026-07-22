@@ -59,6 +59,12 @@ After unwrapping a Welcome, the receiver:
 13. catches up on outstanding Commits as best it can;
 14. performs a self-update as soon as practical.
 
+Steps 4 through 9 are one tentative validation operation. They MUST NOT durably create or replace group state, consume
+or rotate the referenced KeyPackage, or delete its `init_key` material unless every check through step 9 succeeds. If
+the MLS Welcome-processing operation consumes KeyPackage material before exposing the resulting group id and state,
+the receiver MUST stage that mutation or provide equivalent rollback so rejection restores the exact pre-processing
+KeyPackage state. Durable group storage and KeyPackage rotation begin only at steps 10 through 12.
+
 A new member SHOULD perform the post-join self-update before sending application payloads when feasible, and SHOULD do
 so promptly after joining. This carries forward the MIP-02 post-join rotation guidance; this spec keeps it as a
 `SHOULD` because a member who never rotates is a forward-secrecy weakness for itself, not a correctness break for the
@@ -94,8 +100,9 @@ application-defined; this signal is an activity heuristic, not a group-authentic
 
 ## Failure behavior
 
-If Welcome processing fails, the receiver MUST NOT rotate away the KeyPackage that was referenced by the failed Welcome.
-The inviter MAY retry or choose another KeyPackage.
+If Welcome processing or any tentative validation through step 9 fails, the receiver MUST leave the referenced
+KeyPackage and its `init_key` material exactly as they were before processing. The inviter MAY retry or choose another
+KeyPackage.
 
 A receiver rejects the Welcome if:
 

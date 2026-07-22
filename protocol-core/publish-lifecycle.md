@@ -54,6 +54,12 @@ acknowledgement signal. A transport binding or client MAY apply a stricter succe
 accept is the minimum, and a client MUST NOT treat anything weaker (such as a queued or sent-without-acknowledgement
 state) as success.
 
+A transport MAY require attempts to additional targets after its acknowledgement rule has been satisfied. The
+acknowledgement that satisfies that rule releases publish-before-apply; outstanding transport fanout MUST NOT keep the
+group in `PendingPublish`, reopen that state after apply, undo the applied state, or require the Commit to be re-staged.
+The active transport document defines which remaining targets require an attempt and whether later retries are
+required.
+
 Group creation is special because there is no existing group recipient set before the group exists.
 
 For every epoch-0 founding creation, with or without initial invitees, the creation publish obligation has an empty

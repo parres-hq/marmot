@@ -102,17 +102,16 @@ Only an active admin MAY send a standalone encrypted-media policy update proposa
 
 Only an active admin MAY commit an encrypted-media policy update.
 
-Commit authorization, including removal authorization, follows the shared prior-epoch rule in
+Commit authorization, including removal authorization, follows the shared candidate-parent rule in
 [README.md](./README.md) ("Authorization Evaluation").
 
 ## Removal
 
 Only an active admin MAY commit removal of this component.
 
-This component MUST NOT be removed while it is listed as required in GroupContext `app_components`. Under a media-capable
-application profile it is required for new app groups, so removing it from such a group is invalid (see
-[../protocol-core/group-setup.md](../protocol-core/group-setup.md)). A group whose profile does not require encrypted
-media MAY omit it.
+This component MUST NOT be removed while it is listed as required in GroupContext `app_components`. If an authorized
+Commit first removes that requirement, a later authorized Commit MAY remove the component. Application-profile policy
+is not authenticated group state and MUST NOT independently make otherwise-valid component removal invalid.
 
 ## Migration
 
