@@ -53,12 +53,13 @@ Unrecoverable
   -> Stable              state was repaired, restored, or replaced by a verified join
 ```
 
-Fork detection runs only from `Stable`, against settled canonical state. There is no `Merging -> Recovering` edge: a
-competing branch observed while the client is applying its own confirmed commit is retained, the merge completes to
-`Stable`, and fork detection then runs from `Stable`. `Recovering` re-entry is implicit: convergence-relevant input
-that arrives while the group is already in `Recovering` and before the bounded pass cutoff is folded into that recovery
-pass. Input retained after the cutoff belongs to a later pass. The group stays in `Recovering` until a branch is selected
-and applied (`-> Stable`) or no safe branch exists (`-> Unrecoverable`).
+Fork detection runs only from `Stable`, against settled canonical state, using the operational rule in
+[convergence.md](./convergence.md) ("Fork detection"). Linear advancement does not enter `Recovering`. There is no
+`Merging -> Recovering` edge: a competing branch observed while the client is applying its own confirmed commit is
+retained, the merge completes to `Stable`, and fork detection then runs from `Stable`. `Recovering` re-entry is implicit:
+convergence-relevant input that arrives while the group is already in `Recovering` and before the bounded pass cutoff is
+folded into that recovery pass. Input retained after the cutoff belongs to a later pass. The group stays in `Recovering`
+until a branch is selected and applied (`-> Stable`) or no safe branch exists (`-> Unrecoverable`).
 
 A client MUST reject a local group-state commit while the group is in `PendingPublish`, `Merging`, `Recovering`, or
 `Unrecoverable`.

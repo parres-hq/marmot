@@ -74,6 +74,19 @@ Convergence parameters are deliberately not group-tunable: a bad policy choice c
 version that changes convergence behavior MUST ship the new policy as a new app component behind a required capability.
 Until such a component exists, there is no mechanism to change the active policy.
 
+## Fork detection
+
+While the lifecycle is `Stable`, a fork-shaped conflict is detected when retained input produces a valid, eligible
+candidate edge that diverges from the currently selected canonical commit path. The retained canonical suffix and the
+divergent edge then provide at least two candidate branches from a shared `fork_epoch`. The client MUST enter
+`Recovering` and open a bounded convergence pass before convergence selects and applies a branch.
+
+A valid Commit that advances the current canonical tip, with no divergent eligible edge, is linear advancement and does
+not by itself enter `Recovering`. A Commit with an unavailable parent remains deferred and does not trigger recovery
+until replay against retained state produces a valid divergent edge. Invalid, stale, duplicate, or outside-horizon
+input does not trigger recovery. Fork detection derives parentage from validated MLS bytes and retained states, never
+from transport metadata.
+
 ## Candidate branches
 
 A client builds candidate branches by replaying MLS commit bytes from retained group states.
