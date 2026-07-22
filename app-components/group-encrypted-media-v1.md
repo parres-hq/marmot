@@ -53,7 +53,7 @@ The default test/reference policy uses:
 ```text
 media_format = "encrypted-media-v1"
 allowed_locator_kinds = ["blossom-v1"]
-default_blob_endpoints = [{ locator_kind = "blossom-v1", base_url = "https://blossom.primal.net" }]
+default_blob_endpoints = [{ locator_kind = "blossom-v1", base_url = "https://blossom.primal.net/" }]
 ```
 
 ## Update
