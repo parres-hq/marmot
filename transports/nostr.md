@@ -295,6 +295,9 @@ fetch hint only.
 Group messages are published to the relay list in `marmot.transport.nostr.routing.v1`, after applying any local safety
 policy. A commit that changes routing state is published to the prior epoch's routing address
 ([../app-components/nostr-routing-v1.md](../app-components/nostr-routing-v1.md), "Routing rotation").
+The sender MUST attempt publication to every relay in that target list that local policy permits. The first accepted
+acknowledgement can satisfy the publish lifecycle, but it does not permit the sender to skip the other permitted
+targets.
 
 Welcome messages are published to the recipient's inbox relay set ("Account inbox relays" above).
 
