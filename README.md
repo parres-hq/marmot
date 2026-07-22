@@ -21,8 +21,8 @@ Transport beyond that stays agnostic. Marmot clients currently move messages ove
 content, and key agreement layers do not depend on Nostr relays as the only possible transport.
 
 Marmot is designed for group messaging that keeps working when parts of the transport fail. With Nostr, clients connect
-to several relays at once, so a relay that goes down, gets blocked, or turns malicious does not break the group. Any
-future transport binding needs the same redundancy and failover properties.
+to several relays at once, so a relay that goes down, gets blocked, or turns malicious does not break the group. Marmot
+transports MUST support redundant delivery so a group does not depend on one server, relay, or endpoint.
 
 The protocol also tries to expose as little metadata as the design allows. Perfect metadata privacy is not possible in a
 decentralized messaging system, but Marmot SHOULD avoid new metadata leaks unless a feature cannot work without them.
