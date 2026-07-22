@@ -181,11 +181,13 @@ Eligible branches are compared in this order:
 
 1. Higher `effective_commit_depth`.
 2. Witness quorum beats no quorum.
-3. Higher `raw_commit_depth`.
-4. Higher `app_witness_score`.
-5. Lower `tip_priority` (`privileged` before `ordinary`).
-6. Lower `tip_committer`.
-7. Lower `tip_digest`.
+3. Higher `app_witness_score`.
+4. Lower `tip_priority` (`privileged` before `ordinary`).
+5. Lower `tip_committer`.
+6. Lower `tip_digest`.
+
+`raw_commit_depth` has no separate comparison step. It is already part of `effective_commit_depth`; if effective depth
+and witness-quorum status are both tied, a further raw-depth comparison is necessarily tied as well.
 
 Lower `tip_committer` means lexicographic order over the authenticated member-id bytes. Lower digest means
 lexicographic order over the 32 digest bytes. Digest ordering is a same-committer fallback, not the primary fork winner.
