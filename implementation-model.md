@@ -83,9 +83,9 @@ Use aggregate counts, method names, local enum names, and redacted or hashed val
 Some surfaces are fully specified but not yet implemented in this repository. They remain normative; the deferral is a
 property of the current darkmatter code, not of the protocol.
 
-Deferred implementation tails are tracked as issues rather than restated here: per-group agent-stream `replay_ttl_secs`
-/ `max_plaintext_frame_len` enforcement (#321) and exposing the MLS own-leaf-index through the engine API for push
-`leaf_index` (#329).
+Implementation repositories track deferred work such as per-group agent-stream `replay_ttl_secs` /
+`max_plaintext_frame_len` enforcement and exposing the MLS own-leaf-index through an engine API for push `leaf_index`.
+This spec repository does not assign implementation-work issue numbers.
 
 ## Darkmatter Mapping
 
