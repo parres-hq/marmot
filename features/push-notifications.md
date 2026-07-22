@@ -172,6 +172,12 @@ SignedRecord = domain_tag
             || encrypted_token[1084]      removal entries omit this field
 ```
 
+`SignedRecord` deliberately uses this feature-specific fixed-width v1 encoding rather than the Marmot binary profile's
+QUIC variable-length integers. Every integer is unsigned big-endian at the exact width shown, the two variable fields
+use the shown `u16` byte lengths, and the fields are concatenated without alignment or padding. Signers and verifiers
+MUST NOT substitute QUIC varints, TLS vectors, or a serialization-library default. A future incompatible encoding needs
+a new push content version and domain tag; it cannot reinterpret `marmot-push-v1` signatures.
+
 `domain_tag` is the 27-byte ASCII string `marmot-push-token-record-v1` for token entries (kinds `447`/`448`) and the
 28-byte ASCII string `marmot-push-token-removal-v1` for removal entries (kind `449`). A removal encodes
 `relay_hint_len` as zero, includes no `relay_hint` bytes, and omits the trailing `encrypted_token`. `group_id` is the raw
