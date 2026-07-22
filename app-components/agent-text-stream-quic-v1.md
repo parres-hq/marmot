@@ -67,14 +67,18 @@ enforced at every membership change:
   `required_member_roles`;
 - a joiner that does not support every role capability named by `required_member_roles` MUST NOT join the group.
 
-`allowed_member_roles` is the set of role capabilities a member MAY advertise in this group.
+`allowed_member_roles` is the set of role capabilities that this group policy permits `required_member_roles` to
+contain. It constrains future component updates, not LeafNode capability advertisement. A member MAY advertise support
+for additional role capabilities that are not in `allowed_member_roles`; advertising support does not grant permission
+to exercise a role and does not make that role required by the group.
 
 For the first user-to-agent profile:
 
 - `required_member_roles` includes `receive` so every member can process agent-stream start/final semantics;
 - `allowed_member_roles` includes `receive` and `send`;
 - `send` and `fanout` are advertised only by members or helpers that implement the live raw QUIC data plane;
-- `fanout` is allowed only when the group wants members or relays to advertise forwarding support.
+- `fanout` is included in `allowed_member_roles` only when the group permits a later policy update to require forwarding
+  support from every member.
 
 `max_plaintext_frame_len` caps the plaintext bytes in one stream frame before record encryption.
 
