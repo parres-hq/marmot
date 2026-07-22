@@ -113,7 +113,9 @@ Most feature-owned group state SHOULD land here.
 Transport documents define how Marmot bytes move over a network.
 
 Transport documents MAY define transport-specific delivery addresses, event shapes, relay or endpoint selection, fetch
-rules, and app components. They SHOULD NOT define generic group semantics.
+rules, and app components. They MUST follow the ownership boundary in
+[transports/README.md](./transports/README.md): transport documents do not define identity, inner app payloads, MLS
+credential binding, branch selection, or app-component bytes.
 
 ## Features
 
