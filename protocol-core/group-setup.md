@@ -39,6 +39,8 @@ in every Marmot Welcome carries the ratchet tree inline, as [joining.md](./joini
 When creating a group, the creator chooses the initial required feature set, initial members, transport routing state,
 and optional profile settings. The initial admin policy MUST contain the creator's Marmot account identity and MAY
 contain other initial members. This requirement applies even when the creator is the group's only initial member.
+It is therefore not conditional on enabling an admin feature or on adding invitees: every founding group includes the
+same required admin-policy component, and any founding Welcome is evaluated against it.
 
 If the selected transport requires signed group routing state, creation MUST include that transport's routing component.
 
