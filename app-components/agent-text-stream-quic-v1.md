@@ -150,4 +150,5 @@ Marmot messages and final kind `9` stream messages remain valid.
 
 ## Migration
 
-There is no MIP-era component to migrate from.
+There is no MIP-era component to migrate from. v1 is the first versioned form; a breaking change gets a new component
+id and file.
