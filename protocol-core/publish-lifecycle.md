@@ -17,6 +17,7 @@ This rule applies to:
 - group profile update
 - required-capability change
 - admin policy update
+- self-update Commit
 - policy-generated commits
 - SelfRemove-only commits prepared by remaining members
 
