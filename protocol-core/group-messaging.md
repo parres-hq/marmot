@@ -76,7 +76,7 @@ evidence MUST NOT choose the winning branch, and digest ordering is only the fin
 
 When message retention is enabled, the active transport binding applies its own retention hint if it has one.
 
-When retention is disabled, callers cannot force retention data onto the group message envelope. The sender removes or
+When retention is disabled, a sender cannot force retention data onto the group message envelope. The sender removes or
 replaces retention data so the on-wire behavior is determined by group state.
 
 ## Migration notes
