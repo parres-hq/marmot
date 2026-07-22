@@ -56,6 +56,9 @@ uint16 mls_signature_public_key_len
 opaque mls_signature_public_key[mls_signature_public_key_len]
 ```
 
+The literal zero byte terminates the ASCII domain label and separates it from the following fixed-width binary fields.
+It is part of the v1 domain separator, not padding or an optional string terminator.
+
 The signature is a 64-byte BIP-340 Schnorr signature over that digest, verified with `account_identity`. The 32-byte
 `SHA-256` digest above is itself the BIP-340 message: the account key signs and a verifier checks it as a prehashed
 32-byte value. Marmot reuses only the account key's BIP-340 scheme here; it does NOT apply the Nostr canonical
