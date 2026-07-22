@@ -138,6 +138,10 @@ or an invalid result. If any component update is invalid, the Commit is invalid.
 
 ## Authorization Evaluation
 
+Standalone proposal authorization is evaluated against the authenticated candidate state for the proposal's MLS
+source epoch. It checks the proposal sender independently from the later Commit's committer; a resulting-state update
+does not retroactively grant or revoke the proposal sender's authority.
+
 Commit authorization for every component operation, including update and removal, is evaluated against the candidate
 parent state: the active-admin set and other authorization inputs from the epoch before the Commit. Updates carried in
 the Commit cannot grant their own committer authority or revoke authority before the other operations in that Commit

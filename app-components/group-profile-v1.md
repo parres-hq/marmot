@@ -48,8 +48,8 @@ Only an active admin MAY send a standalone profile update proposal.
 
 Only an active admin MAY commit a profile update.
 
-Commit authorization, including removal authorization, follows the shared prior-epoch rule in
-[README.md](./README.md) ("Authorization Evaluation").
+Proposal-sender authorization follows the shared source-epoch rule, while commit authorization, including removal
+authorization, follows the shared prior-epoch rule in [README.md](./README.md) ("Authorization Evaluation").
 
 ## Removal
 
