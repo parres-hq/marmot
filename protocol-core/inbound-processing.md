@@ -28,7 +28,7 @@ vocabulary (`accepted`, `deferred`, `stale`, `invalidated`) is pinned in
 Each inbound message has a message id used for deduplication. A client MUST deduplicate before applying state changes.
 
 The message id used for deduplication MUST be stable for the carried protocol bytes. It MUST NOT depend on local receive
-order, transport source order, subscription id, or database row id.
+order, transport source order, subscription id, or any local storage identifier.
 
 Duplicate input maps to the `duplicate` category in [../foundation/errors.md](../foundation/errors.md) and MUST NOT be
 applied twice. Convergence outcomes named in `PascalCase` below, such as `BeyondAnchor`, map to a disposition and a
