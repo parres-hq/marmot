@@ -136,6 +136,7 @@ A multi-device join is invalid if:
 - the group has not negotiated support for the multi-device gate;
 - the identity proof is missing or invalid;
 - the proof does not bind to the joining account identity;
+- the joining LeafNode credential identity does not match any existing group member's credential identity;
 - the external PSK id or PSK value is wrong for the current group context;
 - the Commit includes any proposal beyond the required ExternalInit and Marmot multi-device External PSK;
 - the External Commit fails normal MLS validation.
