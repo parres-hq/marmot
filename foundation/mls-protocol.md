@@ -82,5 +82,5 @@ Registered Marmot exporter labels are listed in [registries.md](./registries.md)
 
 ## Exporter research
 
-Research whether the MLS Extensions Safe framework's exporter APIs are useful for
+Research whether the MLS Extensions draft's `SafeExportSecret` API is useful for
 any Marmot secret derivation. This spec does not assign one.
