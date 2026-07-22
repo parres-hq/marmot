@@ -38,7 +38,7 @@ does not produce a Nostr signature for the inner Marmot app event. Because decod
 does not match (see "Encoding"), every implementation MUST produce byte-identical serialization; the exact rules are
 NIP-01's, not implementation-defined.
 
-The payload is not signed as a Nostr relay event. Relays MUST NOT be able to accept it as a standalone event. MLS
+The payload is not signed as a Nostr relay event and is not a valid standalone Nostr event for relay publication. MLS
 authenticates the sender as a group member, and the `pubkey` field identifies the Marmot account that authored the
 message.
 
