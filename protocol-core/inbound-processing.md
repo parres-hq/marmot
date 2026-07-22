@@ -3,7 +3,7 @@
 Status: adopted.
 
 Inbound processing accepts bytes from a transport, turns them into Marmot protocol input, and gives each input a
-disposition.
+protocol outcome: either a rejection category or, for input that enters convergence, a convergence disposition.
 
 Transport delivery is evidence that bytes exist. It is not evidence that those bytes define the canonical group state.
 
@@ -14,14 +14,16 @@ transport message
   -> peel or decode transport envelope
   -> retain protocol bytes
   -> classify welcome, commit, proposal, or MLS application message
-  -> feed group-state input into convergence
-  -> emit accepted, stale, deferred, or invalidated disposition
-  -> emit application-visible output when canonical state or delivered payloads change
+  -> produce one protocol outcome:
+     -> reject before convergence with a rejection category; or
+     -> feed processable group-state input into convergence
+        -> emit accepted, stale, deferred, or invalidated disposition
+        -> emit application-visible output when canonical state or delivered payloads change
 ```
 
-The exact local API is implementation-defined. The protocol-visible result is the disposition. The disposition
-vocabulary (`accepted`, `deferred`, `stale`, `invalidated`) is pinned in
-[../foundation/errors.md](../foundation/errors.md).
+The exact local API is implementation-defined. The protocol-visible outcome is either a rejection category or a
+convergence disposition. The category and disposition vocabularies, including the four dispositions (`accepted`,
+`deferred`, `stale`, `invalidated`), are pinned in [../foundation/errors.md](../foundation/errors.md).
 
 ## Message identity
 
