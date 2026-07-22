@@ -39,7 +39,7 @@ The Marmot convergence policy, version 1, is:
 | `witness_quorum_epochs`             | `1`     |
 | `max_witness_override_depth`        | `1`     |
 
-`policy_version` names this pinned profile, not a wire field: the table above is convergence policy version 1.
+The table above is convergence policy v1. It does not define or encode a policy-version wire field.
 
 `max_witness_override_depth` MUST NOT exceed `max_rewind_commits`. The witness-quorum boost is bounded so it can never
 push a branch past the rollback horizon; allowing it to would let app-payload traffic beat an arbitrarily longer valid
