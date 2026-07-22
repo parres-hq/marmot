@@ -205,7 +205,8 @@ Eligible branches are compared in this order:
 `raw_commit_depth` has no separate comparison step. It is already part of `effective_commit_depth`; if effective depth
 and witness-quorum status are both tied, a further raw-depth comparison is necessarily tied as well.
 
-Lower `tip_committer` means lexicographic order over the authenticated member-id bytes. Lower digest means
+Lower `tip_committer` means lexicographic order over the authenticated account identity's raw 32-byte x-only
+secp256k1 public key, as defined in [../foundation/identity.md](../foundation/identity.md). Lower digest means
 lexicographic order over the 32 digest bytes. Digest ordering is a same-committer fallback, not the primary fork winner.
 
 Every value in this comparison MUST come from MLS-valid bytes, retained state, decrypted app payloads, or the pinned
