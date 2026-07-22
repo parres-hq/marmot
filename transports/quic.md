@@ -75,9 +75,10 @@ Candidates are reached over QUIC with TLS 1.3.
 
 A receiver validates the endpoint's certificate against the candidate `host`: a DNS hostname uses normal DNS-name/SNI
 validation, while an IPv4 or IPv6 literal omits SNI and MUST match an `iPAddress` subjectAltName. Because preview
-endpoints and brokers are frequently self-signed, a client MAY instead pin the endpoint certificate, by exact DER or by its SHA-256
-fingerprint, when that pin is supplied through the application's out-of-band watch configuration. Loopback/insecure
-trust is permitted only through explicit dev/test configuration, never as a default.
+endpoints and brokers may be self-signed, a client MAY instead pin the endpoint certificate by exact DER or by its
+SHA-256 fingerprint through local application configuration. The configuration format, pin scope, lifecycle, and
+decision to contact an endpoint are outside this protocol. Those local choices do not change start-payload or candidate
+validity.
 
 TLS authenticates and encrypts the QUIC hop only. It does not make preview records authoritative and does not replace
 MLS membership: a current group member still derives the same record key, and the final MLS payload remains the
