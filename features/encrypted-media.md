@@ -161,6 +161,9 @@ reference-level locator rule below. A receiver MUST reject a reference if:
 - `nonce` is not exactly 12 bytes encoded as 24 hex characters
 - `blurhash` is present
 
+Rejecting a reference is attachment-local: the receiver omits that `imeta` attachment from rendering. It MUST NOT
+invalidate or drop the carrying app payload, its caption, or any other valid attachment.
+
 After a reference passes those checks, fetching and rendering are attachment-availability decisions. Any of the
 following makes that attachment unavailable and MUST NOT retroactively invalidate the reference or its carrying app
 payload:
@@ -181,7 +184,7 @@ locator cannot forge content; only the structural conditions above protect integ
 Host safety is the one locator property that DOES invalidate, and it applies only to `blossom-v1` locators — the kind
 this client fetches over HTTP. An unsafe-host or cleartext-`http` Blossom locator is a hostile request vector: unlike a
 wrong kind, the harm is the fetch request itself (an attempt to make the client reach a private or internal address),
-which content hash-authentication cannot neutralize, so such a reference is rejected and its message dropped. A
+which content hash-authentication cannot neutralize, so such a reference is rejected as an attachment. A
 non-Blossom locator is never fetched by this client, so it is subject only to the structural checks and is otherwise
 merely unfetchable per the rule above.
 
