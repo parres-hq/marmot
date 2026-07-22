@@ -32,6 +32,8 @@ convergence, and retained history. It says *when* MLS-valid bytes become canonic
 
 ## Verification
 
+- When adding, renaming, or removing a spec document, update [`../layout.md`](../layout.md) and this surface's
+  [`README.md`](README.md) in the same change.
 - Run the leak grep from [`../AGENTS.md`](../AGENTS.md) ("Verification") scoped to this directory; confirm no
   transport address shapes or darkmatter code names leaked in.
 - Confirm any disposition or outcome name you introduce maps to a category in

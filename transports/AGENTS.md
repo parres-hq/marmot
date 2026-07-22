@@ -30,6 +30,8 @@ any transport-owned app components (e.g. Nostr routing). One file per transport 
 
 ## Verification
 
+- When adding, renaming, or removing a spec document, update [`../layout.md`](../layout.md) and this surface's
+  [`README.md`](README.md) in the same change.
 - Confirm the transport doc references only delivery mechanics, not group-state selection.
 - Confirm Nostr kinds match those registered in [`../foundation/registries.md`](../foundation/registries.md) and that
   no removed kinds (legacy `443`, `10051`) linger.

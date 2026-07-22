@@ -28,6 +28,8 @@ rule below is the load-bearing one.
 
 ## Verification
 
+- When adding, renaming, or removing a spec document, update [`../layout.md`](../layout.md) and this surface's
+  [`README.md`](README.md) in the same change.
 - Grep the feature doc for `struct`/component-id definitions that should live in [`../app-components/`](../app-components/README.md);
   a feature doc should reference those, not define them.
 - Confirm every surface the feature names resolves to a real owning doc and every link works.
