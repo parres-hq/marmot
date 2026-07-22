@@ -114,9 +114,10 @@ the ciphertext before base64 encoding. The AAD is the empty byte string and is n
 The exporter label/context pair is registered for the Nostr kind `445` outer encryption layer only. It MUST NOT be
 reused for app payloads, media, stream records, or other feature keys.
 
-Security note: `group_event_key` is scoped to one MLS group epoch, so nonce uniqueness for a given key rests on the
-12-byte random nonce. The bounded number of kind `445` events in one epoch keeps random 96-bit nonces well inside the
-birthday bound for this outer ChaCha20-Poly1305 layer.
+Security note: `group_event_key` is scoped to one MLS group epoch, so nonce uniqueness for a given key is probabilistic.
+Each `random(12)` nonce MUST be sampled independently and uniformly with a cryptographically secure random generator.
+Marmot v1 does not impose an event-count limit per epoch; after `q` events under one epoch key, the approximate random
+collision probability is `q(q-1) / 2^97`.
 
 The Nostr event id, event `pubkey`, tags, relay timestamp, and relay URL are not AEAD AAD for kind `445`. They are
 validated as the transport envelope and then treated as transport evidence only.
