@@ -119,7 +119,9 @@ bytes, not the encoded characters.
 When an owning document invokes the Marmot media-type algorithm, canonicalize the input bytes as follows:
 
 1. take the substring before the first `;`, dropping any parameters;
-2. trim leading and trailing ASCII whitespace;
+2. trim leading and trailing ASCII whitespace bytes, where the complete set is HTAB (`0x09`), LF (`0x0a`), FF
+   (`0x0c`), CR (`0x0d`), and space (`0x20`); vertical tab (`0x0b`), non-ASCII bytes, and Unicode whitespace are not
+   trimmed;
 3. lowercase using ASCII case folding only;
 4. require exactly one `/`, with a non-empty type and subtype of at most 64 ASCII bytes each;
 5. require the type, `/`, and subtype together to contain at most 128 bytes;
