@@ -103,7 +103,20 @@ invariants MUST NOT be created, so convergence can never select that invalid tra
 for every available matching parent is rejected as `authorization_failed` only when no unavailable parent could change
 that result; otherwise it remains deferred while that parent may still arrive.
 
-A commit whose parent is not available remains deferred until the parent appears or the input expires.
+A commit whose parent is not available remains deferred while its authenticated MLS source epoch is inside or ahead of
+the rollback horizon. Deferred Commit expiry is epoch-based, not a local wall-clock policy:
+
+```text
+canonical_tip_epoch - commit_source_epoch > max_rewind_commits
+```
+
+Here `canonical_tip_epoch` is the epoch of the client's current canonical group state when it performs the check, and
+`commit_source_epoch` is the epoch authenticated by the deferred MLS handshake message.
+
+When that condition becomes true, the client reclassifies the Commit as stale and MAY release its retained bytes. If
+the parent arrives first, the client replays the Commit and applies the normal candidate validity and `fork_epoch`
+eligibility checks; a newly discovered fork outside the horizon is stale even when the child Commit's own source epoch
+was more recent.
 
 A client MUST NOT trust transport-provided parent metadata when building a branch. Parentage is derived by replaying MLS
 bytes against retained candidate states.
