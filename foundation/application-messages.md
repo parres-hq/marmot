@@ -110,8 +110,8 @@ A kind `1009` event is an ordinary Marmot app event and carries exactly the six 
   edit.
 
 Authorship is enforced client-side: an edit is honored only when its MLS-authenticated sender equals the original
-message's authenticated author. A client receiving a kind `1009` from a different sender MUST ignore the edit. The
-runtime emits all kind `1009` rows it persists; the client decides display.
+message's authenticated author. A client receiving a kind `1009` from a different sender MUST ignore the edit. A client
+MAY retain accepted edit events for history while rendering only the selected overlay.
 
 Multiple edits to the same target are ordered by their inner event's `created_at`. The most recent edit wins as the
 overlaid body. A history surface MAY list each version with its timestamp.
