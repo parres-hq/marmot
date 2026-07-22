@@ -56,6 +56,10 @@ Those two non-admin commit shapes MUST NOT be combined with each other or with o
 
 All other Commits from non-admins are invalid.
 
+In particular, adopted v1 defines no non-admin `new_member_commit` External Commit path. The draft
+[multi-device feature](../features/multi-device.md) does not relax this rule; that feature must define parent-state admin
+authorization and update this adopted commit-shape list before its External Commit flow can become normative.
+
 Non-admin members can send standalone MLS proposals only where the spec explicitly allows them. In v1 protocol core,
 that proposal flow is SelfRemove. A request for an admin-gated group-state change is an application payload or
 feature-owned request flow, not a standalone MLS proposal.
