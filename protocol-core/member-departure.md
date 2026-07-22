@@ -53,7 +53,11 @@ are allowed.
 
 ## SelfRemove commits
 
-Any remaining member that is authorized to commit the resulting state MAY commit a valid retained SelfRemove proposal.
+A SelfRemove-only Commit MAY reference one or more valid retained SelfRemove proposals and MUST NOT contain another
+proposal type. Each referenced SelfRemove proposal is validated independently, and one invalid proposal makes the whole
+Commit invalid.
+
+Any remaining member that is authorized to commit the resulting state MAY commit the retained SelfRemove proposals.
 Marmot does not elect one deterministic SelfRemove committer.
 
 A client that observes a valid peer SelfRemove proposal SHOULD schedule a SelfRemove-only Commit after a short
@@ -115,11 +119,12 @@ traffic from epochs after its removal.
 
 ## Validation
 
-A SelfRemove flow is invalid if:
+A SelfRemove-only Commit is invalid if:
 
-- the proposal does not target the sender;
-- the proposal sender is an active admin in the prior epoch;
-- the leaving member commits the proposal;
+- it references no SelfRemove proposal or includes a proposal of another type;
+- any referenced proposal does not target its authenticated sender;
+- any referenced proposal sender is an active admin in the prior epoch;
+- the committer is the sender and target of any referenced SelfRemove proposal;
 - the committer is not a current member;
 - the commit fails the normal MLS and Marmot convergence checks.
 
