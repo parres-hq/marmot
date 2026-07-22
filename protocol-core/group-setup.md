@@ -27,12 +27,12 @@ by the group. A group MUST NOT be created with features that the initial members
 Group settings are authenticated group state. A client MUST NOT treat local UI preferences, locally observed delivery
 data, or cached transport data as group settings.
 
-Group creation requires `required_capabilities`, `ratchet_tree`, `app_data_dictionary`,
-`marmot.group.admin-policy.v1`, and the other app components required by the selected feature set. The GroupContext
-`app_components` list MUST mark `marmot.group.admin-policy.v1` as required. `required_capabilities` and
-`app_data_dictionary` are GroupContext extensions. `ratchet_tree` is a per-Welcome GroupInfo extension, not a
-GroupContext extension: the GroupInfo encrypted in every Marmot Welcome carries the ratchet tree inline, as
-[joining.md](./joining.md) requires.
+At creation, the GroupContext MUST include the `required_capabilities` and `app_data_dictionary` extensions. The
+`app_data_dictionary` MUST contain `marmot.group.admin-policy.v1` and the other app components required by the selected
+feature set. The GroupContext `app_components` list MUST mark `marmot.group.admin-policy.v1` as required.
+
+Separately, `ratchet_tree` is a per-Welcome GroupInfo extension, not a GroupContext extension. The GroupInfo encrypted
+in every Marmot Welcome carries the ratchet tree inline, as [joining.md](./joining.md) requires.
 
 ## Creation flow
 
