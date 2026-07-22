@@ -55,8 +55,10 @@ exist, and both documents read as complete when they are not.
 
 ## Define protocol bytes exactly
 
-Anything signed, hashed, referenced, stored for replay, compared for equality, or used to choose state needs a canonical
-byte encoding.
+The normative canonical-byte requirements for values that are signed, hashed, referenced, stored for replay, compared
+for equality, or used to choose state are defined in
+[foundation/canonical-encoding.md](./foundation/canonical-encoding.md). An owning document identifies the encoding that
+applies to its bytes.
 
 The owning document MUST say:
 
@@ -93,8 +95,9 @@ For Marmot group messages using Nostr relays for transport, the random `nostr_gr
 delivery-address state. The Nostr event shape, relay behavior, gift wrapping, filters, and publishing rules belong in
 the Nostr transport binding.
 
-Do not derive delivery addresses from identity material. Do not let a generic group rule depend on Nostr event ids,
-relay URLs, pubkeys, tag shapes, or any other transport-specific address shape.
+[foundation/identity.md](./foundation/identity.md) owns the normative prohibition on deriving delivery addresses from
+identity material. Keep generic group rules independent of Nostr event ids, relay URLs, pubkeys, tag shapes, and every
+other transport-specific address shape.
 
 ## Describe state changes completely
 
