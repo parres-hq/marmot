@@ -115,8 +115,9 @@ SelfRemove is special:
 
 ## Removal
 
-This component is the sole admin authority for v1 groups. If it is absent, components and operations that require an
-active admin are invalid (there is no other authorization component in v1).
+This component is the sole admin authority for v1 groups and MUST remain present and required for the lifetime of a
+Marmot group. An AppDataUpdate `remove` operation targeting this component is invalid. Deleting or abandoning a local
+group is not a component removal and does not require a group-state commit.
 
 ## Migration
 
