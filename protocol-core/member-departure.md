@@ -107,18 +107,16 @@ not prevent this local leaf from realizing its removal. When the client applies 
 self-removed state notification (see [inbound-processing.md](./inbound-processing.md), "Application-visible output")
 and mark the local group copy removed.
 
-Realization is a state-derived obligation, not a one-shot event at commit-apply time: whenever retained canonical group
-state records the local member's removal and the local group copy is not yet marked removed, the client MUST perform
-the realization above. A client MAY have recorded the removing commit without the application ever observing the
-resulting notification; the obligation stands until the group copy is marked removed.
+`SelfEvicted` names this state-derived realization, not an input disposition. Whenever retained canonical group state
+records the local member's removal and the local group copy is not yet marked removed, the client MUST perform the
+realization above. It MUST check this obligation when it applies or restores canonical state and whenever it loads or
+attempts to process the retained group copy. A client MAY have recorded the removing commit without the application
+ever observing the resulting notification; the obligation stands until the group copy is marked removed.
 
-Later group input for such a group is the fallback trigger. It receives the `SelfEvicted` outcome (`stale`
-disposition, `stale_epoch` category, see [../foundation/errors.md](../foundation/errors.md)). `SelfEvicted` attaches
-to that later input, not to the removing commit and not to a local presentation mismatch; the input itself proves
-nothing and need not be decrypted or authenticated, because the evidence of removal is the retained canonical state —
-the input is classified by its group, like other stale input for groups the client cannot process further. Processing
-it MUST perform the realization above when it has not already happened. The client MUST NOT classify such input as
-ordinary stale traffic while continuing to present the group as active.
+Later group input can therefore cause the client to notice an outstanding realization, but the input does not receive
+a `SelfEvicted` outcome and need not be trusted as evidence. If the client classifies that input at all, it does so
+under the ordinary validation and disposition rules. The client MUST NOT continue to present the group as active merely
+because the later bytes could not be decrypted or authenticated.
 
 Failure to decrypt group traffic is not, by itself, evidence of removal. Without authenticated evidence that the local
 member's own leaf was removed, undecryptable input is a missing-history or repair condition (see

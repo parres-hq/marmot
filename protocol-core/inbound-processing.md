@@ -86,10 +86,6 @@ Input that cannot affect the group MUST receive a stale disposition. This includ
 - commits that fork from outside the rollback horizon: these are ineligible for branch selection (see
   [convergence.md](./convergence.md), "Eligibility") and, when their source epoch is also older than the retained
   anchor, are reported as `BeyondAnchor`;
-- group input for a group whose retained canonical state records the local member's own removal (`SelfEvicted` ->
-  `stale_epoch`, per [member-departure.md](./member-departure.md), "Realizing removal"): stale for convergence, but
-  processing it MUST also surface the member's removal as a state notification when the application has not yet
-  observed it, instead of failing silently.
 
 The `snake_case` names in parentheses are the shared categories in [../foundation/errors.md](../foundation/errors.md);
 `BeyondAnchor` is a named convergence outcome that maps to the `stale` disposition and the `stale_epoch` category.
@@ -115,6 +111,10 @@ State notifications include events such as:
 - group-state change invalidated because the commit it was derived from was superseded by branch selection.
 
 A state notification is not a delivered app payload. It tells the application what changed in the group state.
+
+Realizing the local member's own removal is derived from retained canonical state, independently of any later input's
+validity or disposition. The required check and notification are defined in
+[member-departure.md](./member-departure.md), "Realizing removal."
 
 State notifications track the selected canonical branch. When convergence supersedes a commit the client previously
 applied, the client MUST emit a group-state-change invalidation naming the superseded commit, and state notifications
