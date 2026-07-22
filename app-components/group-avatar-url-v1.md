@@ -46,6 +46,8 @@ Updating the avatar replaces every field. Clearing the avatar sends the empty st
 
 ## Validation
 
+A state with an empty `url` is valid only when `dim` and `thumbhash` are also empty. Mixed partial states are invalid.
+
 A non-empty avatar state is valid only if `url` validates and normalizes:
 
 - the encoded `url` is at most 2048 bytes
