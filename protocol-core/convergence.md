@@ -298,4 +298,5 @@ If the required retained state is missing, the client MUST report the missing re
 canonical group state. If the missing state is inside the rollback horizon, the client enters `Unrecoverable` until it
 has a verified repair path.
 
-After applying the selected branch, the client MAY release retained states older than the rollback horizon.
+After applying the selected branch, retained-state release follows
+[retained-history.md](./retained-history.md) ("Pruning"); that document owns the pruning obligation and its exceptions.
