@@ -72,19 +72,9 @@ upload/fetch rules.
 
 ## Media Type Canonicalization
 
-The MIME type is canonicalized before it is used in key derivation and as AAD:
-
-1. take the substring before the first `;`, dropping any parameters
-2. trim leading and trailing ASCII whitespace
-3. lowercase using ASCII case folding only
-4. require exactly one `/`, with a non-empty type and subtype of at most 64 ASCII bytes each
-5. require every type and subtype byte to be an ASCII letter, digit, or HTTP token punctuation
-   ``!#$%&'*+-.^_`|~``
-6. reject the reference if either requirement fails
-7. apply the canonical alias `image/jpg` -> `image/jpeg`
-
-Sender and receiver MUST apply this identical algorithm. Adding an alias or normalization step is a breaking
-media-version change.
+Before using the MIME type in key derivation or AAD, senders and receivers MUST apply the shared Marmot media-type
+algorithm in [../foundation/canonical-encoding.md](../foundation/canonical-encoding.md) ("Media type canonicalization").
+The resulting canonical bytes are the `media_type` input below.
 
 ## Filename Profile
 

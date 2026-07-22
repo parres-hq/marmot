@@ -58,9 +58,10 @@ encrypted_blob = ChaCha20-Poly1305.encrypt(image_key, image_nonce, plaintext_ima
 
 The AAD bytes are exactly the concatenation shown: the ASCII version label `marmot-group-image-v1`, one `0x00`
 separator byte, and the canonical media type bytes, with no length prefixes. `media_type` is canonicalized with the
-algorithm in [encrypted-media.md](../features/encrypted-media.md) ("Media Type Canonicalization"); the producer stores
-the canonical form, and the AAD input on both ends is the canonical media type derived from the stored `media_type`
-field. The encrypted blob is the AEAD output, including the 16-byte authentication tag.
+shared algorithm in [../foundation/canonical-encoding.md](../foundation/canonical-encoding.md) ("Media type
+canonicalization"); the producer stores the canonical form, and the AAD input on both ends is the canonical media type
+derived from the stored `media_type` field. The encrypted blob is the AEAD output, including the 16-byte authentication
+tag.
 
 A producer MUST generate a fresh random `image_key` and `image_nonce` for every new image and MUST NOT reuse a
 key-nonce pair.

@@ -114,6 +114,23 @@ This carve-out is what binds hex and base64 string encodings: a producer emits t
 (for example, the Nostr binding in `../transports/nostr.md` requires lowercase hex), and a decoder compares the decoded
 bytes, not the encoded characters.
 
+## Media type canonicalization
+
+When an owning document invokes the Marmot media-type algorithm, canonicalize the input bytes as follows:
+
+1. take the substring before the first `;`, dropping any parameters;
+2. trim leading and trailing ASCII whitespace;
+3. lowercase using ASCII case folding only;
+4. require exactly one `/`, with a non-empty type and subtype of at most 64 ASCII bytes each;
+5. require every type and subtype byte to be an ASCII letter, digit, or HTTP token punctuation
+   ``!#$%&'*+-.^_`|~``;
+6. reject the value if either requirement fails; and
+7. apply the canonical alias `image/jpg` -> `image/jpeg`.
+
+The producer stores the canonical result and the receiver requires the stored bytes to equal that result. The algorithm
+is frozen for constructions that invoke it; adding an alias or normalization step requires a new version of each owning
+construction whose authenticated bytes would change.
+
 ## Sorting and duplicates
 
 When a Marmot structure says a list is sorted, the default sort order is lexicographic order over the encoded item
