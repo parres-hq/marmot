@@ -143,6 +143,8 @@ Commit authorization, including removal authorization, follows the shared prior-
 
 Only an active admin MAY commit removal of this component.
 
+This component MUST NOT be removed while it is listed as required in GroupContext `app_components`.
+
 If removed from a group that no longer requires it, live QUIC text streams are disabled for that group. Existing durable
 Marmot messages and final kind `9` stream messages remain valid.
 
