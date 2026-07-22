@@ -138,8 +138,7 @@ reference-level locator rule below. A receiver MUST reject a reference if:
 - a locator has an empty kind or an empty value, or its value does not parse as a URL
 - a `blossom-v1` locator points at an unsafe host per [../foundation/host-safety.md](../foundation/host-safety.md)
   (loopback, private, CGNAT, link-local, unspecified, documentation, benchmarking, reserved/broadcast, multicast, ULA,
-  or an IPv6 transition prefix with an unsafe embedded address), or uses cleartext `http` to a non-loopback host (host
-  safety; see below)
+  or an IPv6 transition prefix with an unsafe embedded address), or uses a URL scheme other than `http` or `https`
 - required MIME type, filename, ciphertext hash, plaintext hash, nonce, or version fields are missing
 - the MIME type or filename does not satisfy its profile above
 - a single-occurrence field appears more than once in the `imeta` tag. Exactly the `locator` field repeats (one or
