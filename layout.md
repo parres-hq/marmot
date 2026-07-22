@@ -5,7 +5,8 @@ Status: adopted.
 The deprecated MIP set mixes stable protocol surfaces with feature behavior. This
 spec organizes docs around the surface an implementer is building.
 
-MIPs remain useful history. They SHOULD point to the stable docs they changed.
+MIPs remain useful history. This repository records their adopted replacements in [`mip-coverage.md`](mip-coverage.md);
+the frozen MIP repository is not maintained as part of this specification.
 
 ## Top Level
 
