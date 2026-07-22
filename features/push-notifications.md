@@ -256,8 +256,9 @@ suppress a differently-fingerprinted stale record from resurrecting the key).
 
 A device keeps one push registration at a time, so a leaf has at most one active token record. Clients store one token
 record per member id, leaf index, platform, and server public key in a group: an incoming entry that matches a stored
-record on those four values replaces it — including its fingerprint, relay hint, and encrypted token — and any
-other entry inserts a new record. Entries are applied in array order, so a later entry replaces an earlier match.
+record on those four values addresses the same record key — including its replaceable fingerprint, relay hint, and
+encrypted token — and any other entry addresses a different key. Whether a same-key entry replaces the stored record is
+decided only by the ordering primitive below, never by its array position.
 
 Token records are local push state, never group state. The rules below order and revoke them so that two members'
 clients can converge on the same token set without any of it affecting group validity. None of this ordering touches
@@ -283,9 +284,8 @@ cannot advance or rewind that record's position, because it cannot re-sign `owne
 
 A client stamps each stored record with the `(owner_ts, record digest)` of the entry that last wrote it. Apply an
 incoming entry or removal to a record key only when its ordering primitive is strictly greater than the stored stamp
-for that key; otherwise ignore it as stale. Within a single event the array-order rule above still holds, but ordering
-is decided per entry by its own primitive, so a lower-stamped entry never overwrites a higher-stamped one even when it
-appears later in the array.
+for that key; otherwise ignore it as stale. The same comparison applies between same-key entries in one array. Array
+position is not a tie-breaker, so the highest-stamped entry wins regardless of where it appears.
 
 #### Removal and tombstones
 
