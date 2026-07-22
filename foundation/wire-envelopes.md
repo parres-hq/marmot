@@ -25,7 +25,7 @@ sender to the group.
 MLS messages and MLS Welcomes are the transport-independent security bytes.
 
 Protocol-core docs decide which MLS bytes become canonical group state. Transport arrival order, transport timestamps,
-outer transport ids, subscription order, and local receive order do not choose the canonical branch.
+outer transport ids, fetch order, subscription order, and local receive order MUST NOT choose the canonical branch.
 
 ## Transport envelopes
 
