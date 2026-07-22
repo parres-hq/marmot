@@ -181,8 +181,10 @@ inbox relay list — with one `relay` tag per inbox relay URL. Kind `10050` is n
 standard kind unchanged, and the list is public signed account metadata.
 
 Gift-wrapped events addressed to an account — including kind `444` welcome rumors — are published to the recipient's
-kind `10050` inbox relay set. A sender MAY also publish to a contextual relay hint it holds for the recipient; when it
-has no hint, it publishes to the recipient's published kind `10050` list alone.
+kind `10050` inbox relay set. A sender MAY also publish to a contextual relay hint: a relay URL learned outside this
+binding for delivery to that recipient. Such a hint is local, advisory delivery information; it is not authenticated
+recipient metadata and does not change event validity. When a sender has no such hint, it publishes to the recipient's
+published kind `10050` list alone.
 
 An account with no published kind `10050` list cannot reliably receive welcomes: the sender publishes to whatever hint
 relays it has for the recipient, and nothing tells it where the recipient listens. An account SHOULD publish a kind
