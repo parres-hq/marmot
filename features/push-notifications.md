@@ -124,7 +124,10 @@ Kinds `447` and `448` share one content shape:
 }
 ```
 
-- `tokens` is an array of token entries. A missing `tokens` member is read as an empty array.
+- `tokens` MUST be an array of at most 32 token entries. A missing `tokens` member is read as an empty array. A sender with
+  more records splits them across multiple app events. If the decoded array contains more than 32 entries, the recipient
+  treats the entire array as advisory-invalid before performing any entry signature verification; the carrying group
+  message remains valid.
 - `member_id_hex` is the owning member's account public key as 32-byte lowercase hex.
 - `leaf_index` is the owning device's MLS leaf index as an unsigned-integer JSON number.
 - `platform` is the string `apns` or `fcm`.
@@ -239,7 +242,10 @@ signatures it does not hold.
 }
 ```
 
-- `removals` is an array of removal entries. A missing `removals` member is read as an empty array.
+- `removals` MUST be an array of at most 32 removal entries. A missing `removals` member is read as an empty array. A sender
+  with more removals splits them across multiple app events. If the decoded array contains more than 32 entries, the
+  recipient treats the entire array as advisory-invalid before performing any entry signature verification; the
+  carrying group message remains valid.
 - The first five members identify the token record being removed and use the encodings defined for token entries. A
   removal entry MUST carry `leaf_index` so it targets exactly one device's record and cannot revoke a sibling leaf's
   active token for the same account, platform, and server.
