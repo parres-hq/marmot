@@ -80,6 +80,11 @@ This sequence does not require automatic rotation after every removal.
 
 ## Validation
 
+A one-relay list is valid. Producers SHOULD propose at least two independently operated relays when the deployment
+permits it, but relay diversity is an availability policy rather than a group-state validity condition. If every relay
+in the signed routing state is unavailable or censors a routing-change commit, this component provides no out-of-band
+recovery path; members have to regain delivery through that routing state or create another group.
+
 A Nostr routing state is valid if:
 
 - `nostr_group_id` is exactly 32 bytes
