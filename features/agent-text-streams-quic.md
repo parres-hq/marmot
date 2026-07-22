@@ -188,7 +188,7 @@ The first text profile defines these plaintext frame types:
 
 `TextDelta` records carry UTF-8 text fragments. Receivers concatenate `TextDelta` plaintext frames, in sequence order, to
 build the provisional preview text. Senders SHOULD batch output instead of sending one record per token. Only
-`TextDelta` changes the provisional answer text.
+`TextDelta` appends to the provisional answer text; a supported `Checkpoint` may replace it as defined below.
 
 `ProgressDelta` records carry UTF-8 operation-progress text or JSON. Receivers MAY display this as live non-chat agent
 progress chrome. Receivers MUST NOT append `ProgressDelta` plaintext to preview text, final message content,
