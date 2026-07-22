@@ -79,6 +79,14 @@ server-side write credential. Because the secret travels inside the MLS-protecte
 sign later authorization events for the same blob. A producer MUST generate a fresh keypair for every new image and
 MUST NOT use an account identity key, so the blob store cannot link the blob to a Marmot account.
 
+This shared credential is an accepted v1 availability limitation. Any current member, and any former member that
+retained the secret, can issue whatever write or delete authorization the chosen Blossom server accepts for that key.
+The component's admin gate protects only updates to canonical group state; it cannot revoke an already-disclosed
+server-side capability. Deletion makes the referenced image unavailable but does not change or invalidate group state.
+An admin can restore availability only by uploading an image under a fresh `image_upload_key` and committing the full
+replacement component state. Servers with narrower or expiring authorization policies may reduce this risk, but those
+policies are outside Marmot v1.
+
 Blob upload and download are outside MLS group state. A fetch, hash-mismatch, or decryption failure is an
 application-level fetch failure: the image is unavailable, and the failure MUST NOT invalidate the component state or
 the commit that carried it.
