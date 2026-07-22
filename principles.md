@@ -121,8 +121,8 @@ such as credential validation.
 
 Transport input is evidence that bytes exist. It is not consensus.
 
-Transport arrival order, transport timestamps, event ids, subscription order, fetch order, and local receive order MUST
-not choose the canonical group branch. Protocol-core docs own convergence, publish-before-apply, retained history,
+Transport arrival order, transport timestamps, event ids, subscription order, fetch order, and local receive order
+MUST NOT choose the canonical group branch. Protocol-core docs own convergence, publish-before-apply, retained history,
 duplicate handling, and stale-input handling.
 
 A transport doc can say how to find and deliver bytes. It SHOULD NOT define which commit branch wins.
