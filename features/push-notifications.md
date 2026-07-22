@@ -304,8 +304,9 @@ member's whole lifetime in the group, and are cleared only when that member leav
 - **Removal versus a stale list response.** A kind `449` and a kind `448` that both reference the same record key are
   resolved by their ordering primitives, not by arrival order. The higher-stamped event wins; a lower-stamped list
   entry is dropped even if it arrives later.
-- **Removal versus a stale trigger.** A kind `446` trigger whose target token record has been removed or superseded is
-  ignored as a stale trigger (see "Replay and freshness"). The trigger never deletes or mutates a record.
+- **Removal versus a stale trigger.** Honest clients stop selecting a removed or superseded record for new kind `446`
+  triggers. The notification server cannot determine that record state from a trigger; the residual behavior is defined
+  under "Best-effort revocation" below. A trigger never deletes or mutates a record.
 - **Concurrent self-updates.** Two kind `447` self-updates for the same key from re-registration are ordered by their
   primitives; the higher-stamped record is the active one. Equal `owner_ts` is broken by the record digest, so clients
   converge.
@@ -315,6 +316,19 @@ member's whole lifetime in the group, and are cleared only when that member leav
 
 When a member is removed from the group, clients delete every stored token record and tombstone for that member as part
 of local cleanup. No kind `449` event is required for that cleanup.
+
+#### Best-effort revocation
+
+The v1 record model is stateless and best-effort. Kind `449`, record replacement, and member cleanup change which
+records honest group members select for future triggers; they do not register revocation state with a notification
+server. The server does not receive the MLS-encrypted kind `447`/`448`/`449` events and has no group membership, record,
+or tombstone view against which it could prove that a presented `EncryptedToken` is current.
+
+Consequently, a cached `EncryptedToken` remains a wake capability for a removed or malicious member until the native
+platform token stops working or is replaced outside this protocol. Marmot push v1 provides no cryptographic token
+revocation guarantee after disclosure to a group member. Server-side abuse controls, rate limits, platform-token
+rotation, and notification-server key rotation are application and operator concerns; they MUST NOT affect MLS message
+or group-state validity.
 
 ## Notification trigger
 
@@ -352,9 +366,10 @@ which a replayer can change freely by re-wrapping. A server that has already act
 retention window SHOULD ignore a later trigger with the same hash rather than wake the recipient again. Because the
 outer wrap uses a fresh ephemeral key per publish, the server MUST NOT rely on the outer event id for dedup.
 
-A server MUST treat a trigger whose target token record it can no longer match — because the token was removed,
-superseded by a newer record, or never registered — as a stale trigger and ignore it. A stale or replayed trigger never
-mutates token state; only kind `447`/`448`/`449` group events do, under "Record state".
+A server attempts to decrypt each well-formed token chunk and MAY dispatch a native wake for each successful result. It
+ignores a chunk that does not decrypt or whose plaintext is invalid. The server is neither required nor able to match a
+successfully decrypted chunk against group token-record history; removal and supersession are sender-side selection
+rules under "Record state", not server-visible trigger checks.
 
 A client that receives a redundant or stale wake performs a silent fetch and returns to sleep (see "Decoys and
 batching"); duplicate wakes are expected and are never surfaced as errors.
@@ -363,10 +378,10 @@ batching"); duplicate wakes are expected and are never surfaced as errors.
 
 Trigger material is ephemeral. A notification server retains a decoded trigger and its content-hash dedup entry only as
 long as needed to deliver the wake and suppress immediate replays — a short bound measured in minutes, not a durable
-log. A server MUST NOT retain decrypted device tokens beyond the active push registration it needs them for, and MUST
-NOT persist trigger plaintext, group identifiers, or recipient linkage derived from a trigger. A server holds no group
-state and learns nothing about group membership or message content from a trigger; the only material it needs is the
-platform token it decrypts to dispatch the native push.
+log. A server MUST discard each decrypted device token after its dispatch attempt and MUST NOT persist trigger
+plaintext, group identifiers, or recipient linkage derived from a trigger. A server holds no group state and learns
+nothing about group membership or message content from a trigger; the only material it needs is the platform token it
+decrypts to dispatch the native push.
 
 ## Decoys and batching
 
