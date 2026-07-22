@@ -51,7 +51,8 @@ document):
 A `quic://` candidate is `quic://` followed by an authority and nothing the receiver relies on after it:
 
 - `<authority>` is `host:port`, or `[ipv6]:port` for a literal IPv6 address;
-- `host` is the QUIC/UDP host and is also the TLS server name presented for certificate validation;
+- `host` is the QUIC/UDP host. A DNS hostname is also the TLS server name; an IP literal is matched as an IP address
+  during certificate validation and is not sent as SNI;
 - `port` is the UDP port;
 - a receiver MUST ignore any path, query, or fragment after the authority; the candidate carries no other semantics.
   The authority ends at the first `/`, `?`, or `#`; everything after that character is ignored.
@@ -66,8 +67,9 @@ to the next candidate.
 
 Candidates are reached over QUIC with TLS 1.3.
 
-A receiver validates the endpoint's certificate against the candidate `host` server name. Because preview endpoints and
-brokers are frequently self-signed, a client MAY instead pin the endpoint certificate, by exact DER or by its SHA-256
+A receiver validates the endpoint's certificate against the candidate `host`: a DNS hostname uses normal DNS-name/SNI
+validation, while an IPv4 or IPv6 literal omits SNI and MUST match an `iPAddress` subjectAltName. Because preview
+endpoints and brokers are frequently self-signed, a client MAY instead pin the endpoint certificate, by exact DER or by its SHA-256
 fingerprint, when that pin is supplied through the application's out-of-band watch configuration. Loopback/insecure
 trust is permitted only through explicit dev/test configuration, never as a default.
 
