@@ -53,6 +53,8 @@ document):
 
 A `quic://` candidate is `quic://` followed by an authority and nothing the receiver relies on after it:
 
+- the complete tag value MUST be valid UTF-8 and no more than 512 bytes; because the `quic://` prefix is 7 ASCII
+  bytes, the authority itself is at most 505 bytes;
 - `<authority>` is `host:port`, or `[ipv6]:port` for a literal IPv6 address;
 - `host` is the QUIC/UDP host. A DNS hostname is also the TLS server name; an IP literal is matched as an IP address
   during certificate validation and is not sent as SNI;
