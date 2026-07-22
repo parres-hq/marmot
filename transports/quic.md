@@ -160,8 +160,11 @@ uint32 frame_len;            // big-endian byte length of the record that follow
 opaque record[frame_len];    // the AgentTextStreamRecordV1 bytes
 ```
 
-- `frame_len` is a 4-byte big-endian unsigned length. A reader MUST reject a frame whose `frame_len` exceeds the
-  group's `max_plaintext_frame_len` policy value plus 1024 bytes of header and AEAD-tag allowance.
+- `frame_len` is a 4-byte big-endian unsigned length. A sender or receiver that knows the group policy MUST reject a
+  frame whose `frame_len` exceeds the group's `max_plaintext_frame_len` value plus 1024 bytes of record-header and
+  AEAD-tag allowance. A broker, which does not know group state, MUST reject `frame_len > 66543`; this is the v1
+  component's maximum `max_plaintext_frame_len` (`65519`) plus the same allowance. A deployment MAY impose a smaller
+  transport cap.
 - Records carry `seq` starting at `1` and increasing by one. A receiver maintains a last-accepted `seq` high-water
   mark per preview stream. A record whose `seq` is at or below the high-water mark — for example, a record a broker
   replays on reconnect — MUST be discarded silently without affecting the stream; a duplicate or replayed record is
@@ -206,6 +209,7 @@ A broker enforces resource bounds so it cannot be used to exhaust memory. The fi
 
 - per-subscriber queue depth: `32` records;
 - per-room backlog depth: `1024` records;
+- maximum framed-record byte length: `66543`;
 - total retained backlog bytes across all rooms: at most `64 MiB` (a broker-wide budget, not per room);
 - maximum rooms: `512`;
 - maximum connections: `256`, and at most `64` concurrent streams per connection;
