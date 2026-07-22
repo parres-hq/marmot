@@ -1,6 +1,6 @@
 # Multi-device
 
-Status: draft.
+Status: branch draft.
 
 Byte-level definitions in this document are placeholders and not yet finalized. They MUST NOT be implemented for
 interop yet. Marmot-owned hashes in this document use SHA-256, and named Marmot-owned key derivations use
