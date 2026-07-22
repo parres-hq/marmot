@@ -112,6 +112,15 @@ rejects all-zero shared secrets.
 Placeholder: the exact pairing payload construction — ephemeral key encoding, HKDF salt and info bytes, nonce rule, and
 ciphertext layout — is not yet finalized and not yet normative.
 
+Transferring `group_event_key` gives the pairing recipient the ability to remove the Nostr kind `445` outer encryption
+layer for every recorded envelope from that source epoch. It does not by itself reveal MLS application plaintext, but
+it does expose the inner MLS message type, bytes, and traffic grouping that the outer layer hides. This is a property of
+the draft pairing design, not a requirement on the base Marmot group protocol.
+
+Before this feature becomes normative, the pairing design must either remove the `group_event_key` transfer or define a
+single-use pairing payload with a bounded validity period and deletion after successful use or expiry. Those bounds
+belong to this pairing flow and MUST NOT extend the base retained-history window.
+
 Group entries are epoch-specific. A failed stale-epoch join MUST be retried with fresh current-epoch material.
 
 ## Device labels
@@ -144,4 +153,5 @@ A multi-device join is invalid if:
 ## Remaining work
 
 Before this feature becomes normative it needs exact identity-proof bytes, PSK derivation bytes, pairing payload bytes,
-capability rules, and legacy extension migration rules to replace the placeholders called out above.
+the pairing-key lifetime decision above, capability rules, and legacy extension migration rules to replace the
+placeholders called out above.
