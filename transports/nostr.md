@@ -365,8 +365,10 @@ Relays see only transport-envelope metadata, never plaintext or MLS secrets:
 - kind `445` events expose the group's random `nostr_group_id` via the `h` tag (it is not derived from any member key,
   so it does not link members across groups), a fresh per-event ephemeral `pubkey` (never the sender's account identity
   and never reused), the relay timestamp, and — when retention is enabled — the group's retention policy via the
-  NIP-40 `expiration` tag ("Message expiration" above). The MLS message is encrypted under the per-epoch group-event
-  key.
+  NIP-40 `expiration` tag ("Message expiration" above). Tag presence also reveals that the event carries an application
+  message, because commits and proposals never carry it. Tag absence is not conclusive: the tag is a `SHOULD`, and an
+  application message omits it when the exact expiry is unrepresentable. The MLS message is encrypted under the
+  per-epoch group-event key.
 - welcomes are NIP-59 gift wraps addressed to the invitee's account public key; the inbox address is the deliberate
   account-addressing exception ([../foundation/identity.md](../foundation/identity.md)). The gift wrap and seal hide the
   sender and the inner `kind 444` rumor.
