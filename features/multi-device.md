@@ -1,6 +1,6 @@
 # Multi-device
 
-Status: adopted.
+Status: draft.
 
 Byte-level definitions in this document are placeholders and not yet finalized. They MUST NOT be implemented for
 interop yet. Marmot-owned hashes in this document use SHA-256, and named Marmot-owned key derivations use
@@ -13,6 +13,12 @@ Marmot account identity is still the Nostr public key. Devices are separate MLS 
 
 This feature is still a draft. Its wire bytes are not yet normative and are subject to change before they become part
 of the interop surface.
+
+This draft does not create an exception to adopted v1 membership authorization. Under adopted v1, an External Commit
+shaped as below has no authorization exception and is invalid. Before this feature can become normative, it must define
+how an active admin in the candidate parent state authorizes the new device leaf; matching an existing account identity
+and possessing the draft Join PSK are not sufficient admin authorization. Requirement keywords in the remaining draft
+constrain the proposed design only.
 
 ## Surfaces
 
@@ -39,12 +45,12 @@ External Commit behavior for multi-device support is active only when all signal
 - `GroupContext.required_capabilities` requires `0xf2f0`;
 - every current non-blank leaf advertises `0xf2f0` in `LeafNode.capabilities.extensions`.
 
-If any of those checks fail, a client rejects a `new_member_commit` External Commit instead of applying the multi-device
-authorization carve-out.
+In the proposed flow, failure of any signaling check makes a `new_member_commit` External Commit invalid before any
+future admin-authorization check.
 
 ## External Commit authorization
 
-A multi-device External Commit is valid only when:
+Subject to the missing admin authorization above, the proposed multi-device External Commit is valid only when:
 
 - the signaling gate is active;
 - the joining LeafNode credential identity matches at least one existing group member's credential identity;
@@ -155,5 +161,5 @@ A multi-device join is invalid if:
 ## Remaining work
 
 Before this feature becomes normative it needs exact identity-proof bytes, PSK derivation bytes, pairing payload bytes,
-the pairing-key lifetime decision above, capability rules, and legacy extension migration rules to replace the
-placeholders called out above.
+the pairing-key lifetime decision above, parent-state admin authorization for adding the device leaf, capability rules,
+and legacy extension migration rules to replace the placeholders called out above.
