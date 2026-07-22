@@ -222,7 +222,7 @@ account identity that owns the KeyPackage. The event MUST be signed as a normal 
 
 The current tag set is:
 
-- `d`: random non-empty KeyPackage slot id, currently a random 32-byte hex value;
+- `d`: stable random KeyPackage publication-slot id, encoded as a 32-byte lowercase hex value;
 - `mls_protocol_version`: `1.0`;
 - `i`: lowercase hex KeyPackageRef;
 - `mls_ciphersuite`: MLS ciphersuite id;
@@ -257,6 +257,12 @@ value are all equal, comparing the `d` value as exact bytes. For one `(author, k
 newest valid event by `created_at`, with lower event id as the deterministic tie-breaker when timestamps are equal.
 Across different `d` slots, each valid event is a separate candidate KeyPackage. Candidate ranking then follows
 [../foundation/key-packages.md](../foundation/key-packages.md).
+
+A publishing MLS client creates a logical KeyPackage publication slot by generating its `d` value once from 32 random
+bytes and retaining that value locally. Replacing the KeyPackage in that logical slot MUST reuse the same `d`; a routine
+replacement MUST NOT generate a fresh slot id. A client generates a different random `d` only when it intentionally adds
+another concurrently discoverable KeyPackage slot. The slot id MUST NOT be derived from an account key, MLS leaf key,
+KeyPackageRef, device label, or other identity material.
 
 When candidates from different `(author, kind, d)` slots are otherwise equivalent after foundation ranking, clients
 SHOULD select the candidate with the lexicographically lower decoded KeyPackageRef from the `i` tag. The `i` tag is
