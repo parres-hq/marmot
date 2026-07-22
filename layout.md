@@ -59,9 +59,10 @@ features/
 implementation-model.md
 ```
 
-This tree is the canonical file list. When you add, rename, or remove a doc, update this tree in the same change, and
-update the matching index in the surface's `README.md` (and `foundation/registries.md` when an id changes). The subdir
-`AGENTS.md` files carry this as a verification step.
+This tree is the canonical list of spec documents and per-surface `README.md` indexes. Repository-operating files such
+as `AGENTS.md`, and compatibility symlinks, are not entries in the normative spec tree. When you add, rename, or remove
+a spec document, update this tree in the same change, and update the matching index in the surface's `README.md` (and
+`foundation/registries.md` when an id changes). The subdir `AGENTS.md` files carry this as a verification step.
 
 ## Foundation
 
