@@ -66,6 +66,13 @@ Decoders do not police inner tag names. Tags carry application content; the acti
 If a future message kind needs binary content, canonical JSON, or another encoding rule, that rule belongs in the
 message-kind document and MUST name the exact bytes carried inside MLS.
 
+## Receiver authentication
+
+After structural decoding, a receiver MUST compare the inner event's `pubkey` with the Marmot account identity
+authenticated by the MLS sender leaf for that application message. If they are not byte-equal, the receiver MUST drop
+the Marmot app payload and MUST NOT render or deliver it to the application. The mismatch does not alter canonical group
+state or roll back other authenticated MLS processing.
+
 ## Message kinds
 
 The foundation only defines the shared envelope shape. It does not require every client to render every Nostr kind.

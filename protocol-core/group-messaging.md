@@ -40,7 +40,8 @@ Common app payload kinds include:
 
 The inner app event has an `id` but no `sig`. The active transport binding owns the outer envelope and builds its routing tags — the tags that address, route, or expire it — from canonical group state, never from the inner app event (the Nostr binding's routing tags are defined in [../transports/nostr.md](../transports/nostr.md)). An inner tag therefore carries application content only: it never affects addressing, routing, expiry, or branch selection. The inner event's structural rules are in [../foundation/application-messages.md](../foundation/application-messages.md), "Encoding".
 
-Receivers validate that the inner app event `pubkey` matches the Marmot account identity authenticated by MLS.
+Receiver authentication follows [../foundation/application-messages.md](../foundation/application-messages.md)
+("Receiver authentication").
 Unsupported app-event kinds do not change group state unless the owning feature says otherwise.
 
 ## Commit authorization

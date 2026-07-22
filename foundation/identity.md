@@ -90,5 +90,5 @@ set. The owning transport document defines how those addresses are generated, up
 Marmot app payloads use an unsigned Nostr event shape inside MLS. The shared shape is defined in
 [application-messages.md](./application-messages.md).
 
-The inner event's `pubkey` is the author's Marmot account identity. MLS authenticates who sent the MLS application
-message to the group, and the inner event's `pubkey` is validated against that authenticated MLS sender.
+The inner event's `pubkey` is the author's Marmot account identity. The receiver binding and mismatch outcome are
+defined in [application-messages.md](./application-messages.md) ("Receiver authentication").
