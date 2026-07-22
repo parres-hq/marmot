@@ -48,6 +48,9 @@ These values match draft-ietf-mls-extensions-09. In that draft, last-resort KeyP
 | `0xf2f0`       | `marmot.multi-device.v1`                        | [doc](../features/multi-device.md)                         |
 | `0xf2f1`       | `marmot.account-identity-proof.v1`              | [doc](./account-identity-proof-v1.md)                       |
 
+`0xf2d3` is intentionally unassigned and has no reserved meaning. A future use MUST claim it in this registry before
+emitting it.
+
 `0xf2d1`, `0xf2d2`, and `0xf2d4` are the agent-text-stream-QUIC member role capabilities. A member advertises a role by
 listing the matching extension type in its LeafNode capabilities; the `required_member_roles` mask in
 `marmot.group.agent-text-stream.quic.v1` is enforced against these ids at invite and join. The `receive` role
