@@ -26,8 +26,8 @@ are mechanical and easy to get wrong, so treat this file as the checklist and th
   version field in the payload.
 - Each component doc MUST define the full required set: component id, name, entry location, state bytes, update bytes,
   validation, proposal authorization, commit authorization, removal rule, and migration rule.
-- Group-level component commits are admin-gated by default. A component may loosen this, but it MUST say so explicitly,
-  against the admin set in `marmot.group.admin-policy.v1`.
+- Group-level component proposals and commits are admin-gated by default. A component may loosen this, but it MUST say
+  so explicitly, against the admin set in `marmot.group.admin-policy.v1`.
 - Unknown non-required component entries MUST be preserved byte-for-byte; never parse, sort inside, partially copy, or
   re-encode them.
 
