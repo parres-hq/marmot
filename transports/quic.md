@@ -93,8 +93,8 @@ advertise broker candidates only, and there is no start-payload candidate by whi
 own endpoint to the sender. The direct path is therefore usable in v1 only when the sender already knows the receiver's
 endpoint out of band (for example a dev/test or preconfigured peer). Broker-relayed delivery is the v1 discovery
 mechanism. A start-payload candidate format for direct-path discovery is deferred to a future profile, which will also
-settle the connection direction (the natural form mirrors the broker path: the sender advertises a direct `quic://`
-endpoint and the receiver dials it).
+define how a receiver advertises the endpoint that the sender dials. The v1 connection direction remains the one above:
+the receiver listens and the sender dials.
 
 ### Broker-relayed
 
