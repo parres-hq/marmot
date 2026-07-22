@@ -5,8 +5,9 @@ transport-document checklist; the cross-surface map is in [`../AGENTS.md`](../AG
 
 ## Scope
 
-A transport doc owns the outer envelope, delivery addressing, publish/fetch rules, transport-specific validation, and
-any transport-owned app components (e.g. Nostr routing). One file per transport binding. Current bindings:
+A transport doc owns the outer envelope, delivery addressing, publish/fetch rules, and transport-specific validation.
+App-component payload bytes, including signed Nostr routing state, remain owned by `app-components/`. One file per
+transport binding. Current bindings:
 [`nostr.md`](nostr.md) (primary) and [`quic.md`](quic.md) (experimental agent-stream previews).
 
 ## Read order
