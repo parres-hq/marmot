@@ -50,10 +50,10 @@ The protocol defines what must be reproducible. It does not define table names, 
 
 ## Convergence Policy Overrides
 
-The convergence policy is pinned by the protocol; clients do not negotiate or store per-group policy values.
-Implementations and simulators MAY expose local convergence-policy overrides for testing, such as shrinking the
-quiescence window or widening the rollback horizon in a harness. Those overrides are development tooling, not protocol.
-A client MUST NOT ship with non-default policy values.
+The normative pinned-policy rule lives in [protocol-core/convergence.md](./protocol-core/convergence.md) ("Convergence
+policy"). Implementations and simulators can expose local convergence-policy overrides for testing, such as shrinking
+the quiescence window or widening the rollback horizon in a harness. Those overrides are development tooling; a product
+using non-default values is non-conformant under the owning protocol rule.
 
 ## Outcomes
 
