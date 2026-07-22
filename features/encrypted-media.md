@@ -139,8 +139,8 @@ encrypted content and is the preferred content id for blob storage.
 
 ## Validation
 
-A receiver MUST reject (invalidate) an encrypted media reference ONLY for structural-integrity or host-safety reasons. A
-receiver MUST reject a reference if:
+A receiver MUST reject an encrypted media reference when its authenticated fields are malformed or it fails a
+reference-level locator rule below. A receiver MUST reject a reference if:
 
 - the `imeta` tag cannot be decoded
 - the version is absent or not `encrypted-media-v1`
@@ -160,7 +160,12 @@ receiver MUST reject a reference if:
 - `ciphertext_sha256` or `plaintext_sha256` is not a 32-byte hex SHA-256 value
 - `nonce` is not exactly 12 bytes encoded as 24 hex characters
 - `blurhash` is present
-- the fetched encrypted bytes do not match `ciphertext_sha256`
+
+After a reference passes those checks, fetching and rendering are attachment-availability decisions. Any of the
+following makes that attachment unavailable and MUST NOT retroactively invalidate the reference or its carrying app
+payload:
+
+- the encrypted bytes cannot be fetched or do not match `ciphertext_sha256`
 - decryption fails
 - the plaintext SHA-256 does not match `plaintext_sha256`
 - the decrypted media type or size violates application policy
