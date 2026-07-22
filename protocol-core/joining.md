@@ -63,6 +63,12 @@ so promptly after joining. This carries forward the MIP-02 post-join rotation gu
 group. The concrete recommended completion window is operational, not interop-visible, so it lives in
 [../implementation-model.md](../implementation-model.md) rather than here.
 
+The receiving flow above is a first join for a locally unknown MLS group id. If the resulting MLS group id matches a
+group copy the client already retains, the Welcome MUST NOT silently replace or merge into that group's canonical
+state. The receiver rejects it through this flow without rotating or deleting the referenced KeyPackage. A deliberate
+repair or rejoin may use a Welcome only through a separately verified repair path as defined by
+[group-state.md](./group-state.md); otherwise the existing group copy must first be explicitly discarded.
+
 ## Welcome-bootstrap trust
 
 The join-time authorization check (step 8 of the receiving flow) validates the Welcome author against the admin set of
@@ -78,11 +84,11 @@ The first-contact trust root is therefore the Welcome author. A joiner MUST auth
 identity — this is step 6 of the receiving flow — and a client SHOULD present that identity to the joining user
 before or at join, so accepting an invite is an explicit decision about who the inviter is.
 
-A client SHOULD treat a newly joined group as unverified until at least one MLS application message from a member
-account other than the Welcome author authenticates on the group's branch. A forged fork cannot produce such a message:
-the forger cannot sign for another account and cannot forge another account's identity proof. How an unverified group is
-presented is application-defined. This is a corroboration signal, not a proof — a genuine but quiet group also stays
-unverified until another member speaks, and a future feature may add an out-of-band anchor for the legitimate admin set.
+A client MAY treat a newly joined group as unverified until an MLS application message from an account other than the
+Welcome author authenticates on the group's branch. That message proves only that the other account participated on
+the received branch. It does not prove that the branch is the intended continuation: a forger can add genuine
+KeyPackages to a fork, and a genuine re-added member can later speak on it. Any unverified-group presentation is
+application-defined; this signal is an activity heuristic, not a group-authenticity proof.
 
 ## Failure behavior
 
@@ -99,6 +105,7 @@ A receiver rejects the Welcome if:
 - any resulting member leaf is missing a valid account identity proof;
 - the Welcome author cannot be identified as a member leaf in the resulting group;
 - the resulting group state lacks required Marmot state;
+- the resulting MLS group id matches a retained local group outside a separately verified repair or rejoin flow;
 - the Welcome author's MLS-authenticated account identity is not an active admin in the resulting group state (the
   sole membership-add authority for v1 groups; see
   [../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md));
