@@ -18,7 +18,6 @@ This rule applies to:
 - required-capability change
 - admin policy update
 - self-update Commit
-- policy-generated commits
 - SelfRemove-only commits prepared by remaining members
 
 A member's own departure is a SelfRemove *proposal*, not a local commit. The leaver publishes the proposal and does not
