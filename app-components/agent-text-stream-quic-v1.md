@@ -134,7 +134,7 @@ content regardless of the live-preview transport.
 
 Only an active admin MAY send a standalone agent text stream QUIC update proposal.
 
-Only an active admin MAY commit an update.
+Only an active admin MAY commit an agent text stream QUIC update.
 
 Commit authorization, including removal authorization, follows the shared prior-epoch rule in
 [README.md](./README.md) ("Authorization Evaluation").

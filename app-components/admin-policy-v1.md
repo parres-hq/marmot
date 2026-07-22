@@ -78,7 +78,7 @@ component is therefore invalid whether or not the commit re-serializes this comp
 
 ## Authorization
 
-Only an active admin MAY send a standalone admin policy proposal.
+Only an active admin MAY send a standalone admin policy update proposal.
 
 Only an active admin MAY commit an admin policy update.
 
