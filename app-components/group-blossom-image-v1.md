@@ -44,6 +44,11 @@ When an image is present:
 The component stores the cryptographic metadata clients need for a Blossom-backed image. It does not define the Blossom
 upload or download request flow, server selection, relay behavior, or CDN behavior.
 
+Server selection is intentionally an application-profile concern rather than component state. Two applications need a
+shared out-of-band Blossom service/discovery profile to exchange this image; Marmot v1 does not make independently
+chosen servers interoperable. A client with no configured way to locate `image_hash` treats the image as unavailable,
+without invalidating the component or its carrying commit.
+
 ## Image bytes
 
 The image is encrypted, content-addressed, and stored as one opaque blob. The component fields bind to that blob as
