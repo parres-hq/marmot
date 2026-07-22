@@ -16,7 +16,7 @@ Foundation docs own the choices that make Marmot Marmot:
 - Marmot app payloads use an unsigned Nostr event shape inside MLS.
 - MLS is the current continuous group key agreement layer.
 - Marmot transports MUST support redundant delivery so a group does not depend on one server, relay, or endpoint.
-- Marmot specs SHOULD avoid new metadata leaks unless the feature cannot work without them.
+- Marmot SHOULD avoid new metadata leaks unless the feature cannot work without them.
 - Encodings that are commonly used across multiple surfaces.
 
 Do not restate these rules in every feature doc. Point to the foundation doc and describe only what the feature adds.
