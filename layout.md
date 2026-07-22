@@ -53,9 +53,9 @@ transports/
 features/
   README.md
   encrypted-media.md
+  agent-text-streams-quic.md
   push-notifications.md
   multi-device.md
-  agent-text-streams-quic.md
 implementation-model.md
 ```
 
