@@ -55,6 +55,9 @@ candidate parent state. The same commit can be unauthorized on one retained pare
 client MUST NOT reject it globally as `authorization_failed` before attempting every available matching parent. The
 candidate-edge and terminal-rejection rules are defined in [convergence.md](./convergence.md), "Candidate branches."
 
+Input naming a group for which the client has no processable group state receives the `unknown_group` category before
+convergence and no convergence disposition. The client cannot authenticate or classify a branch without that state.
+
 ## Deferred input
 
 A client MAY defer an input when it cannot yet be processed but could become processable after more protocol bytes
@@ -74,7 +77,6 @@ branch.
 Input that cannot affect the group MUST receive a stale disposition. This includes:
 
 - duplicate messages (`duplicate`);
-- messages for unknown groups (`unknown_group`);
 - welcomes addressed to another member (`wrong_recipient`);
 - own echoes (`own_echo`);
 - commits older than the retained anchor (`BeyondAnchor` -> `stale_epoch`, per

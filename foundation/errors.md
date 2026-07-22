@@ -42,7 +42,9 @@ dispositions; the processing flow that assigns them is
 Input that fails a branch-independent gate does not reach convergence and receives no convergence disposition. It is
 rejected before convergence — the `fail closed` path in
 [../protocol-core/inbound-processing.md](../protocol-core/inbound-processing.md) — and is described by
-`invalid_encoding`, `invalid_signature`, or `unsupported_required_feature`.
+`unknown_group`, `invalid_encoding`, `invalid_signature`, or `unsupported_required_feature`. An input for an unknown
+group cannot be authenticated against group state the client does not have; `unknown_group` is therefore a
+pre-convergence category, not a `stale` disposition.
 
 Authorization can depend on the prior group state. A commit's authorization is therefore evaluated against each
 candidate parent state during candidate construction, not as one branch-independent gate. A commit that is authorized
