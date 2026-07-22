@@ -74,12 +74,15 @@ No Marmot-owned custom MLS proposal type is assigned in this spec yet.
 These are the event kinds Marmot allocates or assigns meaning to. The owning document defines each exact event shape;
 this table only names the value and points at the owner.
 
-This table lists Marmot-allocated kinds only. Standard Nostr kinds that the Nostr binding reuses unchanged — kind `1059`
-(NIP-59 gift wrap), kind `13` (NIP-59 seal), kind `10002` (NIP-65 relay list), and kind `10050` (NIP-17 DM inbox relay
-list) — are not Marmot-owned and are defined in [../transports/nostr.md](../transports/nostr.md), not here.
+The table includes Marmot-allocated kinds and standard app-event kinds to which Marmot assigns an inner payload meaning.
+Standard transport kinds that the Nostr binding reuses unchanged — kind `1059` (NIP-59 gift wrap), kind `13` (NIP-59
+seal), kind `10002` (NIP-65 relay list), and kind `10050` (NIP-17 DM inbox relay list) — remain defined in
+[../transports/nostr.md](../transports/nostr.md).
 
 | Kind    | Name                                | Layer                               | Document                                                |
 | ------- | ----------------------------------- | ----------------------------------- | ------------------------------------------------------- |
+| `7`     | Reaction                            | Marmot app payload                  | [application-messages.md](application-messages.md)      |
+| `9`     | Chat message                        | Marmot app payload                  | [application-messages.md](application-messages.md)      |
 | `444`   | Marmot welcome rumor                | Nostr welcome transport             | [nostr.md](../transports/nostr.md)                      |
 | `445`   | Marmot group message                | Nostr group transport               | [nostr.md](../transports/nostr.md)                      |
 | `446`   | Push notification rumor             | Push notification transport         | [push-notifications.md](../features/push-notifications.md) |
