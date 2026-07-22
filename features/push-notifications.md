@@ -431,12 +431,10 @@ Push notifications draw a sharp line between two failure classes:
   mutates group state, or changes which commit wins. A single bad entry in a kind `447`/`448`/`449` event is dropped on
   its own; the rest of the array still applies and the carrying group message remains valid. In particular, an
   `owner_sig` that fails verification fails the entry, never the carrying group message.
-- **Protocol-invalid group data.** The only protocol-invalid conditions are the ones the owning foundation/transport
-  docs already define for the carrying surface: an inner app payload whose canonical app-event `id` does not match its
-  bytes, a forbidden `sig` member, or a duplicate object key (see
-  [../foundation/application-messages.md](../foundation/application-messages.md)). Those are decided by the app-payload
-  decoder, not by this feature, and they are not specific to push. This feature adds no new way for push content to
-  invalidate a group message.
+- **Protocol-invalid group data.** Protocol-invalid conditions are the ones the owning foundation/transport docs define
+  for the carrying surface (see [../foundation/application-messages.md](../foundation/application-messages.md),
+  "Encoding"). Those are decided by the app-payload decoder, not by this feature, and they are not specific to push.
+  This feature adds no new way for push content to invalidate a group message.
 
 Put plainly: kind `447`/`448`/`449` are ordinary unsigned Marmot app events, so they share the app payload's
 validity rules; their push-specific `content` checks below only decide whether an individual token entry or removal is
