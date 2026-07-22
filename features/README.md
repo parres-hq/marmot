@@ -46,7 +46,8 @@ Each feature document SHOULD define:
 
 ## Versioning
 
-Git history records prose changes. Interop-visible feature versions need names inside the spec.
+Git history is not a version-negotiation mechanism; an interop-visible change needs an explicit protocol versioning
+hook.
 
 Use component ids for app component state versions. Use proposal ids for custom MLS proposal versions. Use event kinds
 or payload versions for app messages. Use a new feature document name when the high-level flow changes enough that

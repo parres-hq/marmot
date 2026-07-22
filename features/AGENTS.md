@@ -23,8 +23,8 @@ rule below is the load-bearing one.
 - Mandatory protocol flows belong in [`../protocol-core/`](../protocol-core/README.md) or
   [`../foundation/`](../foundation/README.md), not here, even when they used to live in a MIP.
 - Interop-visible feature versions get a name inside the spec: a component id, a proposal id, an event kind, or a new
-  feature document when the high-level flow changes enough to need both versions side by side. Git history is not
-  version negotiation.
+  feature document when the high-level flow changes enough to need both versions side by side. Git history is not a
+  version-negotiation mechanism; an interop-visible change needs an explicit protocol versioning hook.
 
 ## Verification
 

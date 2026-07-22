@@ -25,7 +25,8 @@ any transport-owned app components (e.g. Nostr routing). One file per transport 
 - Nostr routing and relays are signed group state owned by `marmot.transport.nostr.routing.v1`
   ([`../app-components/nostr-routing-v1.md`](../app-components/nostr-routing-v1.md)), not local hints.
 - An interop-visible transport change needs an explicit hook (a new envelope version, a new kind/route/topic/frame
-  type, a new app component id, or a new required capability) — git history is not a versioning mechanism.
+  type, a new app component id, or a new required capability). Git history is not a version-negotiation mechanism; an
+  interop-visible change needs an explicit protocol versioning hook.
 
 ## Verification
 

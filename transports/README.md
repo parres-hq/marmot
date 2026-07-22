@@ -39,7 +39,7 @@ group-state branch selection, or app component payload bytes.
 
 ## Versioning
 
-Git history records edits to these documents. Interop-visible transport changes need an explicit protocol versioning
+Git history is not a version-negotiation mechanism; an interop-visible change needs an explicit protocol versioning
 hook.
 
 Use the narrowest hook that fits the change:

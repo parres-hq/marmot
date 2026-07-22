@@ -130,8 +130,8 @@ owns group policy bytes, while [features/encrypted-media.md](./features/encrypte
 format, key derivation, and AEAD behavior.
 
 When a feature has an interop-visible breaking change, the owning document MUST name the new version in a capability,
-component id, proposal id, event kind, or feature document. Git history is useful, but it is not a version-negotiation
-mechanism.
+component id, proposal id, event kind, or feature document. Git history is not a version-negotiation mechanism; an
+interop-visible change needs an explicit protocol versioning hook.
 
 ## Implementation Model
 
