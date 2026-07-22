@@ -300,6 +300,11 @@ Welcome messages are published to the recipient's inbox relay set ("Account inbo
 
 KeyPackage events are published to the account's NIP-65 (kind `10002`) write-capable relay set defined above.
 
+Push-notification gift wraps carrying a kind `446` rumor are published to the `relay_hint` values in the selected
+token records for that notification server. If none of those records carries a relay hint, they are published to the
+server account's inbox relay set. The trigger and token-record shapes are defined by
+[../features/push-notifications.md](../features/push-notifications.md).
+
 A publish to a relay is acknowledged when the relay returns a NIP-01 `OK` response accepting the event; anything else —
 a rejecting `OK`, an error, a timeout, or no response — is not an acknowledgement. The transport MAY report
 endpoint-level acceptances and failures. Publish acknowledgement is not group consensus. The protocol-core publish

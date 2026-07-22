@@ -373,9 +373,8 @@ The content field follows the Nostr transport byte-encoding rule: standard base6
 The seal is signed by the same ephemeral key used as the rumor `pubkey`. The gift wrap uses a separate ephemeral key
 and is addressed to the notification server.
 
-The sender publishes the gift wrap to the relay hints carried in the stored token records for that server. When no
-stored record carries a relay hint, the sender publishes to the server account's inbox relays from the Nostr binding
-([../transports/nostr.md](../transports/nostr.md)).
+The sender publishes the gift wrap using the notification-trigger publish-target rule in the Nostr binding
+([../transports/nostr.md](../transports/nostr.md), "Publish targets and acknowledgements").
 
 ### Replay and freshness
 
