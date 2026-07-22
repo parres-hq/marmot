@@ -79,7 +79,7 @@ A policy state is valid if:
 - `default_blob_endpoints` is non-empty and contains at most 16 unique entries
 - every endpoint locator kind appears in `allowed_locator_kinds`
 - every endpoint base URL is 1..2048 bytes
-- every endpoint base URL is a normalized `https` URL, or a normalized `http` URL whose host is loopback
+- every endpoint base URL is a normalized `http` or `https` URL
 - endpoints with userinfo, queries, fragments, or missing hosts are invalid
 
 A base URL is normalized when it is byte-equal to its own parse-and-serialize output under the
@@ -92,12 +92,9 @@ and MUST NOT trim, case-fold, normalize, or deduplicate a value while decoding i
 producer-side rules; a decoder rejects a duplicate entry rather than removing it, and rejects a non-normalized URL or
 locator kind rather than repairing it.
 
-Component-state validity is the same for every member. An endpoint with scheme `http` and a loopback host is valid
-state, and validators MUST accept it, so commit validity never depends on local configuration.
-
-Whether a client acts on such an endpoint is a separate, local rule: a client MUST NOT upload to or download from a
-loopback HTTP endpoint unless it is explicitly configured for development or testing. In a production configuration
-those endpoints are unusable, and attachments that rely on them are unfetchable.
+Component-state validity is the same for every member. Destination reachability, trust, and permission to contact an
+endpoint are local application policy and MUST NOT affect whether the component bytes or their carrying commit are
+valid.
 
 ## Authorization
 
