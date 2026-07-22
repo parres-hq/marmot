@@ -60,8 +60,8 @@ member can ignore raw QUIC endpoint candidates and wait for the final kind `9` m
 start/final messages. `fanout` means the member or helper can forward stream records for others, for example through a
 broker.
 
-`required_member_roles` is the set of role capabilities every member MUST advertise before joining the group. It is
-enforced at every membership change:
+`required_member_roles` is the set of role capabilities every current member MUST advertise. Invite and join checks
+enforce it before a new member enters the group:
 
 - a client MUST NOT invite a member whose KeyPackage does not advertise every role capability named by
   `required_member_roles`;
@@ -115,10 +115,16 @@ A state is valid if:
 
 - `required_member_roles` is not empty;
 - `required_member_roles` is a subset of `allowed_member_roles`;
+- every current member LeafNode advertises every role capability named by `required_member_roles`;
 - every bit in both role masks is one of `receive`, `send`, or `fanout`;
 - `max_plaintext_frame_len` is nonzero and no greater than the application profile maximum;
 - `replay_ttl_secs` is no greater than the application profile maximum;
 - `padding_bucket_bytes` is no greater than the application profile maximum.
+
+The member-capability check is a resulting-epoch invariant. It runs on every Commit, including a Commit that changes
+this component, adds or updates a member leaf, or carries the prior component state forward unchanged. A component
+update that adds a required role is therefore invalid unless every member in the resulting epoch already advertises
+that role, and a member leaf update cannot drop a role that the carried-forward component still requires.
 
 This component is for the raw QUIC live-preview profile. WebTransport, HTTP/3, and WebSocket live-preview profiles
 require another component or a later component version. The durable final kind `9` message remains ordinary Marmot chat
