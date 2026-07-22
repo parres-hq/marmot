@@ -144,7 +144,6 @@ receiver MUST reject a reference if:
 
 - the `imeta` tag cannot be decoded
 - the version is absent or not `encrypted-media-v1`
-- any legacy media version string is present
 - no locator is present
 - a locator has an empty kind or an empty value, or its value does not parse as a URL
 - a `blossom-v1` locator points at an unsafe host per [../foundation/host-safety.md](../foundation/host-safety.md)
