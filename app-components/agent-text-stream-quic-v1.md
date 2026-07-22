@@ -89,9 +89,9 @@ payload. v1 has no separate group-level broker approval mechanism.
 `padding_bucket_bytes` is reserved in v1. No padding mechanism is defined, and senders MUST NOT emit padding. The field
 stays in the byte layout as a forward-compatibility reservation, so already-deployed state remains valid; a future
 version that defines a padding construction will state how padded bytes relate to the transcript hash. Until then a
-producer SHOULD write `0`, and a decoder accepts any value within the application profile maximum without acting on it.
+producer SHOULD write `0`, and a decoder accepts any value within the v1 bound without acting on it.
 
-The first application profile uses these maximums:
+This component version pins these maximums:
 
 - `max_plaintext_frame_len <= 65519`, so a maximum-length frame's ciphertext (`plaintext_len + 16` AEAD tag bytes)
   fits the record's `ciphertext<0..2^16-1>` field bound;
@@ -118,9 +118,9 @@ A state is valid if:
 - `required_member_roles` is a subset of `allowed_member_roles`;
 - every current member LeafNode advertises every role capability named by `required_member_roles`;
 - every bit in both role masks is one of `receive`, `send`, or `fanout`;
-- `max_plaintext_frame_len` is nonzero and no greater than the application profile maximum;
-- `replay_ttl_secs` is no greater than the application profile maximum;
-- `padding_bucket_bytes` is no greater than the application profile maximum.
+- `max_plaintext_frame_len` is nonzero and no greater than the v1 maximum above;
+- `replay_ttl_secs` is no greater than the v1 maximum above;
+- `padding_bucket_bytes` is no greater than the v1 maximum above.
 
 The member-capability check is a resulting-epoch invariant. It runs on every Commit, including a Commit that changes
 this component, adds or updates a member leaf, or carries the prior component state forward unchanged. A component
