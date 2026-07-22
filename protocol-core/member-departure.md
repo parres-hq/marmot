@@ -132,9 +132,13 @@ A removed group copy is retained inactive, not deleted. The removed member:
 - MAY retain previously delivered content and group history for local display;
 - MAY discard the local group copy at any time.
 
-Removal is terminal for that group copy. Rejoining happens only through a new Welcome, which creates a new local group
-state under [joining.md](./joining.md). Retention does not weaken forward secrecy: a removed member cannot decrypt
-traffic from epochs after its removal.
+The removed condition is terminal only while the removing Commit remains on the selected canonical branch. If a later
+convergence pass supersedes that Commit inside the rollback horizon, the client MUST withdraw the self-removed
+notification, clear the removed marker, and derive membership and sendability from the newly selected canonical state;
+that reversal does not require a Welcome. Once the removal remains canonical beyond the rollback horizon, v1 cannot
+reverse it for that group copy. Rejoining then requires a new Welcome, which creates new local group state under
+[joining.md](./joining.md). Retention does not weaken forward secrecy: while removal remains canonical, the removed
+member cannot decrypt traffic from epochs after its removal.
 
 ## Validation
 
