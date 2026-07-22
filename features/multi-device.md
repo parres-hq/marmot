@@ -3,7 +3,9 @@
 Status: adopted.
 
 Byte-level definitions in this document are placeholders and not yet finalized. They MUST NOT be implemented for
-interop yet. SHA-256 is the hash function throughout this document; named key derivations use HKDF-SHA256.
+interop yet. Marmot-owned hashes in this document use SHA-256, and named Marmot-owned key derivations use
+HKDF-SHA256. MLS-Exporter invocations are the exception: MLS computes them with the active ciphersuite's KDF and hash,
+and each invocation below states its ciphersuite-dependent or fixed output length.
 
 Multi-device support lets one Marmot account participate in a group from more than one MLS leaf.
 
