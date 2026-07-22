@@ -318,14 +318,16 @@ lifecycle defines when locally created MLS work MAY be applied.
 
 ## Validation before peeling
 
-A Nostr transport client MUST validate the outer event enough to classify it before passing bytes to the MLS peeler:
+A Nostr transport client MUST validate the complete event shape before passing recovered MLS bytes to the MLS peeler.
+The event-shape sections above own those rules; this checklist points to them rather than restating a second, narrower
+set:
 
-- kind `445` group messages MUST be signed Nostr events with a valid id/signature, MUST satisfy the `h` tag rule above,
-  and MUST have base64 content whose decoded length is at least 28 bytes;
-- kind `1059` welcomes MUST be signed Nostr events with a valid id/signature and MUST satisfy the `p` tag rule above;
-- kind `444` welcome rumors MUST satisfy the `e` and `relays` tag rules above after NIP-59 unwrapping;
-- kind `30443` KeyPackage event content MUST be base64-encoded `MLSMessage` bytes whose wire format is
-  `mls_key_package`, and MUST satisfy the KeyPackage tag rules above;
+- kind `445` group messages MUST satisfy every envelope, tag, content, and signature rule in "Group message delivery"
+  before outer decryption;
+- kind `1059` welcomes and their kind `444` rumors MUST satisfy every recipient, envelope, tag, content, and signature
+  rule in "Welcome delivery" as each NIP-59 layer is unwrapped;
+- kind `30443` KeyPackage events MUST satisfy every envelope, tag, content, signature, and decoded-KeyPackage rule in
+  "KeyPackage publication";
 - fields that claim to be hex or base64 MUST decode successfully;
 - unsupported Nostr kinds are ignored or reported as malformed transport input.
 
