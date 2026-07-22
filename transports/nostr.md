@@ -156,6 +156,12 @@ not applied while the group is in those states.
 If no retained candidate key authenticates the content, the event is undecryptable transport input and is retained or
 dropped under the inbound-processing rules, not applied to group state.
 
+The public routing id and required fresh ephemeral event key do not provide a member-authenticated prefilter for kind
+`445`; a non-member can submit envelopes that reach trial decryption. Relay admission controls and client-side input,
+CPU, and retry budgets are operational policy, not Marmot group-state rules. In particular, a budget decision MAY drop
+or defer transport input, but it MUST NOT make that input valid, choose a canonical branch, or change the bounded set of
+candidate keys tried for an accepted envelope.
+
 ## Message expiration
 
 The `expiration` tag applies to MLS application messages only. When the group's active
