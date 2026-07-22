@@ -206,52 +206,11 @@ receiver ignores them in UI.
 
 ## Typed durable agent rows
 
-Kind `1201` and `1202` are normal Marmot app events. They are end-to-end encrypted with the group like any
-other inner app event. Clients render them separately from human chat bubbles and MUST NOT treat their `content` as a
-kind `9` chat body.
-
-Kind `1201` agent activity content is JSON:
-
-```json
-{
-  "v": 1,
-  "status": "thinking",
-  "text": "Thinking",
-  "extra": {}
-}
-```
-
-It SHOULD carry a `["status", status]` tag. If it relates to a user prompt or another event, it SHOULD carry an `e` tag.
-
-Kind `1202` agent operation content is JSON:
-
-```json
-{
-  "v": 1,
-  "event_type": "tool_call",
-  "status": "started",
-  "operation_id": "call-123",
-  "run_id": "run-456",
-  "turn_id": "turn-789",
-  "name": "search",
-  "text": "search: glp-1",
-  "preview": "glp-1",
-  "details": {
-    "args": {}
-  },
-  "sequence": 0,
-  "ok": true,
-  "duration_ms": 1200
-}
-```
-
-It MUST carry a non-empty `event_type` such as `tool_call`, `approval`, `hook`, `handoff`, or `delivery`. It SHOULD carry
-`["operation", event_type]`, `["operation-status", status]`, and, when known, `["operation-name", name]` tags. If it
-relates to a user prompt or another event, it SHOULD carry an `e` tag. Tool output or operation results that become part
-of the assistant answer belong in the final kind `9`, not in `1202`.
-
-`details` is optional, bounded metadata for UI/debugging. Senders SHOULD redact secrets, raw credentials, large tool
-inputs, and bulky tool outputs before writing durable operation details, even though the event is encrypted to the group.
+Kind `1201` and `1202` are normal Marmot app events reserved for application-defined agent activity and operation rows.
+They are end-to-end encrypted with the group like any other inner app event. This protocol version does not define a
+JSON field schema, ordering model, storage rule, or presentation contract for either kind. Applications that agree on
+such a profile may use one; other clients treat unsupported content under the normal app-payload rules. Neither kind is
+a kind `9` chat body or part of the authoritative final answer.
 
 Kind `1210` group system events (durable membership/admin/profile rows) are defined in
 [foundation application payloads](../foundation/application-messages.md#group-system-events-kind-1210), not here.
