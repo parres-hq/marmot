@@ -24,7 +24,7 @@ struct {
 
 struct {
   opaque locator_kind<V>;
-  opaque base_url<V>;
+  opaque base_url<1..2048>;
 } BlobStoreEndpointV1;
 
 struct {
@@ -75,6 +75,7 @@ A policy state is valid if:
 - `allowed_locator_kinds` is non-empty and contains at most 16 unique entries
 - `default_blob_endpoints` is non-empty and contains at most 16 unique entries
 - every endpoint locator kind appears in `allowed_locator_kinds`
+- every endpoint base URL is 1..2048 bytes
 - every endpoint base URL is a normalized `https` URL, or a normalized `http` URL whose host is loopback
 - endpoints with userinfo, queries, fragments, or missing hosts are invalid
 - an endpoint whose host is unsafe per [../foundation/host-safety.md](../foundation/host-safety.md) is invalid, with the
