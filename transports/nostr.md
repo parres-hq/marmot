@@ -165,13 +165,13 @@ candidate keys tried for an accepted envelope.
 
 ## Message expiration
 
-The `expiration` tag applies to MLS application messages only. When the group's active
-`marmot.group.message-retention.v1` state enables a retention duration
-([../app-components/message-retention-v1.md](../app-components/message-retention-v1.md)), the sender of a kind `445`
-event that carries an MLS application message SHOULD attach a NIP-40 `expiration` tag whose value is the inner app
-payload `created_at` plus the retention duration. A kind `445` event that carries a commit or proposal MUST NOT carry
-an `expiration` tag, regardless of the retention policy: group-state history stays fetchable for members catching up.
-A group without retention enabled emits no `expiration` tag.
+The `expiration` tag applies to MLS application messages only. When the message's source-epoch
+`marmot.group.message-retention.v1` state enables a retention duration, the sender of its kind `445` event SHOULD attach
+a NIP-40 `expiration` tag whose value is the exact `expiry_timestamp` defined by
+[../app-components/message-retention-v1.md](../app-components/message-retention-v1.md). If that value is undefined or
+unrepresentable, the sender omits the tag. A kind `445` event that carries a commit or proposal MUST NOT carry an
+`expiration` tag, regardless of the retention policy: group-state history stays fetchable for members catching up. A
+message whose source epoch has no enabled retention emits no `expiration` tag.
 
 The `expiration` tag is relay-facing transport metadata that asks relays to delete the event after the expiry time.
 Receivers MUST NOT use the tag for message validity, ordering, or branch selection, and a missing or mismatched tag

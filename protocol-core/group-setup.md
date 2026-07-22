@@ -99,11 +99,9 @@ doc owns the detailed leave flow.
 
 ## Message retention
 
-When message retention is enabled, the transport binding applies its own retention hint, if it has one. The expiry
-timestamp is the sender's inner app-payload `created_at` plus the retention duration. Because the base timestamp is the
-sender's own `created_at`, expiry is advisory and inherits the trust placed in the MLS-authenticated sender; it is not
-a deletion guarantee against a hostile sender. The owning component
-[../app-components/message-retention-v1.md](../app-components/message-retention-v1.md) states this caveat in full.
+When message retention is enabled, the transport binding applies its own retention hint, if it has one. The owning
+component [../app-components/message-retention-v1.md](../app-components/message-retention-v1.md) defines the pinned
+source-epoch state, exact expiry calculation, overflow behavior, and sender-timestamp caveat.
 
 Retention is group state, not a sender preference. A sender-supplied expiration tag is replaced or removed according to
-the active retention component.
+the message's source-epoch retention component.
