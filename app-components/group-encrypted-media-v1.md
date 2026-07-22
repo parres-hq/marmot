@@ -58,7 +58,11 @@ default_blob_endpoints = [{ locator_kind = "blossom-v1", base_url = "https://blo
 
 ## Update
 
-The update payload is a full replacement `EncryptedMediaPolicyV1`.
+The update payload is a full replacement state:
+
+```text
+EncryptedMediaPolicyV1 EncryptedMediaPolicyUpdateV1;
+```
 
 Endpoint updates are group-state updates. They are not message metadata and do not rewrite existing media references.
 
