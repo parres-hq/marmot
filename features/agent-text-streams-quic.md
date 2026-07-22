@@ -87,7 +87,8 @@ For the first user-to-agent profile:
 2. The agent publishes a hidden kind `1200` start payload through MLS.
 3. Online preview-capable receivers watch the start payload's `quic://` candidates. Other receivers ignore the route.
 4. The agent sends encrypted, ordered preview records over QUIC.
-5. Preview-capable receivers render text deltas as provisional preview text and MAY surface stream status.
+5. Preview-capable receivers render text deltas only as provisional preview text, visibly distinct from confirmed
+   durable content, and MAY surface stream status.
 6. The agent publishes the final kind `9` message through MLS.
 7. Clients that rendered a preview replace or verify it with the final message. Clients that skipped the preview display
    the final message as normal chat history.
@@ -334,8 +335,9 @@ The stream secret is group shared. It hides plaintext from a relay or passive ou
 the same record key.
 
 For v1, preview records are provisional. The final MLS app payload is authoritative because MLS authenticates it as an
-application message from the sender. Applications MUST NOT treat unsigned preview records as durable instructions or
-automation input unless they explicitly accept that risk.
+application message from the sender. A client that renders preview records MUST distinguish them from confirmed durable
+content until the final payload authenticates and anchors them. Applications MUST NOT treat unsigned preview records as
+durable instructions or automation input unless they explicitly accept that risk.
 
 ## Transcript hash
 
