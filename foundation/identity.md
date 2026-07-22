@@ -79,8 +79,8 @@ KeyPackage id, message id, relay URL, or other stable identity material. For exa
 random `nostr_group_id`, not a value derived from any member key.
 
 Account-level inbox addressing is the deliberate exception. A transport MAY address an account's own inbox by that
-account's public key, because reaching a specific account is the purpose of an inbox. The Nostr binding uses the account
-public key as the gift-wrap recipient and inbox filter for welcomes and other account-directed events.
+account's public key, because reaching a specific account is the purpose of an inbox. The active transport binding owns
+the concrete inbox-addressing mechanism; the Nostr rule is defined in [../transports/nostr.md](../transports/nostr.md).
 
 Examples of delivery addresses include a Nostr group `h` tag, an account inbox, a relay list, a topic, or an endpoint
 set. The owning transport document defines how those addresses are generated, updated, validated, and used.
