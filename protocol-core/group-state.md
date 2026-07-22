@@ -125,8 +125,9 @@ is not meaningful while the group is in them.
 
 ## Local actions during convergence
 
-When convergence status is `Syncing`, `Resolving`, or `Blocked`, a client SHOULD queue local outbound intents instead
-of preparing them against a state that MAY lose branch selection or require repair.
+When convergence status is `Syncing`, `Resolving`, or `Blocked`, a client MUST NOT prepare a group-state change or
+encrypt an app payload against the unresolved state. It MAY queue the local intent until the group settles or reject it
+as locally unavailable; the queue representation and user-visible behavior are application concerns.
 
 Queued app-payload sends are encrypted after convergence status reaches `Settled` and the lifecycle state allows
 outbound work.
