@@ -84,16 +84,15 @@ from `admins` is valid only if at least one other active admin remains.
 
 ## Admin-Gated Actions
 
-In v1, the following operations require an active admin to commit:
+Every v1 group-level Marmot component update requires an active admin to commit unless the owning component document
+explicitly defines a looser rule. No v1 group-level component currently defines one. This rule follows the component
+class rather than an enumerated list, so adding a registered component does not silently make its updates ungoverned.
 
-- update `marmot.group.profile.v1`
-- update `marmot.group.blossom.image.v1`
-- update `marmot.group.admin-policy.v1`
-- update `marmot.transport.nostr.routing.v1`
-- update `marmot.group.message-retention.v1`
-- invite a new member
-- remove another member
-- change required Marmot components
+The following non-component operations also require an active admin to commit:
+
+- invite a new member;
+- remove another member; and
+- change the GroupContext `app_components` list of required Marmot components.
 
 For Welcome-based joins, the receiver applies the same invite authorization check at join time. The receiver identifies
 the inviter from the MLS GroupInfo signer leaf and rejects the Welcome unless that leaf's MLS-authenticated Marmot
