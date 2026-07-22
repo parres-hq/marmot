@@ -117,10 +117,16 @@ For each Commit, a Marmot client groups AppDataUpdate proposals by component id.
 evaluates the prior state and ordered update bytes using that component's update rule.
 
 The update rule returns new state bytes or rejects the Commit. A component's update rule decides how update bytes relate
-to prior state. In v1 every component document defines its update payload as a full replacement state, so the update
-rule replaces the prior state with the update bytes (partial field updates are not defined; see "Common Rules" above). A
-future component MAY define a diff-style update rule, but it MUST say so explicitly in its own document; no v1 component
-does.
+to prior state. In v1 every component document defines its update payload as a full replacement state. When a Commit
+contains one or more update operations for the same v1 component, the client MUST validate every proposal sender and
+every update payload's component-local encoding and value rules in Commit order. Any invalid proposal or payload makes
+the whole Commit invalid. Each valid payload replaces the working component state, so the last update operation's
+payload is the resulting component state; earlier valid replacements do not override it. Resulting-epoch and
+cross-component invariants are then checked against that final state. Partial field updates are not defined (see
+"Common Rules" above).
+
+A future component MAY define a diff-style update rule, but it MUST say so explicitly in its own document; no v1
+component does.
 
 Update rules MUST be deterministic. They MUST NOT read local wall-clock time, transport state, random numbers, local UI
 state, or local storage order.
@@ -132,8 +138,8 @@ group-level components default to the same active-admin role that may commit it.
 component change, if a feature defines one, is carried as a Marmot app payload or feature-owned request flow rather than
 as an MLS AppDataUpdate proposal.
 
-For a Commit, a Marmot client evaluates all AppDataUpdate proposals for a component in commit order. The component
-validates the proposal sender, the committer, the prior state, and the ordered updates. It returns the new state bytes
+For a Commit, a Marmot client evaluates all AppDataUpdate proposals for a component in Commit order. The component
+validates every proposal sender, the committer, the prior state, and the ordered updates. It returns the new state bytes
 or an invalid result. If any component update is invalid, the Commit is invalid.
 
 ## Authorization Evaluation
