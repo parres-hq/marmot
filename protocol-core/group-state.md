@@ -56,8 +56,9 @@ Unrecoverable
 Fork detection runs only from `Stable`, against settled canonical state. There is no `Merging -> Recovering` edge: a
 competing branch observed while the client is applying its own confirmed commit is retained, the merge completes to
 `Stable`, and fork detection then runs from `Stable`. `Recovering` re-entry is implicit: convergence-relevant input
-that arrives while the group is already in `Recovering` is folded into the same recovery pass, and the group stays in
-`Recovering` until a branch is selected and applied (`-> Stable`) or no safe branch exists (`-> Unrecoverable`).
+that arrives while the group is already in `Recovering` and before the bounded pass cutoff is folded into that recovery
+pass. Input retained after the cutoff belongs to a later pass. The group stays in `Recovering` until a branch is selected
+and applied (`-> Stable`) or no safe branch exists (`-> Unrecoverable`).
 
 A client MUST reject a local group-state commit while the group is in `PendingPublish`, `Merging`, `Recovering`, or
 `Unrecoverable`.
@@ -96,8 +97,8 @@ recovery method defined by a future protocol-core document.
 
 Convergence has a separate derived status:
 
-- `Syncing`: convergence-relevant input is still arriving or the quiescence window defined in
-  [convergence.md](./convergence.md) has not elapsed since the last retained or reclassified convergence-relevant input.
+- `Syncing`: a bounded convergence pass is collecting score-changing input and neither the quiescence window nor the
+  absolute pass deadline defined in [convergence.md](./convergence.md) has elapsed.
 - `Resolving`: the quiescence window has elapsed, but the client still has unresolved convergence work, such as a child
   commit whose parent has not been retained or fetched yet.
 - `Settled`: candidate processing reached a fixed point and the selected branch, if any, has been applied.
@@ -110,7 +111,7 @@ The legal combinations are:
 
 | Convergence status | Lifecycle states it can appear in | Notes                                                                 |
 | ------------------ | --------------------------------- | --------------------------------------------------------------------- |
-| `Syncing`          | `Stable`, `Recovering`            | input still arriving or quiescence not elapsed                        |
+| `Syncing`          | `Stable`, `Recovering`            | bounded pass still collecting score-changing input                    |
 | `Resolving`        | `Stable`, `Recovering`            | quiescence elapsed, work outstanding (e.g. a child commit's parent)   |
 | `Settled`          | `Stable`                          | fixed point reached and any selected branch applied                   |
 | `Blocked`          | `Recovering`, `Unrecoverable`     | needs a repair path or missing retained material                      |
@@ -131,4 +132,6 @@ outbound work.
 
 Queued group-state changes are regenerated after convergence status reaches `Settled` and the lifecycle state allows
 outbound work. A staged commit created before branch selection MUST NOT be reused after convergence changes the
-canonical state.
+canonical state. After a bounded pass, the fair scheduling rule in [convergence.md](./convergence.md) gives one
+already-queued admin-authorized group-state intent a preparation opportunity before queued inbound input alone starts
+another pass.

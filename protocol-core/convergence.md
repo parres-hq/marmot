@@ -20,6 +20,8 @@ The convergence policy contains:
   witnesses (the exact window formula is in [retained-history.md](./retained-history.md), "App-payload retention").
 - `settlement_quiescence_ms`: the minimum time without new convergence-relevant input before a client MAY treat a
   convergence pass as settled and release queued outbound work.
+- `max_convergence_pass_ms`: the maximum duration of one convergence pass. This deadline is measured from the start of
+  the pass and MUST NOT be extended by later input.
 - `witness_quorum_senders_per_epoch`: the number of distinct senders needed for one branch epoch to count toward witness
   quorum.
 - `witness_quorum_epochs`: the number of branch epochs that MUST meet sender quorum.
@@ -32,6 +34,7 @@ The Marmot convergence policy, version 1, is:
 | `max_rewind_commits`                | `5`     |
 | `app_payload_past_epoch_limit`      | `5`     |
 | `settlement_quiescence_ms`          | `1000`  |
+| `max_convergence_pass_ms`           | `5000`  |
 | `witness_quorum_senders_per_epoch`  | `2`     |
 | `witness_quorum_epochs`             | `1`     |
 | `max_witness_override_depth`        | `1`     |
@@ -43,11 +46,29 @@ push a branch past the rollback horizon; allowing it to would let app-payload tr
 commit branch, violating the invariant below. The version-1 values satisfy this bound, and any future policy component
 MUST satisfy it.
 
-`settlement_quiescence_ms` gates when a client decides it has waited long enough to run or finish convergence. It is
-measured with the client's local monotonic clock from the last time the client retained or reclassified
-convergence-relevant input. Convergence-relevant input is non-stale protocol input that can affect candidate branches,
-witness counts, deferred-parent resolution, delivered app payloads, or invalidations. Duplicate, invalid, or stale input
-does not reset the clock. Input ordering MUST NOT enter the branch score.
+`settlement_quiescence_ms` and `max_convergence_pass_ms` bound one convergence pass. A pass starts when the client first
+retains or reclassifies input that can change convergence. Both intervals are measured with the client's local
+monotonic clock. The quiescence interval restarts only when newly retained or reclassified input can still change the
+current pass's branch selection, for example by adding or invalidating an eligible candidate edge, changing a bounded
+witness score, supplying a missing parent, or making deferred input processable. Ordinary app-payload delivery that
+cannot change branch selection does not restart quiescence. Neither do duplicate, invalid, stale, already-dominated, or
+already-fully-counted witness inputs.
+
+The absolute pass deadline starts when the pass starts and MUST NOT restart. A client closes the pass at the earlier of:
+
+1. `settlement_quiescence_ms` elapsing without score-changing input; or
+2. `max_convergence_pass_ms` elapsing.
+
+At that cutoff, the client freezes the pass's retained input batch, reaches a fixed point over that batch, selects and
+applies the canonical branch, and returns to `Stable`. Input retained after the cutoff is not discarded; it belongs to
+a later pass. The local cutoff controls scheduling and batch membership only. Input arrival time, cutoff time, and pass
+membership MUST NOT enter candidate validity or the branch score.
+
+After a bounded pass returns the group to `Stable`, the client MUST give one already-queued, admin-authorized local
+group-state intent an opportunity to be prepared against the selected canonical state before it begins another
+convergence pass solely because more inbound input is queued. Inbound input remains durably retained during that
+opportunity. The prepared commit then follows the normal publication and convergence rules; this scheduling guarantee
+does not make it valid, accepted, or canonical.
 
 Convergence parameters are deliberately not group-tunable: a bad policy choice can fork a group. A future protocol
 version that changes convergence behavior MUST ship the new policy as a new app component behind a required capability.
