@@ -180,7 +180,8 @@ Assigned component ids are registered in [../foundation/registries.md](../founda
 
 - Marmot component ids stay in the private-use range for the foreseeable future.
 - Marmot component major versions are represented by component ids.
-- Marmot core components are optional unless a group profile, transport, or feature requires them.
+- `marmot.group.admin-policy.v1` is required for every Marmot group. Other Marmot core components are optional unless a
+  group profile, transport, or feature requires them.
 - `marmot.group.blossom.image.v1` is Blossom-specific. Other image-reference models SHOULD use separate components.
 - `marmot.transport.nostr.routing.v1` is required for Nostr-routed Marmot groups.
 - Nostr relays in `marmot.transport.nostr.routing.v1` are canonical signed group state, not local hints.

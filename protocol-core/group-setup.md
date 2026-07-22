@@ -27,21 +27,22 @@ by the group. A group MUST NOT be created with features that the initial members
 Group settings are authenticated group state. A client MUST NOT treat local UI preferences, locally observed delivery
 data, or cached transport data as group settings.
 
-Group creation requires `required_capabilities`, `ratchet_tree`, `app_data_dictionary`, and the app components required
-by the selected feature set. `required_capabilities` and `app_data_dictionary` are GroupContext extensions.
-`ratchet_tree` is a per-Welcome GroupInfo extension, not a GroupContext extension: the GroupInfo encrypted in every
-Marmot Welcome carries the ratchet tree inline, as [joining.md](./joining.md) requires.
+Group creation requires `required_capabilities`, `ratchet_tree`, `app_data_dictionary`,
+`marmot.group.admin-policy.v1`, and the other app components required by the selected feature set. The GroupContext
+`app_components` list MUST mark `marmot.group.admin-policy.v1` as required. `required_capabilities` and
+`app_data_dictionary` are GroupContext extensions. `ratchet_tree` is a per-Welcome GroupInfo extension, not a
+GroupContext extension: the GroupInfo encrypted in every Marmot Welcome carries the ratchet tree inline, as
+[joining.md](./joining.md) requires.
 
 ## Creation flow
 
-When creating a group, the creator chooses the initial required feature set, initial members, initial admin policy,
-transport routing state, and optional profile settings.
+When creating a group, the creator chooses the initial required feature set, initial members, transport routing state,
+and optional profile settings. The initial admin policy MUST contain the creator's Marmot account identity and MAY
+contain other initial members. This requirement applies even when the creator is the group's only initial member.
 
 If the selected transport requires signed group routing state, creation includes that transport's routing component.
 
 If the group has a human-visible profile, creation includes `marmot.group.profile.v1`.
-
-If the group has admin-gated settings or membership changes, creation includes `marmot.group.admin-policy.v1`.
 
 If the group has a Blossom-backed group image, creation includes `marmot.group.blossom.image.v1`; a group that
 references an avatar by plain URL instead includes `marmot.group.avatar-url.v1`.

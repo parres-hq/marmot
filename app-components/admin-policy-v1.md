@@ -7,7 +7,7 @@ Status: adopted.
 - Component id: `0x8003`
 - Name: `marmot.group.admin-policy.v1`
 - Location: GroupContext `app_data_dictionary`
-- Default requirement: optional
+- Default requirement: required for every Marmot group
 
 ## State
 
