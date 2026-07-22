@@ -36,7 +36,7 @@ KeyPackage publication, and NIP-59 welcome delivery. A future transport can carr
 a different outer envelope.
 
 Transport docs MAY define routing ids, relay lists, publish targets, fetch rules, and transport-specific validation.
-They SHOULD NOT redefine Marmot account identity or inner app payload shape.
+They MUST NOT redefine Marmot account identity or inner app payload shape.
 
 ## Message ids
 
