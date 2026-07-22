@@ -443,7 +443,8 @@ applied, never whether the group message is valid.
 A recipient applies the per-field rejection rules in "Token entries" and "Removal" at the entry granularity: reject the
 individual entry, keep processing the rest, and never let an entry failure propagate to group-message validity.
 
-Notification servers MUST reject or ignore malformed notification triggers, including:
+Notification servers MUST ignore malformed notification triggers and MUST NOT dispatch a notification for them,
+including:
 
 - missing or unsupported `v` tags;
 - invalid base64 content;
