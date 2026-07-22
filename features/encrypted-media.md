@@ -69,11 +69,19 @@ The MIME type is canonicalized before it is used in key derivation and as AAD:
 1. take the substring before the first `;`, dropping any parameters
 2. trim leading and trailing ASCII whitespace
 3. lowercase using ASCII case folding only
-4. reject the reference if the result is empty or does not contain `/`
-5. apply the canonical alias `image/jpg` -> `image/jpeg`
+4. require exactly one `/`, with a non-empty type and subtype of at most 64 ASCII bytes each
+5. require every type and subtype byte to be an ASCII letter, digit, or HTTP token punctuation
+   ``!#$%&'*+-.^_`|~``
+6. reject the reference if either requirement fails
+7. apply the canonical alias `image/jpg` -> `image/jpeg`
 
 Sender and receiver MUST apply this identical algorithm. Adding an alias or normalization step is a breaking
 media-version change.
+
+## Filename Profile
+
+`filename` is display metadata. Its value MUST be valid UTF-8, contain 1..255 bytes, and contain no U+0000 character.
+Its UTF-8 bytes are preserved exactly; senders and receivers MUST NOT normalize or case-fold it.
 
 ## Key Derivation
 
@@ -91,7 +99,8 @@ file_key     = HKDF-Expand(media_secret,
 HKDF is HKDF-SHA256. `media_secret` is used directly as the HKDF PRK (Expand only, no Extract step). This choice is
 fixed and independent of the group's MLS ciphersuite; only the `MLS-Exporter` line is computed with the ciphersuite's
 own hash, as MLS defines. The info bytes are exactly the concatenation shown: fields joined by single `0x00` separator
-bytes, with no length prefixes.
+bytes, with no length prefixes. This delimiter is unambiguous because the media-type profile is ASCII and the filename
+profile forbids U+0000.
 
 `media_secret` is key material. Clients MUST NOT publish, transmit, log, or expose it in diagnostics. Clients SHOULD
 protect cached source-epoch media secrets at rest with confidentiality controls appropriate to the platform. Clients
@@ -128,6 +137,7 @@ receiver MUST reject a reference if:
   or an IPv6 transition prefix with an unsafe embedded address), or uses cleartext `http` to a non-loopback host (host
   safety; see below)
 - required MIME type, filename, ciphertext hash, plaintext hash, nonce, or version fields are missing
+- the MIME type or filename does not satisfy its profile above
 - a single-occurrence field appears more than once in the `imeta` tag. Exactly the `locator` field repeats (one or
   more); every other field — `v`, `ciphertext_sha256`, `plaintext_sha256`, `nonce`, `m`, `filename`, `dim`, and
   `thumbhash` — occurs at most once. A receiver MUST reject a duplicate rather than picking a first or last occurrence,
