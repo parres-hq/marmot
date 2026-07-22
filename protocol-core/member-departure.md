@@ -74,9 +74,18 @@ A client whose own SelfRemove-only commit publish fails MUST follow the normal p
 discard the pending state and keep the SelfRemove available if it is still valid and unconsumed.
 
 A client that receives multiple SelfRemove proposals from the same leaving member for the same source epoch before one
-is consumed MUST bound storage and commit eligibility to one retained proposal. Byte-identical repeats are duplicates
-under [inbound-processing.md](./inbound-processing.md), and non-identical redundant proposals are stale unless a future
-protocol version defines a distinct retry identity.
+is consumed MUST retain only the proposal with the lexicographically lowest `self_remove_proposal_digest`, where:
+
+```text
+self_remove_proposal_digest = SHA-256(serialized_proposal_mls_message)
+```
+
+`serialized_proposal_mls_message` is the complete serialized handshake `MLSMessage` carrying the SelfRemove proposal,
+under Marmot's pinned [handshake wire format](../foundation/mls-protocol.md#handshake-wire-format). If a lower-digest
+proposal arrives, it replaces the retained proposal for commit eligibility and the replaced proposal becomes stale.
+Byte-identical repeats are duplicates under
+[inbound-processing.md](./inbound-processing.md); other non-selected proposals are stale. Local arrival order MUST NOT
+choose the retained proposal.
 
 ## Realizing removal
 
