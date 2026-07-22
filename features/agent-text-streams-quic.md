@@ -164,6 +164,13 @@ profile that defines flag bits will negotiate through a new capability or record
 once and never folds a record into the preview or transcript out of order; the transport binding
 ([../transports/quic.md](../transports/quic.md)) defines how duplicates, transport-level replay, and gaps are handled.
 
+One kind `1200` start payload defines at most one cryptographic publisher session. A publisher MUST NOT restart `seq`
+or reuse any prior `seq` value for the same `AgentTextStreamKeyContextV1`, including after reconnect, retry, process
+restart, or daemon resume. A publisher MAY resume only when it has retained the next unused sequence value. If it cannot
+prove which sequence value is next, it MUST stop publishing preview records for that start payload and rely on the
+authoritative final kind `9` message. A later preview attempt requires a new kind `1200` start payload with a freshly
+generated `stream_id`, which produces a new `start_event_id` and key context.
+
 The first text profile defines these plaintext frame types:
 
 ```text
@@ -274,7 +281,8 @@ and 12 bytes for `nonce_base`.
 The exporter label/context pair is registered for agent text stream QUIC record crypto only. `stream_secret` is reusable
 inside the epoch. Implementations MAY derive it more than once for send, watch, retry, or daemon resume paths. Per-stream
 keys MUST be derived through `AgentTextStreamKeyContextV1`; implementations MUST NOT use `stream_secret` directly as an
-AEAD key.
+AEAD key. Re-deriving the same per-stream key and nonce base does not create a new publisher session and MUST NOT reset
+the record sequence.
 
 `AgentTextStreamKeyContextV1` uses Marmot canonical encoding:
 

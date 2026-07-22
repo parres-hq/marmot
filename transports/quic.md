@@ -188,6 +188,11 @@ transcript hash covers every accepted record, a receiver can detect a gap and ei
 window or mark the preview unverifiable and wait for the final MLS message. Reconnect and candidate selection MUST NOT
 change record ordering or the transcript: ordering comes from `seq`, never from connection or arrival order.
 
+A publisher MAY replace a failed QUIC delivery stream only by continuing the publisher session's monotonically
+increasing record sequence. Opening a new QUIC stream does not create a new cryptographic session and MUST NOT reset
+`seq` to `1`. If the publisher no longer knows the next unused sequence value, it stops that preview; another preview
+requires the new start anchor defined by the feature document.
+
 ## Limits
 
 A broker enforces resource bounds so a relay cannot be used to exhaust memory. The first-profile defaults are:
