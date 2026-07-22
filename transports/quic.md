@@ -60,8 +60,9 @@ A `quic://` candidate is `quic://` followed by an authority and nothing the rece
 - a receiver MUST ignore any path, query, or fragment after the authority; the candidate carries no other semantics.
   The authority ends at the first `/`, `?`, or `#`; everything after that character is ignored.
 
-Candidate tags are advisory routing hints carried in signed group state. They are not authenticated stream content: a
-candidate that points at a wrong or hostile endpoint cannot forge preview records, because every record is
+Candidate tags are advisory routing hints carried in the kind `1200` Marmot app payload inside MLS; they are not
+committed app-component group state. They are not authenticated stream content: a candidate that points at a wrong or
+hostile endpoint cannot forge preview records, because every record is
 authenticated under the group-derived record key from the feature's key schedule. A receiver MUST treat a candidate
 that fails to connect, fails TLS, or yields records for a different `(stream_id, start_event_id)` as unusable and move
 to the next candidate.
