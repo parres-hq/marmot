@@ -59,6 +59,14 @@ encoded in the locator URL matches `ciphertext_sha256`.
 The group component's `default_blob_endpoints` list supplies ordered fallback endpoints. A client MAY try explicit
 locators first, then construct backend-specific fallback fetch URLs from the default endpoints and `ciphertext_sha256`.
 
+For a `blossom-v1` endpoint, let `server_root` be its normalized `base_url` with all trailing `/` bytes removed, and let
+`hash_hex` be the 64-character lowercase hex encoding of `ciphertext_sha256`. The fallback fetch URL is
+`server_root || "/" || hash_hex`; clients fetch it with the
+[Blossom BUD-01](https://github.com/hzrd149/blossom/blob/master/buds/01.md) `GET` operation and do not add an extension,
+query, or fragment. The upload URL is `server_root || "/upload"` and uses the
+[Blossom BUD-02](https://github.com/hzrd149/blossom/blob/master/buds/02.md) upload operation. An explicit locator returned
+by the server is stored as received after URL validation; it need not equal the fallback URL.
+
 The protocol is not Blossom-specific. Additional locator kinds require component policy support and backend-specific
 upload/fetch rules.
 
