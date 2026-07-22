@@ -119,6 +119,13 @@ encrypted_content = ChaCha20-Poly1305.encrypt(file_key, nonce, plaintext, aad)
 
 The AAD bytes are exactly the concatenation shown, with the same single `0x00` separators and no length prefixes.
 
+For every encryption operation, the producer MUST sample a fresh, independent, uniformly random 12-byte nonce with a
+cryptographically secure random generator and MUST NOT knowingly reuse a nonce with the same `file_key`. The derivation
+produces the same `file_key` when the same plaintext hash, media type, and filename are sent again in the same epoch, so
+a resend or retry still requires a new nonce. The deterministic key and protected `plaintext_sha256` also reveal
+same-attachment equality to current group members, who can already derive the key and decrypt the attachment; they do
+not expose that equality outside MLS.
+
 `plaintext_sha256` is the SHA-256 hash of the original plaintext file. `ciphertext_sha256` is the SHA-256 hash of the
 encrypted content and is the preferred content id for blob storage.
 
