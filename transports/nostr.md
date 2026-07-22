@@ -210,8 +210,8 @@ NIP-59.
 
 A receiver MUST reject a welcome that is not addressed to its own account identity.
 
-A receiver MUST reject a kind `444` rumor whose content is not valid base64, whose `e` tag is missing or not a
-32-byte hex Nostr event id, or whose `relays` tag is missing or empty.
+A receiver MUST reject a kind `444` rumor that does not satisfy its `e` and `relays` rows in "Event identity and tag
+cardinality" or whose content is not valid base64-encoded `MLSMessage` bytes with the `mls_welcome` wire format.
 
 ## KeyPackage publication
 
