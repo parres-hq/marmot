@@ -136,6 +136,14 @@ For a Commit, a Marmot client evaluates all AppDataUpdate proposals for a compon
 validates the proposal sender, the committer, the prior state, and the ordered updates. It returns the new state bytes
 or an invalid result. If any component update is invalid, the Commit is invalid.
 
+## Authorization Evaluation
+
+Commit authorization for every component operation, including update and removal, is evaluated against the candidate
+parent state: the active-admin set and other authorization inputs from the epoch before the Commit. Updates carried in
+the Commit cannot grant their own committer authority or revoke authority before the other operations in that Commit
+are authorized. After authorization, every component and cross-component invariant is evaluated against the complete
+resulting epoch state.
+
 ## Removal
 
 The MLS AppDataUpdate `remove` operation removes a component entry from the GroupContext dictionary. Each Marmot

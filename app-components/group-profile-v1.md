@@ -48,7 +48,8 @@ Only an active admin MAY send a standalone profile update proposal.
 
 Only an active admin MAY commit a profile update.
 
-The admin check is evaluated against the prior epoch state.
+Commit authorization, including removal authorization, follows the shared prior-epoch rule in
+[README.md](./README.md) ("Authorization Evaluation").
 
 ## Removal
 

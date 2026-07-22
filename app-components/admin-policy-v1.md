@@ -79,8 +79,9 @@ Only an active admin MAY send a standalone admin policy proposal.
 
 Only an active admin MAY commit an admin policy update.
 
-The commit authorization is evaluated against the prior epoch's active admins. An update that removes the committer
-from `admins` is valid only if at least one other active admin remains.
+Commit authorization, including removal authorization, follows the shared prior-epoch rule in
+[README.md](./README.md) ("Authorization Evaluation"). An update that removes the committer from `admins` is valid only
+if at least one other active admin remains.
 
 ## Admin-Gated Actions
 

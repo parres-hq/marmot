@@ -99,8 +99,10 @@ those endpoints are unusable, and attachments that rely on them are unfetchable.
 
 Only an active admin MAY send a standalone encrypted-media policy update proposal.
 
-Only an active admin MAY commit an encrypted-media policy update. The admin check is evaluated against the prior epoch
-state.
+Only an active admin MAY commit an encrypted-media policy update.
+
+Commit authorization, including removal authorization, follows the shared prior-epoch rule in
+[README.md](./README.md) ("Authorization Evaluation").
 
 ## Removal
 
