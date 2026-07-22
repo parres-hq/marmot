@@ -407,9 +407,10 @@ decrypts to dispatch the native push.
 
 ## Decoys and batching
 
-Clients SHOULD batch notifications for a short period and include decoy tokens when possible. Decoys are valid encrypted
-tokens from other groups or the sender's own token, not random bytes. Random bytes are distinguishable because they fail
-curve or AEAD validation.
+Clients SHOULD batch notifications for a short period and include decoy tokens when possible. A decoy MUST be a valid
+encrypted token owned by the sender's local MLS leaf, either from this group or another group. A sender MUST NOT use
+another member or sibling leaf's token as a decoy: doing so wakes that other device and creates avoidable cross-group
+correlation. Random bytes are not decoys because they are distinguishable by curve or AEAD failure.
 
 Silent wakes that lead to no new messages are expected. Clients SHOULD fetch, find nothing, and return to sleep without
 showing user-facing errors.
