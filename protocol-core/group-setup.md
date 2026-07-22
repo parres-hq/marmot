@@ -71,6 +71,21 @@ Settings updates are admin-gated by default. A component MAY define a looser rul
 Self-update Commits and dedicated SelfRemove-only Commits do not change group settings and do not require admin
 authorization.
 
+## Required capability changes
+
+A change to the GroupContext `required_capabilities` extension uses the MLS `GroupContextExtensions` proposal and a
+Commit. Only an active admin MAY send that proposal as a standalone proposal, and only an active admin MAY commit the
+change. Proposal-sender and commit authorization use the source-epoch and candidate-parent rules in
+[../app-components/README.md](../app-components/README.md) ("Authorization Evaluation").
+
+The resulting epoch is valid only if every current member LeafNode advertises every extension type, proposal type, and
+credential type named by `required_capabilities` in the corresponding MLS capability list. This check runs for every
+Commit that changes `required_capabilities` or the member leaf set. A Commit therefore cannot make a capability
+required while retaining a member that does not advertise it. Removing a requirement uses the same authorized flow.
+
+The Commit follows [publish-lifecycle.md](./publish-lifecycle.md) like any other local group-state change. A client MUST
+NOT apply the changed GroupContext before the publication obligation succeeds.
+
 ## Admin policy
 
 Admin authority is based on Marmot account identity, not on MLS leaf id. If an account has multiple leaves in a group,

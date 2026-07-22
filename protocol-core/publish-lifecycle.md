@@ -15,7 +15,7 @@ This rule applies to:
 - invite
 - member removal by an admin
 - group profile update
-- capability upgrade
+- required-capability change
 - admin policy update
 - policy-generated commits
 - SelfRemove-only commits prepared by remaining members

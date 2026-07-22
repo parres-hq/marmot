@@ -67,7 +67,8 @@ app component id, or a combination named by the feature. Marmot-owned ids are re
 
 Optional features SHOULD NOT block basic messaging. If a feature is not supported by every member, the group can still
 exist without that feature. When all current members later support it, the group MAY upgrade its required feature set
-through the protocol-core rules for capability upgrades.
+through the required-capability change flow in
+[../protocol-core/group-setup.md](../protocol-core/group-setup.md) ("Required capability changes").
 
 ## Delivery addressing is separate
 
