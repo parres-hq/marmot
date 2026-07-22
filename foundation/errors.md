@@ -27,8 +27,8 @@ Protocol-core docs can split these into more detailed outcomes when needed.
 
 ## Dispositions
 
-Inbound protocol input that is structurally valid and authenticated — it parses, its required signatures verify, the
-client supports its required features, and its sender is authorized — receives exactly one of four convergence
+Inbound protocol input that is structurally valid, authenticated, and supported — it parses, its required signatures
+verify, and the client supports its required features — can enter convergence and receive one of four convergence
 dispositions; the processing flow that assigns them is
 [../protocol-core/inbound-processing.md](../protocol-core/inbound-processing.md):
 
@@ -38,13 +38,18 @@ dispositions; the processing flow that assigns them is
 - `invalidated`: the input's MLS application message decrypts only on a losing branch, so its app payload is withdrawn
   from application output.
 
-Input that fails one of those gates does not reach convergence and receives no convergence disposition. It is rejected
-before convergence — the `fail closed` path in
-[../protocol-core/inbound-processing.md](../protocol-core/inbound-processing.md) — and is described by its category
-alone: `invalid_encoding`, `invalid_signature`, `unsupported_required_feature`, or `authorization_failed`.
-`transport_rejected` is likewise a publish/delivery outcome, not a convergence disposition. Every inbound input
-therefore has exactly one outcome: a convergence disposition when it was structurally valid and authenticated,
-otherwise a rejection category.
+Input that fails a branch-independent gate does not reach convergence and receives no convergence disposition. It is
+rejected before convergence — the `fail closed` path in
+[../protocol-core/inbound-processing.md](../protocol-core/inbound-processing.md) — and is described by
+`invalid_encoding`, `invalid_signature`, or `unsupported_required_feature`.
+
+Authorization can depend on the prior group state. A commit's authorization is therefore evaluated against each
+candidate parent state during candidate construction, not as one branch-independent gate. A commit that is authorized
+on one candidate parent and unauthorized on another can create an edge only from the authorized parent. When a commit
+is unauthorized for every available matching parent and no missing parent could change that result, it is rejected as
+`authorization_failed` and receives no convergence disposition. `transport_rejected` is likewise a
+publish/delivery outcome, not a convergence disposition. Every inbound input therefore has exactly one outcome: a
+convergence disposition when convergence classifies it, otherwise a rejection category.
 
 `delivered` is not a disposition. It names the application-visible output of an `accepted` MLS application message: the
 Marmot app payload handed to the application. `dropped` is not a disposition either; where older versions of this

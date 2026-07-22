@@ -49,6 +49,12 @@ rules.
 Malformed input MUST fail closed. Unsupported input MUST fail closed when the active group policy requires support for
 that input (e.g. a welcome requires capabilities the client does not support).
 
+Encoding, required-signature, and required-feature checks are branch-independent and run before convergence. A commit
+authorization check that depends on group state is not: convergence evaluates the authenticated committer against each
+candidate parent state. The same commit can be unauthorized on one retained parent and authorized on another, so a
+client MUST NOT reject it globally as `authorization_failed` before attempting every available matching parent. The
+candidate-edge and terminal-rejection rules are defined in [convergence.md](./convergence.md), "Candidate branches."
+
 ## Deferred input
 
 A client MAY defer an input when it cannot yet be processed but could become processable after more protocol bytes

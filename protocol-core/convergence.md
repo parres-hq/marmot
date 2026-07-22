@@ -57,11 +57,17 @@ Until such a component exists, there is no mechanism to change the active policy
 
 A client builds candidate branches by replaying MLS commit bytes from retained group states.
 
-A commit creates a candidate edge only when it validates against exactly one parent state. Validation here is full
-commit validity: MLS validation plus Marmot component validation, including cross-component resulting-epoch checks such
-as the admin/leaf coupling in [../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md)
-("Validation"). A commit whose resulting state fails those checks is invalid on every branch and MUST NOT create a
-candidate edge, so convergence can never select a branch that contains it.
+A commit creates a candidate edge only when it validates against a candidate parent state. Validation here is full
+commit validity: MLS validation; authorization of the authenticated committer against that parent state; and Marmot
+component validation of the resulting state, including cross-component resulting-epoch checks such as the admin/leaf
+coupling in [../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md) ("Validation").
+
+Authorization is parent-relative. A committer can be authorized on one retained branch and unauthorized on another, so
+failure against one candidate parent MUST NOT reject the commit against every parent. The commit creates an edge only
+from a parent against which all checks succeed. A candidate edge whose resulting state fails Marmot component
+invariants MUST NOT be created, so convergence can never select that invalid transition. A commit that is unauthorized
+for every available matching parent is rejected as `authorization_failed` only when no unavailable parent could change
+that result; otherwise it remains deferred while that parent may still arrive.
 
 A commit whose parent is not available remains deferred until the parent appears or the input expires.
 
