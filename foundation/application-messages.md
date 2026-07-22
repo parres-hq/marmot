@@ -105,7 +105,7 @@ A kind `1009` event is an ordinary Marmot app event and carries exactly the six 
 `v`; its `content` is the replacement plaintext, not JSON).
 
 - The original message's projected `kind` does not change; only its rendered body is overlaid.
-- The chat-list preview MUST NOT bump on an edit. An edit to a stale message must not reorder the conversation list.
+- The chat-list preview MUST NOT bump or reorder the conversation list when an edit targets a stale message.
 - The unread count MUST NOT advance on an edit. A receiver who is caught up with the original is caught up with the
   edit.
 
