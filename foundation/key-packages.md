@@ -48,8 +48,9 @@ avoid creating a group that some member cannot process.
 Every Marmot KeyPackage MUST carry `marmot.account-identity-proof.v1` in its LeafNode extensions and advertise support
 for that extension type as required by [account-identity-proof-v1.md](./account-identity-proof-v1.md). The remaining
 current-profile capabilities are listed by namespace in [registries.md](./registries.md): `app_data_dictionary`,
-`app_components`, `last_resort`, `app_data_update`, and `self_remove`. The registry is the source of numeric ids and
-namespaces; this document only requires that those capabilities appear in the appropriate MLS capability lists.
+`app_components`, `last_resort_key_package`, `app_data_update`, and `self_remove`. The registry is the source of numeric
+ids and namespaces; this document only requires that those capabilities appear in the appropriate MLS capability
+lists. Last-resort status is carried as the empty-data `last_resort_key_package` component in the KeyPackage.
 
 A member can join only if its KeyPackage advertises support for every MLS primitive, app component, and component-owned
 role capability the group requires. For example, an agent-stream-ready group may require the agent text stream `receive`

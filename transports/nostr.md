@@ -245,7 +245,7 @@ The current tag set is:
 - `app_components`: supported Marmot app-component ids.
 
 `mls_ciphersuite`, `mls_extensions`, `mls_proposals`, and `app_components` are id-list tags. Each is exactly one tag
-whose values follow the tag name in a single tag array, for example `["mls_extensions", "0x0006", "0xf2f1", "0x000a"]`.
+whose values follow the tag name in a single tag array, for example `["mls_extensions", "0x0006", "0xf2f1"]`.
 A producer MUST NOT split the ids of one list across repeated tags. Each value is the `0x`-prefixed lowercase
 hexadecimal encoding of the 16-bit id, zero-padded to four hex digits, such as `0x0001` or `0xf2f1`. Each id-list tag
 MUST carry at least one value and MUST NOT repeat a value inside the same tag. Consumers compare id-list values as exact

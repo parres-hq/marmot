@@ -29,18 +29,13 @@ these assignments, Marmot needs an explicit compatibility plan before changing w
 | Namespace        | Value    | Name                  | Upstream source                      |
 | ---------------- | -------- | --------------------- | ------------------------------------ |
 | ComponentID      | `0x0001` | `app_components`      | MLS extensions draft `ComponentID`   |
+| ComponentID      | `0x0004` | `last_resort_key_package` | MLS extensions draft `ComponentID` |
 | Extension type   | `0x0006` | `app_data_dictionary` | MLS extensions draft extension type  |
 | Proposal type    | `0x0008` | `app_data_update`     | MLS extensions draft proposal type   |
 | Proposal type    | `0x000a` | `self_remove`         | MLS extensions draft proposal type   |
-| Extension type   | `0x000a` | `last_resort`         | MLS extensions draft extension type  |
 
-`self_remove` and `last_resort` share the value `0x000a` but are not an id collision: MLS values are unique within the
-namespace named in the first column.
-
-The `app_components`, `app_data_dictionary`, `app_data_update`, and `self_remove` values match
-draft-ietf-mls-extensions-09. The `last_resort` value is the extension-type assignment currently pinned by Marmot.
-Confirm `last_resort` against draft-09 before relying on it: the draft MAY track last-resort handling in the component
-registry rather than as extension `0x000a`.
+These values match draft-ietf-mls-extensions-09. In that draft, last-resort KeyPackage marking is the empty-data
+`last_resort_key_package` application component, not an MLS extension type.
 
 ## Marmot custom MLS extension types
 
