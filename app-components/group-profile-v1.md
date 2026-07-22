@@ -56,6 +56,8 @@ authorization, follows the shared prior-epoch rule in [README.md](./README.md) (
 Only an active admin MAY commit removal of this component.
 
 If the component is not required, removal means the group has no signed Marmot display profile.
+An absent component and a present component with two empty fields are distinct canonical group states: the latter is a
+signed empty profile. Applications MAY render the same local fallback for both.
 
 ## Migration
 
