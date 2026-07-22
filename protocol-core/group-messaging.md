@@ -41,7 +41,7 @@ Unsupported app-event kinds do not change group state unless the owning feature 
 
 An active admin MAY commit a group-state change when its owning rule authorizes that admin.
 
-Non-admin members can commit only the narrow flows that the spec explicitly allows:
+Non-admin members MUST NOT commit anything except the narrow flows the spec explicitly allows:
 
 - a self-update Commit that updates only the sender's own LeafNode;
 - a dedicated SelfRemove-only Commit that processes valid pending SelfRemove proposals by reference.
@@ -54,7 +54,7 @@ In particular, adopted v1 defines no non-admin `new_member_commit` External Comm
 [multi-device feature](../features/multi-device.md) does not relax this rule; that feature must define parent-state admin
 authorization and update this adopted commit-shape list before its External Commit flow can become normative.
 
-Non-admin members can send standalone MLS proposals only where the spec explicitly allows them. In v1 protocol core,
+Non-admin members MAY send standalone MLS proposals only where the spec explicitly allows them. In v1 protocol core,
 that proposal flow is SelfRemove. A request for an admin-gated group-state change is an application payload or
 feature-owned request flow, not a standalone MLS proposal.
 
