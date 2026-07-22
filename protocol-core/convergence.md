@@ -119,10 +119,13 @@ The branch epochs of a candidate are the epochs strictly greater than `fork_epoc
 
 ## Eligibility
 
-Only branches inside the rollback horizon are eligible:
+A convergence pass snapshots `pass_base_epoch`, the epoch of the canonical group state when that pass starts. It stays
+fixed until the pass selects and applies one branch; candidate replay during the pass does not advance it.
+
+Only branches inside the rollback horizon relative to that fixed base are eligible:
 
 ```text
-current_tip_epoch - fork_epoch <= max_rewind_commits
+pass_base_epoch - fork_epoch <= max_rewind_commits
 ```
 
 Branches outside that horizon MUST NOT be selected.
