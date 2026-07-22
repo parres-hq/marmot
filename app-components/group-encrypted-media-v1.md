@@ -81,10 +81,6 @@ A policy state is valid if:
 - every endpoint base URL is 1..2048 bytes
 - every endpoint base URL is a normalized `https` URL, or a normalized `http` URL whose host is loopback
 - endpoints with userinfo, queries, fragments, or missing hosts are invalid
-- an endpoint whose host is unsafe per [../foundation/host-safety.md](../foundation/host-safety.md) is invalid, with the
-  single exception of a loopback host (which carries the `http`-to-loopback dev/test endpoint allowed above); every other
-  range in the unsafe-host set — private, CGNAT, link-local, documentation, benchmarking, reserved, multicast, and the
-  IPv6 transition prefixes — makes the endpoint invalid
 
 A base URL is normalized when it is byte-equal to its own parse-and-serialize output under the
 [WHATWG URL Standard](https://url.spec.whatwg.org/) — the same normalization
