@@ -59,9 +59,8 @@ using non-default values is non-conformant under the owning protocol rule.
 
 Local APIs should expose classified outcomes for inputs that do not produce application content.
 
-The API names can vary. The categories should map to the Marmot classification surface for duplicates, own echoes, wrong
-recipients, unknown groups, already-applied commits, stale epochs, invalid encodings, authorization failures, and
-missing history.
+The API names can vary. Their categories should map to the complete Marmot classification surface in
+[foundation/errors.md](./foundation/errors.md) ("Input categories") rather than maintaining a separate list here.
 
 ## Post-join rotation window
 
