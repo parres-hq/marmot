@@ -1,6 +1,6 @@
 # marmot.group.agent-text-stream.quic.v1
 
-Status: adopted.
+Status: experimental.
 
 ## Registry
 
