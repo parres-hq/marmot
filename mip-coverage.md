@@ -12,7 +12,9 @@ work and is tracked here because it affects this spec's design.
 - MIP-00, Credentials & Key Packages: Review and required.
   - Foundation: [foundation/identity.md](./foundation/identity.md) and
     [foundation/key-packages.md](./foundation/key-packages.md);
-    [foundation/account-identity-proof-v1.md](./foundation/account-identity-proof-v1.md) is new in this spec and breaking
+    [app-components/account-identity-proof-v2.md](./app-components/account-identity-proof-v2.md) is new in this spec and
+    breaking; [foundation/account-identity-proof-v1.md](./foundation/account-identity-proof-v1.md) records its
+    superseded predecessor
   - Transport binding: [transports/nostr.md](./transports/nostr.md)
   - Protocol flow: [protocol-core/joining.md](./protocol-core/joining.md)
 - MIP-01, Group Construction & Marmot Group Data Extension: Review and required.
@@ -34,6 +36,8 @@ work and is tracked here because it affects this spec's design.
   - Feature flow: [features/push-notifications.md](./features/push-notifications.md)
 - MIP-06, Multi-Device Support: Branch-draft and optional.
   - Feature flow: [features/multi-device.md](./features/multi-device.md)
+  - Join authorization component:
+    [app-components/multi-device-join-authorization-v1.md](./app-components/multi-device-join-authorization-v1.md)
   - Foundation: [foundation/identity.md](./foundation/identity.md)
   - Convergence: [protocol-core/convergence.md](./protocol-core/convergence.md)
 

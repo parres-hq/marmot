@@ -233,8 +233,7 @@ A component MAY define a looser rule, but it MUST do so explicitly. In v1, the a
 
 Assigned component ids are registered in [../foundation/registries.md](../foundation/registries.md).
 
-The currently adopted Marmot-owned components below are all GroupContext components. LeafNode, KeyPackage, and
-GroupInfo components use the same registry and directory when Marmot defines them.
+The currently adopted persistent GroupContext components are:
 
 - [marmot.group.profile.v1](./group-profile-v1.md)
 - [marmot.group.blossom.image.v1](./group-blossom-image-v1.md)
@@ -245,12 +244,20 @@ GroupInfo components use the same registry and directory when Marmot defines the
 - [marmot.group.avatar-url.v1](./group-avatar-url-v1.md)
 - [marmot.group.encrypted-media.v1](./group-encrypted-media-v1.md)
 
+Every Marmot leaf uses the adopted
+[marmot.member.account-identity-proof.v2](./account-identity-proof-v2.md) LeafNode component.
+
+The branch-draft multi-device flow uses
+[marmot.authorization.multi-device-join.v1](./multi-device-join-authorization-v1.md) as commit-scoped component data
+in `AppEphemeral`. Its assigned bytes do not make the feature adopted.
+
 ## Resolved Direction
 
 - Marmot component ids stay in the private-use range for the foreseeable future.
 - Marmot component major versions are represented by component ids.
-- `marmot.group.admin-policy.v1` is required for every Marmot group. Other Marmot core components are optional unless a
-  group profile, transport, or feature requires them.
+- `marmot.group.admin-policy.v1` and the LeafNode component `marmot.member.account-identity-proof.v2` are required for
+  every Marmot group. Other Marmot core components are optional unless a group profile, transport, or feature requires
+  them.
 - `marmot.group.blossom.image.v1` is Blossom-specific. Other image-reference models SHOULD use separate components.
 - `marmot.transport.nostr.routing.v1` is required for Nostr-routed Marmot groups.
 - Nostr relays in `marmot.transport.nostr.routing.v1` are canonical signed group state, not local hints.

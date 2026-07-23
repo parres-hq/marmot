@@ -245,7 +245,7 @@ The current tag set is:
 - `app_components`: supported Marmot app-component ids.
 
 `mls_ciphersuite`, `mls_extensions`, `mls_proposals`, and `app_components` are id-list tags. Each is exactly one tag
-whose values follow the tag name in a single tag array, for example `["mls_extensions", "0x0006", "0xf2f1"]`.
+whose values follow the tag name in a single tag array, for example `["app_components", "0x8001", "0x8009"]`.
 A producer MUST NOT split the ids of one list across repeated tags. Each value is the `0x`-prefixed lowercase
 hexadecimal encoding of the 16-bit id, zero-padded to four hex digits, such as `0x0001` or `0xf2f1`. Each id-list tag
 MUST carry at least one value and MUST NOT repeat a value inside the same tag. Consumers compare id-list values as exact
@@ -256,8 +256,10 @@ and ignore the rest.
 
 The `i` tag is the KeyPackageRef, not the account identity. Receivers MUST verify it against the decoded KeyPackage.
 
-The `mls_extensions` tag MUST include the value `0xf2f1` for `marmot.account-identity-proof.v1`. Receivers MUST still
-validate the decoded KeyPackage LeafNode proof; the tag is only an advertisement and fetch filter.
+The `app_components` tag MUST include the value `0x8009` for `marmot.member.account-identity-proof.v2`. Receivers MUST
+still validate the decoded KeyPackage LeafNode's support list and proof data; the transport tag is only an
+advertisement and fetch filter. The current profile does not require legacy extension type `0xf2f1` in
+`mls_extensions`.
 
 KeyPackage publication is account transport. It helps other users find fresh KeyPackages. It does not create group
 state.

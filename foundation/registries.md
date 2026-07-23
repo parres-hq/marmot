@@ -10,16 +10,18 @@ The owning document defines the bytes and validation rules. This registry only n
 
 Marmot app components use MLS private-use component ids.
 
-| Component id | Name                                     | Document                                              |
-| ------------ | ---------------------------------------- | ----------------------------------------------------- |
-| `0x8001`     | `marmot.group.profile.v1`                | [doc](../app-components/group-profile-v1.md)          |
-| `0x8002`     | `marmot.group.blossom.image.v1`          | [doc](../app-components/group-blossom-image-v1.md)    |
-| `0x8003`     | `marmot.group.admin-policy.v1`           | [doc](../app-components/admin-policy-v1.md)           |
-| `0x8004`     | `marmot.transport.nostr.routing.v1`      | [doc](../app-components/nostr-routing-v1.md)          |
-| `0x8005`     | `marmot.group.message-retention.v1`      | [doc](../app-components/message-retention-v1.md)      |
-| `0x8006`     | `marmot.group.agent-text-stream.quic.v1` | [doc](../app-components/agent-text-stream-quic-v1.md) |
-| `0x8007`     | `marmot.group.avatar-url.v1`             | [doc](../app-components/group-avatar-url-v1.md)       |
-| `0x8008`     | `marmot.group.encrypted-media.v1`        | [doc](../app-components/group-encrypted-media-v1.md)  |
+| Component id | Name                                            | Document                                                            |
+| ------------ | ----------------------------------------------- | ------------------------------------------------------------------- |
+| `0x8001`     | `marmot.group.profile.v1`                       | [doc](../app-components/group-profile-v1.md)                        |
+| `0x8002`     | `marmot.group.blossom.image.v1`                 | [doc](../app-components/group-blossom-image-v1.md)                  |
+| `0x8003`     | `marmot.group.admin-policy.v1`                  | [doc](../app-components/admin-policy-v1.md)                         |
+| `0x8004`     | `marmot.transport.nostr.routing.v1`             | [doc](../app-components/nostr-routing-v1.md)                        |
+| `0x8005`     | `marmot.group.message-retention.v1`             | [doc](../app-components/message-retention-v1.md)                    |
+| `0x8006`     | `marmot.group.agent-text-stream.quic.v1`        | [doc](../app-components/agent-text-stream-quic-v1.md)               |
+| `0x8007`     | `marmot.group.avatar-url.v1`                    | [doc](../app-components/group-avatar-url-v1.md)                     |
+| `0x8008`     | `marmot.group.encrypted-media.v1`               | [doc](../app-components/group-encrypted-media-v1.md)                |
+| `0x8009`     | `marmot.member.account-identity-proof.v2`       | [doc](../app-components/account-identity-proof-v2.md)               |
+| `0x800a`     | `marmot.authorization.multi-device-join.v1`     | [draft](../app-components/multi-device-join-authorization-v1.md)    |
 
 ## Upstream MLS extension draft ids
 
@@ -70,9 +72,12 @@ These three extension types are capability markers only: v1 defines no extension
 `LeafNode.capabilities.extensions` to advertise role support and are never emitted as LeafNode or GroupContext
 extension bodies.
 
-`0xf2ef` and `0xf2f0` are reserved for the draft multi-device feature (see [../features/multi-device.md](../features/multi-device.md))
-and are not yet implemented;
-confirm the values when that feature lands. `0xf2f1` is implemented and required on every Marmot member LeafNode.
+`0xf2ef` and `0xf2f0` are reserved for the draft multi-device feature (see
+[../features/multi-device.md](../features/multi-device.md)) and are not yet implemented; confirm the values when that
+feature lands.
+
+`0xf2f1` is the superseded v1 account-identity-proof extension. It is not required or emitted by the current profile;
+component id `0x8009` replaces it. It remains registered so the legacy wire value is never reassigned.
 
 ## Marmot custom proposal types
 
@@ -100,7 +105,8 @@ seal), kind `10002` (NIP-65 relay list), and kind `10050` (NIP-17 DM inbox relay
 | `447`   | Push token request                  | Marmot app payload                  | [push-notifications.md](../features/push-notifications.md) |
 | `448`   | Push token list response            | Marmot app payload                  | [push-notifications.md](../features/push-notifications.md) |
 | `449`   | Push token removal                  | Marmot app payload                  | [push-notifications.md](../features/push-notifications.md) |
-| `450`   | Reserved account identity proof event | Local signing template, not relayed | [account-identity-proof-v1.md](account-identity-proof-v1.md) |
+| `450`   | Account identity proof v2 event     | Local signing template, not relayed | [account-identity-proof-v2.md](../app-components/account-identity-proof-v2.md) |
+| `451`   | Multi-device join authorization v1 | Local signing template, not relayed | [multi-device-join-authorization-v1.md](../app-components/multi-device-join-authorization-v1.md) |
 | `1009`  | Message edit                        | Marmot app payload                  | [application-messages.md](application-messages.md)      |
 | `1200`  | Agent text stream start             | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
 | `1201`  | Agent activity                      | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
@@ -112,10 +118,10 @@ The experimental agent text stream QUIC feature claims kind `1200` for durable s
 agent activity rows, and kind `1202` for agent operation rows. Live stream chunks are transient QUIC records. Future durable
 abort, media-final, or fallback preview app-event kinds MUST be added to this registry before use.
 
-Kind `450` is reserved for the event-signed successor to `marmot.account-identity-proof.v1`. The adopted v1 proof does
-not use a Nostr event, and no kind `450` tag or content shape is normative yet. Clients MUST NOT emit kind `450` until
-the successor component document defines it. A multi-device admin join authorization is a different authority class
-and MUST claim a different event kind.
+Kind `450` is the local signing event for the adopted account identity proof v2. Kind `451` is the separate local
+signing event for the draft multi-device active-admin join authorization. Neither event is a transport object, and
+clients MUST NOT publish either event to relays. Their exact event shapes are defined by their component documents and
+share the envelope and validation rules in [authorization-proofs.md](./authorization-proofs.md).
 
 Kind `1210` is reserved for durable group system rows, such as membership, name, avatar, or other group-lifecycle
 notices that clients render separately from human chat.

@@ -18,6 +18,7 @@ mip-coverage.md
 foundation/
   README.md
   identity.md
+  authorization-proofs.md
   account-identity-proof-v1.md
   key-packages.md
   canonical-encoding.md
@@ -47,6 +48,8 @@ app-components/
   agent-text-stream-quic-v1.md
   group-avatar-url-v1.md
   group-encrypted-media-v1.md
+  account-identity-proof-v2.md
+  multi-device-join-authorization-v1.md
 transports/
   README.md
   nostr.md

@@ -27,9 +27,9 @@ identity in the credential.
 
 A KeyPackage belongs to the account named by its credential identity.
 
-Every Marmot KeyPackage MUST carry `marmot.account-identity-proof.v1` in its LeafNode extensions. The proof binds the
-credential identity to the KeyPackage LeafNode's MLS signature public key. A KeyPackage without a valid proof is
-malformed.
+Every Marmot KeyPackage MUST carry `marmot.member.account-identity-proof.v2` in the
+`app_data_dictionary` of its embedded LeafNode. The proof binds the credential identity to that LeafNode's MLS
+signature public key. A KeyPackage without a valid proof is malformed.
 
 When a KeyPackage is published through a transport object, the transport binding defines how the outer author or sender
 is checked against the credential identity.
@@ -45,11 +45,12 @@ over the inner `KeyPackage` (RFC 9420 `MakeKeyPackageRef`), not over the `MLSMes
 KeyPackages advertise what that client/device can support. Group creation and member addition use these capabilities to
 avoid creating a group that some member cannot process.
 
-Every Marmot KeyPackage MUST carry `marmot.account-identity-proof.v1` in its LeafNode extensions and advertise support
-for that extension type as required by [account-identity-proof-v1.md](./account-identity-proof-v1.md). The remaining
+Every Marmot KeyPackage MUST carry `marmot.member.account-identity-proof.v2` in its embedded LeafNode and advertise
+component id `0x8009` in that LeafNode's `app_components` support list as required by
+[../app-components/account-identity-proof-v2.md](../app-components/account-identity-proof-v2.md). The remaining
 current-profile capabilities are listed by namespace in [registries.md](./registries.md): the LeafNode advertises the
-`app_data_dictionary` extension and the relevant proposal types in MLS capabilities, and its `app_components`
-dictionary entry advertises the Marmot component ids the client supports.
+`app_data_dictionary` extension and the relevant proposal types in MLS capabilities, and its `app_components` entry
+advertises the Marmot component ids the client supports.
 
 Last-resort status is not an MLS capability or extension type. A last-resort KeyPackage carries an
 `app_data_dictionary` in its KeyPackage extensions, separate from the dictionary in its embedded LeafNode, with an
@@ -117,7 +118,7 @@ A client MUST reject a published KeyPackage when:
 - the KeyPackage `Lifetime` extension is missing, the validation time is before `not_before` or after `not_after`, or
   the total range is longer than 7,261,200 seconds;
 - the credential identity is not a valid Marmot account identity;
-- the account identity proof extension is missing or invalid;
+- the account identity proof component is missing or invalid;
 - the transport author or sender does not match the credential identity under the active transport binding;
 - the transport publication encoding is invalid;
 - required capability tags are missing or incompatible;

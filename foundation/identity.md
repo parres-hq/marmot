@@ -32,14 +32,14 @@ says which Marmot account that leaf belongs to.
 
 ## Account identity proof
 
-Every Marmot member LeafNode MUST carry `marmot.account-identity-proof.v1`, an MLS LeafNode extension that proves the
-account named by the `BasicCredential` authorized the leaf's MLS signature public key.
+Every Marmot member LeafNode MUST carry `marmot.member.account-identity-proof.v2`, a LeafNode application component
+that proves the account named by the `BasicCredential` authorized the leaf's MLS signature public key.
 
 Clients MUST reject a member leaf or KeyPackage if the proof is missing, malformed, does not match the credential
 identity, does not match the MLS leaf signature key, or does not verify under the account identity.
 
-The extension bytes and validation rules are defined in
-[account-identity-proof-v1.md](./account-identity-proof-v1.md).
+The component bytes, local Nostr signing event, capability rules, and validation requirements are defined in
+[../app-components/account-identity-proof-v2.md](../app-components/account-identity-proof-v2.md).
 
 ## KeyPackages
 

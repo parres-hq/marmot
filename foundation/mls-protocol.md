@@ -23,12 +23,12 @@ Marmot builds on:
 - MLS Commits, Proposals, application-message content, and Welcomes;
 - MLS KeyPackages and KeyPackage references;
 - MLS `BasicCredential` for member credentials;
-- the Marmot account identity proof LeafNode extension;
+- the Marmot account identity proof LeafNode component;
 - MLS capability advertisement and required capabilities.
 
-The Marmot account identity carried in credentials is defined in [identity.md](./identity.md). The LeafNode extension
+The Marmot account identity carried in credentials is defined in [identity.md](./identity.md). The LeafNode component
 that binds that identity to the MLS leaf signature key is defined in
-[account-identity-proof-v1.md](./account-identity-proof-v1.md).
+[../app-components/account-identity-proof-v2.md](../app-components/account-identity-proof-v2.md).
 
 ## Handshake wire format
 
@@ -63,8 +63,9 @@ to allocate a custom extension. A custom MLS extension is appropriate only when 
 or extension semantics that the application-component mechanisms cannot express. A custom MLS proposal type is
 appropriate only when the feature needs proposal semantics that a component update cannot express.
 
-`marmot.account-identity-proof.v1` is the required custom LeafNode extension used to authenticate Marmot account
-ownership of MLS leaf signature keys. New custom extensions MUST be registered in [registries.md](./registries.md).
+The current account identity proof uses a LeafNode application component, not a custom extension. Extension type
+`0xf2f1` documents only the superseded v1 proof and is not part of the current profile. New custom extensions MUST be
+registered in [registries.md](./registries.md).
 
 ## Commit-attached data, authenticated data, and exporters
 

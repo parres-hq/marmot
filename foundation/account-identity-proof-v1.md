@@ -1,12 +1,15 @@
 # Account identity proof v1
 
-Status: adopted.
+Status: superseded.
 
-`marmot.account-identity-proof.v1` is a Marmot custom MLS LeafNode extension that binds the Marmot account identity in
-an MLS `BasicCredential` to that leaf's MLS signature public key.
+`marmot.account-identity-proof.v1` was the legacy Marmot custom MLS LeafNode extension that bound the Marmot account
+identity in an MLS `BasicCredential` to that leaf's MLS signature public key.
 
-This is a breaking protocol requirement. Marmot clients MUST reject member leaves and KeyPackages that do not carry a
-valid proof.
+This document preserves the legacy wire format so extension type `0xf2f1` is never reinterpreted. It is not part of the
+current Marmot profile. Current clients use
+[../app-components/account-identity-proof-v2.md](../app-components/account-identity-proof-v2.md).
+
+Within a legacy v1 group, clients MUST reject member leaves and KeyPackages that do not carry a valid v1 proof.
 
 ## Registry
 
@@ -96,14 +99,14 @@ signature  = 78c1f3d5ccbe816e01266327a3c68b1f5d4ee1900cbe368ea86dde8d641b69b2ccc
 
 ## Required capabilities
 
-Every Marmot KeyPackage and group member LeafNode MUST advertise support for extension type `0xf2f1` in MLS
-capabilities.
+Every KeyPackage and group member LeafNode in the legacy v1 profile MUST advertise support for extension type `0xf2f1`
+in MLS capabilities.
 
-Every Marmot group MUST require extension type `0xf2f1` in MLS `RequiredCapabilities`.
+Every legacy v1 group MUST require extension type `0xf2f1` in MLS `RequiredCapabilities`.
 
 ## Validation
 
-A client MUST reject a LeafNode or KeyPackage if:
+A client validating the legacy v1 profile MUST reject a LeafNode or KeyPackage if:
 
 - the extension is missing;
 - the payload is truncated or has trailing bytes;
@@ -115,4 +118,8 @@ A client MUST reject a LeafNode or KeyPackage if:
 - `mls_signature_public_key` does not exactly match the LeafNode MLS signature public key;
 - `schnorr_signature` is not a valid BIP-340 signature for the signing input digest and `account_identity`.
 
-There is no legacy fallback. A member without a valid proof is not a Marmot member under this spec.
+There is no fallback within the legacy v1 profile: a member without a valid v1 proof is not a valid v1 member.
+
+The current v2 profile MUST NOT accept this extension as a substitute for component id `0x8009`, and this extension
+MUST NOT be required or emitted in a newly created v2 group. The clean-break migration rules are defined in
+[../app-components/account-identity-proof-v2.md](../app-components/account-identity-proof-v2.md) ("Migration from v1").

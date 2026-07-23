@@ -29,14 +29,17 @@ data, or cached transport data as group settings.
 
 At creation, the GroupContext MUST include the `required_capabilities` and `app_data_dictionary` extensions. The
 `app_data_dictionary` MUST contain `marmot.group.admin-policy.v1` and the other required GroupContext component entries
-selected by the feature set. The GroupContext `app_components` list MUST mark `marmot.group.admin-policy.v1` and every
-other component required by the selected feature set as required, including any required component whose data appears
-only in member LeafNodes rather than in the GroupContext dictionary.
+selected by the feature set. The GroupContext `app_components` list MUST require
+`marmot.member.account-identity-proof.v2`, `marmot.group.admin-policy.v1`, and every other component required by the
+selected feature set, including any required component whose data appears only in member LeafNodes rather than in the
+GroupContext dictionary.
 
-The admin-policy presence and requirement are lifetime invariants, not creation defaults. Every resulting epoch MUST
-retain the `marmot.group.admin-policy.v1` entry in `app_data_dictionary` and MUST retain component id `0x8003` in the
-GroupContext `app_components` list. A Commit that removes either one, including a Commit that changes
-`app_components`, is invalid under [../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md).
+The account-proof and admin-policy requirements are lifetime invariants, not creation defaults. Every resulting epoch
+MUST require component ids `0x8009` and `0x8003` in the GroupContext `app_components` list, every member leaf MUST
+advertise and carry a valid `0x8009` proof, and the GroupContext MUST retain the `marmot.group.admin-policy.v1` entry.
+A Commit that violates any of those invariants, including a Commit that changes `app_components`, is invalid under
+[../app-components/account-identity-proof-v2.md](../app-components/account-identity-proof-v2.md) and
+[../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md).
 
 Separately, `ratchet_tree` is a per-Welcome GroupInfo extension, not a GroupContext extension. The GroupInfo encrypted
 in every Marmot Welcome carries the ratchet tree inline, as [joining.md](./joining.md) requires.
