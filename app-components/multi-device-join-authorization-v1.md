@@ -13,7 +13,7 @@ document becomes normative, adopted membership authorization continues to reject
 
 - Component id: `0x800a`
 - Name: `marmot.authorization.multi-device-join.v1`
-- Proof event kind: `451`
+- Proof event kind: `452`
 - Valid carrier: one MLS `AppEphemeral` proposal in the draft multi-device `new_member_commit` External Commit
 - Signature algorithm: administrator account-key BIP-340 Schnorr signature over a NIP-01 event id
 
@@ -69,7 +69,7 @@ Construct this exact local-only Nostr event:
 ```text
 pubkey     = lowercase-hex(proof.signer_pubkey)
 created_at = proof.created_at
-kind       = 451
+kind       = 452
 tags       = [
   ["d", "marmot.multi-device-join-authorization.v1"],
   ["component", "0x800a"],
@@ -184,20 +184,20 @@ leaf_node_hash      = 606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c
 The NIP-01 canonical event serialization is:
 
 ```json
-[0,"f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9",1700000060,451,[["d","marmot.multi-device-join-authorization.v1"],["component","0x800a"],["group_id","000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"],["epoch","7"],["group_context_hash","202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"],["account","2f8bde4d1a07209355b4a7250a5c5128e88b84bddc619ab7cba8d569b240efe4"],["ciphersuite","0x0001"],["signature_scheme","0x0807"],["mls_signature_key","404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f"],["leaf_node_hash","606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f"]],"Authorize this device to join the Marmot group"]
+[0,"f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9",1700000060,452,[["d","marmot.multi-device-join-authorization.v1"],["component","0x800a"],["group_id","000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"],["epoch","7"],["group_context_hash","202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"],["account","2f8bde4d1a07209355b4a7250a5c5128e88b84bddc619ab7cba8d569b240efe4"],["ciphersuite","0x0001"],["signature_scheme","0x0807"],["mls_signature_key","404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f"],["leaf_node_hash","606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f"]],"Authorize this device to join the Marmot group"]
 ```
 
 The event id and BIP-340 signature are:
 
 ```text
-event_id  = 5742d21abace7c54ddb386b3276a4c3c0f2cf04e01037aa723b5d84b447f17be
-signature = dd19fefcc2dc03fdc8b8540bd938ea6af6abcef70d3b2698ac65c0f96ebe54a6e0fde0bea14f85ddc3960c5a3f310fef7d2ac5aac7e7453e32e5692fb5df247c
+event_id  = aa6c83eefe4f96d2e28135c93ff32412d64aeb79096a545f8e8cad4af31187f2
+signature = e8fad066f7eea0271fecd1808728004b09bde30e59af63d3bf8d07413e65382a8e55e3247d5cdfc3b4fc5c5c8fc02b02a0a4b5eff44fe2c42641c11b57cd5dc8
 ```
 
 The resulting 104-byte `AppEphemeral` data is:
 
 ```text
-f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9000000006553f13cdd19fefcc2dc03fdc8b8540bd938ea6af6abcef70d3b2698ac65c0f96ebe54a6e0fde0bea14f85ddc3960c5a3f310fef7d2ac5aac7e7453e32e5692fb5df247c
+f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9000000006553f13ce8fad066f7eea0271fecd1808728004b09bde30e59af63d3bf8d07413e65382a8e55e3247d5cdfc3b4fc5c5c8fc02b02a0a4b5eff44fe2c42641c11b57cd5dc8
 ```
 
 ## Draft migration
@@ -205,6 +205,6 @@ f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9000000006553f13c
 Earlier branch-draft text proposed carrying this proof in raw `authenticated_data` and left its component id and event
 kind unassigned. That shape was never normative.
 
-Component id `0x800a`, event kind `451`, and the `AppEphemeral` carrier replace that placeholder design. Implementations
+Component id `0x800a`, event kind `452`, and the `AppEphemeral` carrier replace that placeholder design. Implementations
 of the draft MUST reject a kind `450` multi-device authorization, raw authenticated-data proof, SafeAAD proof item, or
 any proof using the earlier unassigned shape.

@@ -106,7 +106,8 @@ seal), kind `10002` (NIP-65 relay list), and kind `10050` (NIP-17 DM inbox relay
 | `448`   | Push token list response            | Marmot app payload                  | [push-notifications.md](../features/push-notifications.md) |
 | `449`   | Push token removal                  | Marmot app payload                  | [push-notifications.md](../features/push-notifications.md) |
 | `450`   | Account identity proof v2 event     | Local signing template, not relayed | [account-identity-proof-v2.md](../app-components/account-identity-proof-v2.md) |
-| `451`   | Multi-device join authorization v1 | Local signing template, not relayed | [multi-device-join-authorization-v1.md](../app-components/multi-device-join-authorization-v1.md) |
+| `451`   | Push owner proof event              | Local signing template, not relayed | [push-notifications.md](../features/push-notifications.md) |
+| `452`   | Multi-device join authorization v1 | Local signing template, not relayed | [multi-device-join-authorization-v1.md](../app-components/multi-device-join-authorization-v1.md) |
 | `1009`  | Message edit                        | Marmot app payload                  | [application-messages.md](application-messages.md)      |
 | `1200`  | Agent text stream start             | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
 | `1210`  | Group system event                  | Marmot app payload                  | [application-messages.md](application-messages.md)      |
@@ -121,10 +122,18 @@ unknown-app-event rules. Future adoption MUST add their exact semantics to the m
 interoperability. Future durable abort, media-final, or fallback preview app-event kinds likewise MUST be added before
 use.
 
-Kind `450` is the local signing event for the adopted account identity proof v2. Kind `451` is the separate local
-signing event for the draft multi-device active-admin join authorization. Neither event is a transport object, and
-clients MUST NOT publish either event to relays. Their exact event shapes are defined by their component documents and
-share the envelope and validation rules in [authorization-proofs.md](./authorization-proofs.md).
+Kind `450` is the local signing event for the adopted account identity proof v2. Its exact event shape is defined by its
+component document and uses the envelope and validation rules in
+[authorization-proofs.md](./authorization-proofs.md). Kind `452` is reserved for the separate draft multi-device
+active-admin join authorization, whose component document uses the same common proof rules.
+
+Kind `451` is the local signing event for current push token-record and removal owner proofs. Its two templates use
+distinct `d` tags and are defined by [push-notifications.md](../features/push-notifications.md). Its signature-only
+carrier is feature-specific and does not use `MarmotAuthorizationProof`.
+
+Kinds `450`, `451`, and `452` are local signing templates, not transport objects. Clients MUST NOT publish them to
+relays. Legacy-group verification of push signatures created with kind `450` does not change the current allocation:
+clients MUST NOT produce a new push owner proof with kind `450`.
 
 The `d` tag strings in these local signing events are fixed proof-domain labels, not component names. Implementations
 MUST use the exact `d` value in each owning proof document and MUST NOT derive it from the component name.

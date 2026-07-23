@@ -10,6 +10,8 @@ Push notification support is optional. A group MUST still work when no client su
 
 - App payload: token gossip event kinds `447`, `448`, and `449`, carried inside ordinary encrypted group messages (see
   "Token gossip event shapes").
+- Owner authentication: local-only Nostr signing event kind `451`, whose signature is carried as `owner_sig` inside a
+  token or removal entry (see "Owner authentication"). The signing event is never published.
 - Transport: Nostr push notification rumor kind `446` for the current Nostr binding. Unlike the kinds above, `446` is
   not an inner group payload: it is the rumor inside a separately gift-wrapped trigger addressed to the notification
   server's inbox. The Nostr binding owns that outer envelope and its publish targets.
@@ -141,9 +143,9 @@ Kinds `447` and `448` share one content shape:
   owner-signed ordering stamp for this record (see "Owner authentication" and "Record key and ordering primitive"); a
   recipient MUST NOT substitute the carrying event's `created_at` for it. At entry validation, `owner_ts` MUST NOT be
   more than `3,600,000` milliseconds (one hour) ahead of the recipient's local wall clock.
-- `owner_sig` is the owner's BIP-340 Schnorr signature over the record, as 64-byte (128 lowercase hex character)
-  signature bytes (see "Owner authentication"). It binds every other field to `member_id_hex`, so the record stays
-  verifiable no matter which member relays it.
+- `owner_sig` is the owner's BIP-340 Schnorr signature over the local-only owner-proof event id, as 64-byte (128
+  lowercase hex character) signature bytes (see "Owner authentication"). It binds every other field to
+  `member_id_hex`, so the record stays verifiable no matter which member relays it.
 
 A recipient MUST reject an entry whose `member_id_hex` or `server_pubkey_hex` is not 32-byte lowercase hex, whose
 `token_fingerprint` is not `sha256:` followed by exactly 24 hex characters, whose `platform` is unknown, whose
@@ -160,7 +162,9 @@ that carries it. This lets one member relay another member's records (see "List 
 full token set without requiring every owner to be online, while preventing a relaying member from forging, repointing,
 or rolling back another member's routing.
 
-An owner signs the canonical byte string
+#### Canonical record bytes
+
+Each entry has the following canonical byte string:
 
 ```text
 SignedRecord = domain_tag
@@ -181,22 +185,144 @@ SignedRecord = domain_tag
 QUIC variable-length integers. Every integer is unsigned big-endian at the exact width shown, the two variable fields
 use the shown `u16` byte lengths, and the fields are concatenated without alignment or padding. Signers and verifiers
 MUST NOT substitute QUIC varints, TLS vectors, or a serialization-library default. A future incompatible encoding needs
-a new push content version and domain tag; it cannot reinterpret `marmot-push-v1` signatures.
+a new push content version and domain tag; it cannot reinterpret the `marmot-push-v1` ordering digest or legacy
+signature preimage.
 
 `domain_tag` is the 27-byte ASCII string `marmot-push-token-record-v1` for token entries (kinds `447`/`448`) and the
 28-byte ASCII string `marmot-push-token-removal-v1` for removal entries (kind `449`). A removal encodes
 `relay_hint_len` as zero, includes no `relay_hint` bytes, and omits the trailing `encrypted_token`. `group_id` is the raw
 MLS group id of the carrying group and is length-prefixed because the MLS group id is variable-length. `member_id` and
-`server_pubkey` are the raw 32-byte values the corresponding hex fields encode (both are Nostr x-only public keys). The
-signature is a BIP-340 Schnorr signature over `SHA-256(SignedRecord)`, produced with the secret key for `member_id_hex`
-and carried as `owner_sig`.
+`server_pubkey` are the raw 32-byte values the corresponding hex fields encode (both are Nostr x-only public keys).
 
-A recipient verifies `owner_sig` against `member_id_hex` over the same canonical bytes, reconstructing `group_id` from
-the carrying group message. An entry whose signature does not verify is dropped as advisory-invalid and never mutates
-`group_push_tokens`. Because the signature binds `group_id`, `server_pubkey_hex`, `relay_hint`, `encrypted_token`, and
-`owner_ts`, a relaying member cannot move the record to another group, repoint it at a different notification server or
-relay, swap the token, or restamp it. The carrying event stays an ordinary unsigned Marmot app payload (it MUST NOT
-carry a `sig` member, see "Validation"); `owner_sig` lives inside each record, not on the event.
+`SHA-256(SignedRecord)` is the record digest used only as the deterministic ordering tie-breaker in current groups. It
+is not the current `owner_sig` signature preimage.
+
+#### Current owner-proof signing event
+
+The current proof is a BIP-340 signature over the id of an exact, unpublished Nostr event. It is a feature-specific
+signature carrier and does not use the 104-byte `MarmotAuthorizationProof` envelope from
+[../foundation/authorization-proofs.md](../foundation/authorization-proofs.md).
+
+For a token entry, construct:
+
+```text
+pubkey     = member_id_hex
+created_at = 0
+kind       = 451
+tags       = [
+  ["d", "marmot-push-token-record-v1"],
+  ["group_id", group_id_hex],
+  ["member_id", member_id_hex],
+  ["leaf_index", leaf_index_decimal],
+  ["platform", platform],
+  ["server_pubkey", server_pubkey_hex],
+  ["token_fingerprint", token_fingerprint],
+  ["owner_ts", owner_ts_decimal],
+  ["relay_hint", relay_hint_or_empty],
+  ["encrypted_token_encoding", "base64"]
+]
+content    = encrypted_token_base64
+```
+
+For a removal entry, construct:
+
+```text
+pubkey     = member_id_hex
+created_at = 0
+kind       = 451
+tags       = [
+  ["d", "marmot-push-token-removal-v1"],
+  ["group_id", group_id_hex],
+  ["member_id", member_id_hex],
+  ["leaf_index", leaf_index_decimal],
+  ["platform", platform],
+  ["server_pubkey", server_pubkey_hex],
+  ["token_fingerprint", token_fingerprint],
+  ["owner_ts", owner_ts_decimal],
+  ["relay_hint", ""]
+]
+content    = ""
+```
+
+The event values are:
+
+- `group_id_hex`: the raw MLS group id of the carrying group as lowercase hexadecimal with no prefix;
+- `member_id_hex`: the entry's member id, which MUST also equal the event `pubkey`;
+- `leaf_index_decimal`: the entry's unsigned `leaf_index` as canonical decimal ASCII, with no leading zero except that
+  zero itself is `"0"`;
+- `platform`: the entry's exact `apns` or `fcm` string;
+- `server_pubkey_hex`: the entry's server public key as lowercase hexadecimal with no prefix;
+- `token_fingerprint`: the entry's complete `sha256:`-prefixed lowercase fingerprint string;
+- `owner_ts_decimal`: the entry's unsigned millisecond timestamp as canonical decimal ASCII, with no leading zero except
+  that zero itself is `"0"`;
+- `relay_hint_or_empty`: the entry's exact non-empty `relay_hint` string, with no Unicode normalization or whitespace
+  trimming, or the empty string when the member is absent or whitespace-only; and
+- `encrypted_token_base64`: standard base64 with padding of the exact 1084-byte `EncryptedToken`.
+
+The tags MUST appear exactly once and in the order shown. The event has no other tags. Its id is the SHA-256 digest of
+the NIP-01 canonical serialization
+
+```text
+[0, member_id_hex, 0, 451, tags, content]
+```
+
+using the Nostr-shaped-value rules in
+[../foundation/canonical-encoding.md](../foundation/canonical-encoding.md). The event is only a signing template and
+MUST NOT be published to relays.
+
+##### Removal signing test vector
+
+This fixture uses BIP-340 secret key `3` and all-zero 32-byte auxiliary randomness. The secret is test material only.
+The NIP-01 canonical event serialization is:
+
+```json
+[0,"f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9",0,451,[["d","marmot-push-token-removal-v1"],["group_id","000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"],["member_id","f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9"],["leaf_index","3"],["platform","apns"],["server_pubkey","2f8bde4d1a07209355b4a7250a5c5128e88b84bddc619ab7cba8d569b240efe4"],["token_fingerprint","sha256:000102030405060708090a0b"],["owner_ts","1700000000000"],["relay_hint",""]],""]
+```
+
+The event id and resulting `owner_sig` are:
+
+```text
+event_id  = be12f4d029d3cac4034251949d6c013ff18eae00870e199012c7a97e8960b7a2
+owner_sig = 04c3588a6533399aeaebb6c596fab896186dd0af1f9724f2926d984d2876490c76e1d149127e0fa697d7f19a0807aa373e942f0eb33edc63071567f274ce3bec
+```
+
+A producer MUST validate a signed event returned by an external signer before copying its signature into `owner_sig`.
+The returned `pubkey`, `created_at`, `kind`, `tags`, and `content` MUST exactly equal the requested values, its event id
+MUST equal the locally recomputed id, and its BIP-340 signature MUST verify for that id and public key.
+
+A recipient reconstructs the exact event from the entry and carrying group's MLS group id, then verifies `owner_sig`
+against the event id under `member_id_hex`. An entry whose signature does not verify is dropped as advisory-invalid and
+never mutates the stored push-token records. Because the event binds `group_id`, `server_pubkey_hex`, `relay_hint`,
+`encrypted_token`, and `owner_ts`, a relaying member cannot move the record to another group, repoint it at a different
+notification server or relay, swap the token, or restamp it.
+
+The carrying event stays an ordinary unsigned Marmot app payload and MUST NOT carry a `sig` member (see "Validation").
+The local-only proof event itself is not carried; only its 64-byte signature is carried as `owner_sig` inside the
+record.
+
+#### Current and legacy group verification
+
+A current-profile group is a group whose GroupContext requires component id `0x8009` under
+[`marmot.member.account-identity-proof.v2`](../app-components/account-identity-proof-v2.md). Every member leaf in a
+valid current-profile group also contains a valid `0x8009` component. In such a group, a producer MUST create the kind
+`451` owner proof above, and a recipient MUST accept only that proof form. A raw
+`SHA-256(SignedRecord)` signature or a push owner proof reconstructed with kind `450` is advisory-invalid in a
+current-profile group.
+
+A legacy group is an existing group outside that current profile. To let legacy and upgraded members remain in the
+same group, an upgraded producer in a legacy group MUST still create the kind `451` proof, while an upgraded recipient
+MUST accept any of these forms:
+
+1. the current kind `451` owner proof above;
+2. the transitional event-shaped proof deployed before kind `451` was allocated, reconstructed from the exact same
+   tags and content above but with kind `450` and NIP-01 serialization
+   `[0, member_id_hex, 0, 450, tags, content]`; or
+3. the raw legacy proof: a BIP-340 signature under `member_id_hex` directly over the 32-byte
+   `SHA-256(SignedRecord)` digest.
+
+Kinds `450` and raw-digest proofs are verification-only legacy forms. A producer MUST NOT create either form. Legacy
+acceptance is scoped to legacy groups and does not reserve kind `450` for push: kind `450` belongs to the current
+account identity proof.
 
 A record's authority comes only from `owner_sig` and current group membership, not from the carrying event's sender. A
 recipient applies a verified entry regardless of whether `message.sender` equals `member_id_hex`, but MUST still drop
@@ -249,17 +375,18 @@ signatures it does not hold.
 - The first five members identify the token record being removed and use the encodings defined for token entries. A
   removal entry MUST carry `leaf_index` so it targets exactly one device's record and cannot revoke a sibling leaf's
   active token for the same account, platform, and server.
-- `owner_ts` and `owner_sig` are the owner-signed ordering stamp and signature, using the removal `domain_tag` and the
-  removal `SignedRecord` form (zero-length relay hint and no `encrypted_token`) from "Owner authentication". The same
-  one-hour future bound on `owner_ts` applies to removals; a removal beyond it is advisory-invalid.
+- `owner_ts` and `owner_sig` are the owner-authenticated ordering stamp and signature, using the removal signing event
+  and the removal `SignedRecord` form (zero-length relay hint and no `encrypted_token`) from "Owner authentication".
+  The same one-hour future bound on `owner_ts` applies to removals; a removal beyond it is advisory-invalid.
 
 A recipient deletes the stored token record for the removal's record key (`member_id_hex`, `leaf_index`, `platform`,
 `server_pubkey_hex`) only when the removal passes "Owner authentication", `member_id_hex` is a current member, and the
 removal wins the record key's ordering primitive (see "Record key and ordering primitive"). A removal that fails
 verification, names a non-member, or loses the ordering race is dropped as advisory-invalid.
 
-The `token_fingerprint` is part of the owner-signed `SignedRecord`, so it is authenticated and states which token
-instance the owner intends to revoke, but it is **not** part of the record key and does not gate the delete: the
+The `token_fingerprint` is bound by the owner-proof event and is part of `SignedRecord`, so it is authenticated and
+states which token instance the owner intends to revoke, but it is **not** part of the record key and does not gate the
+delete: the
 `(owner_ts, record digest)` stamp is the single arbiter of which write to a record key wins. This is deliberate. A
 removal only deletes a record older than itself (it must win the ordering race), so the realistic re-registration race —
 an old token, its removal, and a newer token with a different fingerprint on the same key — converges correctly on the
@@ -291,12 +418,13 @@ entry or removal overwrite or suppress another leaf's active token.
 Each entry carries its owner's `owner_ts` and `owner_sig` (see "Owner authentication"). The ordering primitive for a
 record key is the pair `(owner_ts, record digest)`, compared as the integer `owner_ts` first and the lowercase-hex
 `SHA-256(SignedRecord)` as the tie-breaker. The `owner_ts` half is an owner-supplied, latest-wins clock; the digest
-tie-breaker makes two distinct records with an equal `owner_ts` converge deterministically. The primitive lives inside
-the owner-signed bytes, so it inherits the trust of `owner_sig` rather than the carrying event's sender, and it stays
-deliberately advisory. A client MUST NOT substitute the carrying event's `created_at`, transport arrival order, outer
-transport event ids, relay metadata, or local receive time for this primitive. Using `owner_ts` rather than the
-carrying `created_at` is what makes the primitive relay-safe: a member relaying another member's record in a kind `448`
-cannot advance or rewind that record's position, because it cannot re-sign `owner_ts`.
+tie-breaker makes two distinct records with an equal `owner_ts` converge deterministically. The owner-proof event binds
+every field from which both halves are computed, so the primitive inherits the trust of `owner_sig` rather than the
+carrying event's sender and stays deliberately advisory. A client MUST NOT substitute the carrying event's
+`created_at`, transport arrival order, outer transport event ids, relay metadata, or local receive time for this
+primitive. Using `owner_ts` rather than the carrying `created_at` is what makes the primitive relay-safe: a member
+relaying another member's record in a kind `448` cannot advance or rewind that record's position, because it cannot
+re-sign `owner_ts`.
 
 A client stamps each stored record with the `(owner_ts, record digest)` of the entry that last wrote it. Apply an
 incoming entry or removal to a record key only when its ordering primitive is strictly greater than the stored stamp
@@ -453,8 +581,10 @@ Push notifications are an optional feature. A group MUST keep working when no me
 document changes group state.
 
 The `marmot-push-v1` shapes above are the interop surface: JSON content with explicit member ids, leaf indexes,
-fingerprints, owner-signed token and removal entries, and a kind `446` rumor whose only tag is `v`. Earlier exploratory
-versions that carried token gossip in `token` tags with empty content, left the sender's leaf implicit, defined no
-removal entries, or required an `["encoding", "base64"]` tag on the kind `446` rumor are not interoperable with this
-version and predate the owner-authentication and per-record ordering rules; clients MUST reject any `v` other than
-`marmot-push-v1`.
+fingerprints, event-signed token and removal entries, and a kind `446` rumor whose only tag is `v`. Kind `451` is the
+current owner-proof versioning hook even though only its signature is carried in `owner_sig`. Raw-digest and
+transitional kind `450` owner proofs remain accepted only under the explicit legacy-group rules above. Earlier
+exploratory versions that carried token gossip in `token` tags with empty content, left the sender's leaf implicit,
+defined no removal entries, or required an `["encoding", "base64"]` tag on the kind `446` rumor are not interoperable
+with this version and predate the owner-authentication and per-record ordering rules; clients MUST reject any `v` other
+than `marmot-push-v1`.

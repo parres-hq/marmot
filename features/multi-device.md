@@ -78,7 +78,7 @@ These checks establish three different facts:
   group from the candidate parent state;
 - the Join PSK establishes that the new device received current, group-specific pairing material.
 
-The join authorization proof is a signature over a canonical local-only kind `451` Nostr event. Its signer MUST be an
+The join authorization proof is a signature over a canonical local-only kind `452` Nostr event. Its signer MUST be an
 active admin in the candidate parent state. The exact event, component data, signed GroupContext and LeafNode bindings,
 freshness and replay scope, and validation rules are defined in
 [../app-components/multi-device-join-authorization-v1.md](../app-components/multi-device-join-authorization-v1.md).
