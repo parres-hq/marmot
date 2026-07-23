@@ -163,11 +163,11 @@ uint32 frame_len;            // big-endian byte length of the record that follow
 opaque record[frame_len];    // the AgentTextStreamRecordV1 bytes
 ```
 
-- `frame_len` is a 4-byte big-endian unsigned length. A sender or receiver that knows the group policy MUST reject a
-  frame whose `frame_len` exceeds the group's `max_plaintext_frame_len` value plus 1024 bytes of record-header and
-  AEAD-tag allowance. A broker, which does not know group state, MUST reject `frame_len > 66543`; this is the v1
-  component's maximum `max_plaintext_frame_len` (`65519`) plus the same allowance. A deployment MAY impose a smaller
-  transport cap.
+- `frame_len` is a 4-byte big-endian unsigned length. A sender that knows the group policy MUST NOT emit a frame whose
+  `frame_len` exceeds the group's `max_plaintext_frame_len` value plus 1024 bytes of record-header and AEAD-tag
+  allowance; a receiver that knows the policy MUST reject such a frame. A broker, which does not know group state,
+  MUST reject `frame_len > 66543`; this is the v1 component's maximum `max_plaintext_frame_len` (`65519`) plus the same
+  allowance. A deployment MAY impose a smaller transport cap.
 - Records carry `seq` starting at `1` and increasing by one. A receiver maintains a last-accepted `seq` high-water
   mark per preview stream. A record whose `seq` is at or below the high-water mark — for example, a record a broker
   replays on reconnect — MUST be discarded silently without affecting the stream; a duplicate or replayed record is
@@ -207,18 +207,23 @@ requires the new start anchor defined by the feature document.
 
 ## Limits
 
-A broker enforces resource bounds so it cannot be used to exhaust memory. The first-profile defaults are:
+A broker enforces resource bounds so it cannot be used to exhaust memory. The v1 interoperable framed-record ceiling
+is:
+
+- maximum framed-record byte length: `66543`.
+
+The first-profile deployment defaults are:
 
 - per-subscriber queue depth: `32` records;
 - per-room backlog depth: `1024` records;
-- maximum framed-record byte length: `66543`;
 - total retained backlog bytes across all rooms: at most `64 MiB` (a broker-wide budget, not per room);
 - maximum rooms: `512`;
 - maximum connections: `256`, and at most `64` concurrent streams per connection;
 - read timeout `15s`, idle timeout `30s`, keep-alive interval `10s`.
 
-These are broker transport safety limits, not interop-visible protocol values; a broker MAY tighten them. Brokers cannot
-inspect MLS component state. Senders and receivers enforce the per-group `max_plaintext_frame_len`; they use
+The deployment defaults are broker transport safety limits, not interop-visible protocol values; a broker MAY tighten
+them. The `66543` ceiling is a fixed v1 decoding limit, though a broker MAY also impose a smaller local cap. Brokers
+cannot inspect MLS component state. Senders and receivers enforce the per-group `max_plaintext_frame_len`; they use
 `replay_ttl_secs` only as the broker-selection/configuration request described above and cannot enforce remote
 retention. `padding_bucket_bytes` is reserved in v1 and caps nothing yet.
 

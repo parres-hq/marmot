@@ -41,6 +41,10 @@ A Commit that violates any of those invariants, including a Commit that changes 
 [../app-components/account-identity-proof-v2.md](../app-components/account-identity-proof-v2.md) and
 [../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md).
 
+Every current-profile group MUST list the `app_data_update` proposal type (`0x0008`) in
+`required_capabilities.proposals`, and every member KeyPackage and LeafNode capability list MUST advertise it. This
+requirement is lifetime-wide because every current-profile group carries mutable GroupContext component state.
+
 Separately, `ratchet_tree` is a per-Welcome GroupInfo extension, not a GroupContext extension. The GroupInfo encrypted
 in every Marmot Welcome carries the ratchet tree inline, as [joining.md](./joining.md) requires.
 
@@ -61,11 +65,11 @@ references an avatar by plain URL instead MUST include `marmot.group.avatar-url.
 
 If the group has disappearing messages, creation MUST include `marmot.group.message-retention.v1`.
 
-If the application profile supports encrypted media, creation MUST include `marmot.group.encrypted-media.v1`. This is
+If the application profile supports encrypted media, creation MUST include `marmot.group.encrypted-media.v2`. This is
 an application-profile choice: the encrypted-media component is required for new app groups created under a
 media-capable profile, not by the bare protocol. A non-media group MAY omit it.
 
-If the application profile treats agent participation as a baseline group behavior, creation MUST include
+If an experimental application profile enables raw QUIC agent previews, creation MUST include
 `marmot.group.agent-text-stream.quic.v1` and MUST require the `receive` role. This is an application-profile choice that
 makes groups agent-stream-ready without exposing a user-facing enable switch. The component and feature documents own
 the exact role semantics and fallback behavior.

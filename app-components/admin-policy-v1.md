@@ -108,7 +108,7 @@ same parent-state check; it instead applies the distinct join-time resulting-sta
 signer leaf and rejects the Welcome unless that leaf's MLS-authenticated Marmot account identity is an active admin in
 the joined group state. This component is the sole membership-add authority for v1 groups: if it is absent, no member is
 authorized to add, so the receiver rejects the Welcome. The resulting-state check's trust model and limits are described
-in `joining.md`, "Welcome-bootstrap trust."
+in [../protocol-core/joining.md](../protocol-core/joining.md), "Welcome-bootstrap trust."
 
 SelfRemove is special:
 

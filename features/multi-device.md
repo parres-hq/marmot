@@ -65,7 +65,7 @@ The proposed multi-device External Commit is valid only when:
 - the Commit contains the required `ExternalInit` proposal;
 - the Commit contains exactly one MLS PreSharedKey proposal carrying the Marmot multi-device External PSK id;
 - the Commit contains exactly one `AppEphemeral` proposal for component id `0x800a`;
-- the Commit contains no proposal other than that `ExternalInit`, PreSharedKey, and `AppEphemeral` proposal;
+- the Commit contains no proposals other than those `ExternalInit`, PreSharedKey, and `AppEphemeral` proposals;
 - the `AppEphemeral` data contains a valid active-admin join authorization proof;
 - this flow contributes no data to `FramedContent.authenticated_data`, which follows any other independently
   negotiated Marmot feature's rules and is zero-length when no such feature applies;

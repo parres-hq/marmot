@@ -48,6 +48,7 @@ app-components/
   agent-text-stream-quic-v1.md
   group-avatar-url-v1.md
   group-encrypted-media-v1.md
+  group-encrypted-media-v2.md
   account-identity-proof-v2.md
   multi-device-join-authorization-v1.md
 transports/
@@ -57,6 +58,7 @@ transports/
 features/
   README.md
   encrypted-media.md
+  encrypted-media-v1.md
   agent-text-streams-quic.md
   push-notifications.md
   multi-device.md
@@ -131,7 +133,7 @@ A feature document SHOULD mostly reference foundation, protocol-core, and compon
 their rules.
 
 Feature documents stay separate from app components. The feature doc explains the flow. The app component doc owns the
-component bytes. Encrypted media follows that split: [app-components/group-encrypted-media-v1.md](./app-components/group-encrypted-media-v1.md)
+component bytes. Encrypted media follows that split: [app-components/group-encrypted-media-v2.md](./app-components/group-encrypted-media-v2.md)
 owns group policy bytes, while [features/encrypted-media.md](./features/encrypted-media.md) owns message attachment
 format, key derivation, and AEAD behavior.
 

@@ -62,18 +62,20 @@ required.
 
 Group creation is special because there is no existing group recipient set before the group exists.
 
-For every epoch-0 founding creation, with or without initial invitees, the creation publish obligation has an empty
-outbound byte set and an empty recipient scope. The creator MUST treat that empty obligation as immediately satisfied
-and make the initial state canonical without publishing group-message bytes. No existing peer can be forked by a
-missing creation Commit. This exception is limited to the epoch-0 founding commit; every later Commit follows the
-normal publish-before-apply rule.
+The one-member epoch-0 group creation has an empty outbound byte set and an empty recipient scope. The creator MUST
+treat that empty obligation as immediately satisfied and make epoch 0 canonical without publishing group-message bytes.
 
-When founding creation includes initial invitees, each MLS Welcome is a separate retryable per-invitee delivery
-obligation after epoch 0 becomes canonical. A Welcome delivery succeeds or fails independently and is not the creation
-publish obligation, so its outcome does not affect the group's canonical state.
+When founding creation includes initial invitees, the creator next prepares and locally merges one founding Add Commit
+from epoch 0 to epoch 1. That Commit also has an empty group-message publication obligation: the creator is the only
+pre-existing member, so no peer can be forked by failure to publish it. Each resulting epoch-1 Welcome is a separate
+retryable per-invitee delivery obligation after the Add Commit becomes canonical. A Welcome delivery succeeds or fails
+independently and does not affect canonical group state.
 Consumed KeyPackage material for founding invitees cannot be restored on Welcome delivery failure; if a Welcome
 cannot be delivered, the founding creator MAY re-invite the unreachable member using a new Add commit against
 the now-canonical group with a fresh KeyPackage.
+
+The empty-obligation exception is limited to the epoch-0 creation and, when applicable, its immediately following
+founding Add Commit. Every subsequent Commit follows the normal publish-before-apply rule.
 
 ## Proposal-driven commits
 

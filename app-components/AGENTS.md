@@ -1,8 +1,8 @@
 # AGENTS.md - app-components
 
 Agent operating rules for the app-component surface. Read [`README.md`](README.md) for the full human-facing model
-(component ids, negotiation, common rules, update processing, default authorization); the cross-surface map is in
-[`../AGENTS.md`](../AGENTS.md).
+(component ids, negotiation, common rules, GroupContext update processing, default GroupContext authorization); the
+cross-surface map is in [`../AGENTS.md`](../AGENTS.md).
 
 ## Scope
 
@@ -12,7 +12,8 @@ are mechanical and easy to get wrong, so treat this file as the checklist and th
 
 ## Read order
 
-1. [`README.md`](README.md) (Component IDs, Negotiation, Common Rules, Update Processing, Default Authorization).
+1. [`README.md`](README.md) (Component IDs, Negotiation, Common Rules, GroupContext Update Processing, Default
+   GroupContext Authorization).
 2. [`../foundation/registries.md`](../foundation/registries.md) to claim the next free id, then
    [`../foundation/canonical-encoding.md`](../foundation/canonical-encoding.md) for the byte rules.
 3. The component file you are adding or editing.
@@ -20,7 +21,7 @@ are mechanical and easy to get wrong, so treat this file as the checklist and th
 ## Rules
 
 - Component ids are private-use MLS range `0x8000..0xffff`. To add one, pick the next free id and register it in THREE
-  places in the same change: [`../foundation/registries.md`](../foundation/registries.md), the README "Current
+  places in the same change: [`../foundation/registries.md`](../foundation/registries.md), the README "Current Marmot
   Components" list, and the [`../layout.md`](../layout.md) tree. This trio is the most frequently missed step — for
   example `avatar-url` (`0x8007`) was once absent from the README list.
 - The component id IS the major version. A breaking change gets a NEW component id and a NEW file; do not add a generic
@@ -42,7 +43,7 @@ are mechanical and easy to get wrong, so treat this file as the checklist and th
 ## Verification
 
 - After adding or renaming a component, grep that the id and file appear in
-  [`../foundation/registries.md`](../foundation/registries.md), the README "Current Components" list, and
+  [`../foundation/registries.md`](../foundation/registries.md), the README "Current Marmot Components" list, and
   [`../layout.md`](../layout.md).
 - Confirm the file defines every location-appropriate requirement above.
 

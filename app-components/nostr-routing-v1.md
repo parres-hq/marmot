@@ -57,7 +57,7 @@ Members MUST continue to accept and fetch traffic at a prior routing address whi
 inside either retained-history window: at or after the retained anchor for commits and proposals, or inside the retained
 app-payload window for application messages
 ([../protocol-core/retained-history.md](../protocol-core/retained-history.md)). Members MUST be able to map more than one
-routing id to the same group until both uses of the prior address have expired.
+routing id to the same group until no epoch using the prior address remains in either retained-history window.
 
 A member catching up across a rotation uses its recorded routing-state history to fetch older epochs at their
 then-active addresses. A new joiner receives the current routing state in its Welcome and needs older addresses only

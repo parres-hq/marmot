@@ -28,7 +28,7 @@ which peeled MLS bytes become canonical group state.
 
 Marmot app payloads use an unsigned Nostr event shape inside MLS.
 
-App-payload kinds and their owning documents are listed in
+Marmot-defined app-payload kinds and their owning documents are listed in
 [../foundation/registries.md](../foundation/registries.md) ("Nostr event kinds used by Marmot").
 
 The inner app event has an `id` but no `sig`. The active transport binding owns the outer envelope and builds its routing tags — the tags that address, route, or expire it — from canonical group state, never from the inner app event (the Nostr binding's routing tags are defined in [../transports/nostr.md](../transports/nostr.md)). An inner tag therefore carries application content only: it never affects addressing, routing, expiry, or branch selection. The inner event's structural rules are in [../foundation/application-messages.md](../foundation/application-messages.md), "Encoding".
@@ -51,8 +51,8 @@ Those two non-admin commit shapes MUST NOT be combined with each other or with o
 All other Commits from non-admins are invalid.
 
 In particular, adopted v1 defines no non-admin `new_member_commit` External Commit path. The draft
-[multi-device feature](../features/multi-device.md) does not relax this rule; that feature must define parent-state admin
-authorization and update this adopted commit-shape list before its External Commit flow can become normative.
+[multi-device feature](../features/multi-device.md) does not relax this rule. Its proposed External Commit flow remains
+non-normative unless a future adopted protocol-core revision explicitly authorizes that commit shape.
 
 Non-admin members MAY send standalone MLS proposals only where the spec explicitly allows them. In v1 protocol core,
 that proposal flow is SelfRemove. A request for an admin-gated group-state change is an application payload or

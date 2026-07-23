@@ -30,8 +30,7 @@ span multiple epoch-bound SelfRemove proposals.
 
 A member whose own removal has been realized holds the group as a removed, inactive copy per
 [member-departure.md](./member-departure.md) ("Realizing removal"). Like `Leaving`, this is not a canonical lifecycle
-state. It is locally inactive and reverses only if convergence supersedes the removing Commit inside the rollback
-horizon under the member-departure rule.
+state. It is locally inactive and does not resume without an explicit rejoin.
 
 The optional "unverified" presentation described in [joining.md](./joining.md) ("Welcome-bootstrap trust") is neither
 a lifecycle state nor a protocol condition. It is an application-defined activity heuristic and does not change the
@@ -50,6 +49,8 @@ Merging
   -> Stable              staged commit applied
 Stable
   -> Recovering          fork detected and retained recovery is required
+Stable
+  -> Unrecoverable       required retained state is permanently missing or corrupt
 Recovering
   -> Stable              a canonical branch was selected and applied
 Recovering
@@ -65,6 +66,11 @@ retained, the merge completes to `Stable`, and fork detection then runs from `St
 convergence-relevant input that arrives while the group is already in `Recovering` and before the bounded pass cutoff is
 folded into that recovery pass. Input retained after the cutoff belongs to a later pass. The group stays in `Recovering`
 until a branch is selected and applied (`-> Stable`) or no safe branch exists (`-> Unrecoverable`).
+
+The direct `Stable -> Unrecoverable` transition applies when normal linear processing discovers that required retained
+history or authenticated state inside the rollback horizon is permanently unavailable or corrupt and no defined
+authenticated repair path can restore it. A client does not enter `Recovering` merely to pass through to
+`Unrecoverable` when no fork recovery is possible.
 
 A client MUST reject a local group-state commit while the group is in `PendingPublish`, `Merging`, `Recovering`, or
 `Unrecoverable`.
@@ -103,8 +109,8 @@ protocol-core document.
 
 Convergence has a separate derived status:
 
-- `Syncing`: a bounded convergence pass is collecting score-changing input and neither the quiescence window nor the
-  absolute pass deadline defined in [convergence.md](./convergence.md) has elapsed.
+- `Syncing`: a bounded convergence pass is collecting selection-relevant input and neither the quiescence window nor the
+  absolute collection deadline defined in [convergence.md](./convergence.md) has elapsed.
 - `Resolving`: the pass input batch is frozen and the client is computing a deterministic fixed point over state already
   retained in that batch. It does not wait for fetches or admit later input; unresolved children remain deferred to a
   later pass.
@@ -118,7 +124,7 @@ The legal combinations are:
 
 | Convergence status | Lifecycle states it can appear in | Notes                                                                 |
 | ------------------ | --------------------------------- | --------------------------------------------------------------------- |
-| `Syncing`          | `Stable`, `Recovering`            | bounded pass still collecting score-changing input                    |
+| `Syncing`          | `Stable`, `Recovering`            | bounded pass still collecting selection-relevant input                |
 | `Resolving`        | `Stable`, `Recovering`            | frozen-batch fixed-point work; no waiting or new input                |
 | `Settled`          | `Stable`                          | fixed point reached and any selected branch applied                   |
 | `Blocked`          | `Recovering`, `Unrecoverable`     | needs a repair path or missing retained material                      |

@@ -46,23 +46,27 @@ rejected before convergence — the `fail closed` path in
 `unsupported_required_feature`. An input for an unknown group cannot be authenticated against group state the client
 does not have; `unknown_group` is therefore a pre-convergence category, not a `stale` disposition.
 
+Local admission checks for byte-identical duplicates, already-accounted-for own echoes, and inputs addressed to another
+recipient likewise produce `duplicate`, `own_echo`, or `wrong_recipient` without a convergence disposition. `stale` is
+reserved for input admitted to convergence that can no longer affect the group.
+
 Some MLS authentication, including membership-tag or sender-signature checks, requires retained source-epoch or
 candidate-parent state. Those checks run during convergence candidate construction, not in the branch-independent
-admission gate. Failure against one candidate parent prevents an edge from that parent; it does not globally reject the
-input while another available or still-missing matching parent could authenticate it. An input that fails authentication
-against every available matching parent, when no missing parent could change the result, is rejected as
-`invalid_signature` and receives no convergence disposition.
+admission gate. If no retained state authenticates the membership tag, the input remains deferred while its parent may
+still arrive. Once that authentication identifies the candidate parent, a failed sender-signature or other terminal MLS
+authentication check is `invalid_signature` and receives no convergence disposition.
 
-Authorization can depend on the prior group state. A commit's authorization is therefore evaluated against each
-candidate parent state during candidate construction, not as one branch-independent gate. A commit that is authorized
-on one candidate parent and unauthorized on another can create an edge only from the authorized parent. When a commit
-is unauthorized for every available matching parent and no missing parent could change that result, it is rejected as
-`authorization_failed` and receives no convergence disposition. `transport_rejected` is an outbound transport outcome,
-not an inbound or convergence disposition. Every received inbound input therefore has exactly one current outcome: a
-convergence disposition when convergence classifies it, otherwise an inbound rejection category. A convergence
-disposition is a live classification, not an immutable processing-history label. It MAY change when missing state
-arrives or a later pass selects a different canonical branch; at every point the input still has only one current
-disposition.
+Authorization can depend on the prior group state. A Commit's authorization is therefore evaluated against the
+candidate parent identified by parent-dependent MLS authentication during candidate construction, not as one
+branch-independent gate. A retained state that does not authenticate the Commit cannot cause an authorization failure.
+If no retained state passes parent-dependent MLS authentication, the Commit remains deferred while its source epoch is
+inside or ahead of the rollback horizon. Once authentication identifies the candidate parent, failed authorization is
+terminal `authorization_failed` and receives no convergence disposition.
+`transport_rejected` is an outbound transport outcome, not an inbound or convergence disposition. Every received
+inbound input therefore has exactly one current outcome: a convergence disposition when convergence classifies it,
+otherwise an inbound rejection category. A convergence disposition is a live classification, not an immutable
+processing-history label. It MAY change when missing state arrives or a later pass selects a different canonical
+branch; at every point the input still has only one current disposition.
 
 `delivered` is not a disposition. It names the application-visible output of an `accepted` MLS application message: the
 Marmot app payload handed to the application. `dropped` is not a disposition either; where older versions of this

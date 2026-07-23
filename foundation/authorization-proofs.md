@@ -71,8 +71,7 @@ owning proof context.
 A producer:
 
 1. obtains the protocol values required by the owning proof class;
-2. sets `created_at` to its local current Unix time in seconds; a producer MUST NOT intentionally backdate,
-   future-date, or zero this value;
+2. sets `created_at` to the producer's local current Unix time in whole seconds for this signing request;
 3. constructs the exact unsigned event defined by that proof class;
 4. asks the Nostr account signer to sign that event;
 5. validates the returned event exactly as described below; and

@@ -71,7 +71,7 @@ first matching tag and ignore later duplicates.
 | kind `1059` welcome gift wrap | `p` | exactly one tag, exactly one value: lowercase hex account identity of the recipient |
 | kind `444` welcome rumor | `e` | exactly one tag, exactly one value: lowercase hex Nostr event id of the claimed KeyPackage event |
 | kind `444` welcome rumor | `relays` | exactly one tag, one or more relay URL values using the relay URL profile |
-| kind `30443` KeyPackage | `d` | exactly one tag, exactly one non-empty slot id value |
+| kind `30443` KeyPackage | `d` | exactly one tag, exactly one 64-character lowercase hex value decoding to 32 bytes |
 | kind `30443` KeyPackage | `mls_protocol_version` | exactly one tag, exactly one value: `1.0` |
 | kind `30443` KeyPackage | `i` | exactly one tag, exactly one value: lowercase hex KeyPackageRef |
 | kind `30443` KeyPackage | `mls_ciphersuite` | exactly one id-list tag |
@@ -130,9 +130,11 @@ Receivers MUST reject kind `445` content that is not valid base64 or that decode
 12 nonce bytes plus the 16-byte ChaCha20-Poly1305 tag.
 
 Marmot v1 does not impose a universal maximum Nostr event or decoded-content size. Relays and clients MAY apply local
-resource limits to kind `445`, `1059`, `444`, and `30443` events and MAY discard an event that exceeds such a limit
-before decoding or decryption. That discard is a transport availability outcome; it does not establish that recovered
-MLS bytes would be protocol-invalid or change canonical group state.
+resource limits to transport objects they can observe and MAY discard an object that exceeds such a limit before
+decoding or decryption. A relay can limit visible kind `445`, `1059`, and `30443` events; it cannot inspect the kind
+`444` rumor sealed inside a kind `1059` gift wrap. A client MAY additionally limit that rumor after unwrapping. Such a
+discard is a transport availability outcome; it does not establish that recovered MLS bytes would be protocol-invalid
+or change canonical group state.
 
 Kind `445` Nostr event ids, relay timestamps, relay arrival order, and subscription order are transport evidence. They
 MUST NOT choose group state.
@@ -225,6 +227,22 @@ A receiver MUST reject a Welcome that is not addressed to its own account identi
 A receiver MUST reject a kind `444` rumor that does not satisfy its `e` and `relays` rows in "Event identity and tag
 cardinality" or whose content is not valid base64-encoded `MLSMessage` bytes with the `mls_welcome` wire format.
 
+## Push notification delivery
+
+The optional push feature owns the kind `446` notification-rumor content and processing rules
+([../features/push-notifications.md](../features/push-notifications.md)). The Nostr binding carries that unsigned rumor
+in a NIP-59 envelope:
+
+```text
+kind 1059 gift wrap
+  kind 13 seal
+    unsigned kind 446 Marmot notification rumor
+```
+
+The seal is signed by the same fresh ephemeral key named by the rumor's `pubkey`. The gift wrap uses a separate fresh
+ephemeral key and is addressed to the notification server's account identity. The publish target is defined under
+"Publish targets and acknowledgements."
+
 ## KeyPackage publication
 
 Nostr KeyPackages use kind `30443`.
@@ -293,10 +311,11 @@ A Nostr transport client subscribes to:
 
 - account inbox gift wraps: kind `1059`, `p` tag equal to the local account pubkey, on the account's own kind `10050`
   inbox relay set ("Account inbox relays" above);
-- group messages: kind `445`, fetched from one or more relays in the routing state associated with the current
-  `nostr_group_id` and each prior routing id the rotation rules still require
+- group messages: kind `445`, with a `#h` filter equal to the current `nostr_group_id` or each prior routing id the
+  rotation rules still require, fetched from one or more relays in the routing state associated with that id
   ([../app-components/nostr-routing-v1.md](../app-components/nostr-routing-v1.md), "Routing rotation"); fetching from
-  every relay in those states is not an interoperability requirement;
+  every relay in those states is not an interoperability requirement, and the filter does not replace receiver
+  validation of the signed event and exact `h` tag;
 - NIP-17 inbox relay lists: kind `10050`, author equal to the account being addressed, to discover that account's
   inbox relay set;
 - NIP-65 relay lists: kind `10002`, author equal to the account being queried, to discover where that account
@@ -312,11 +331,16 @@ fetch hint only.
 Group messages are published to the relay list in `marmot.transport.nostr.routing.v1`, after applying any local safety
 policy. A commit that changes routing state is published to the prior epoch's routing address
 ([../app-components/nostr-routing-v1.md](../app-components/nostr-routing-v1.md), "Routing rotation").
-The sender MUST attempt publication to every relay in that target list that local policy permits. The first accepted
-acknowledgement can satisfy the publish lifecycle, but it does not permit the sender to skip the other permitted
-targets. Each other permitted target remains outstanding until the sender has made at least one publication attempt to
-it. That later fanout does not keep or return the group to `PendingPublish`, undo canonical apply, or re-stage the
-Commit; retrying a target after its required first attempt is transport or local policy.
+When the sender creates the signed event, it snapshots that applicable relay target list and durably records the
+serialized event plus per-target attempt status. A later routing rotation does not rewrite this fanout obligation.
+
+The sender MUST attempt publication of the same signed event to every snapshotted relay that local policy permits. The
+first accepted acknowledgement can satisfy the publish lifecycle, but it does not permit the sender to skip the other
+permitted targets. Each target remains outstanding across process restart until the sender has made at least one
+publication attempt or records that current local policy prohibits contacting it. The obligation ends when every target
+is complete or the transport object reaches its authenticated expiration. That later fanout does not keep or return the
+group to `PendingPublish`, undo canonical apply, or re-stage the Commit; retrying a target after its required first
+attempt is transport or local policy.
 
 Welcome messages are published to the recipient's inbox relay set ("Account inbox relays" above).
 
@@ -342,14 +366,16 @@ set:
   before outer decryption;
 - kind `1059` Welcomes and their kind `444` rumors MUST satisfy every recipient, envelope, tag, content, and signature
   rule in "Welcome delivery" as each NIP-59 layer is unwrapped;
-- kind `30443` KeyPackage events MUST satisfy every envelope, tag, content, signature, and decoded-KeyPackage rule in
+- kind `30443` KeyPackage events MUST satisfy every outer envelope, tag, content-encoding, and signature rule in
   "KeyPackage publication";
 - fields that claim to be hex or base64 MUST decode successfully;
 - unsupported Nostr kinds are ignored or reported as malformed transport input.
 
-The Nostr transport client owns NIP-59 unwrapping, kind `445` outer AEAD authentication, and the outer recipient check
-for a Welcome. It passes the recovered `MLSMessage` bytes unchanged to the MLS peeler, which validates the MLS wire and
-security rules. Protocol core validates group state and join rules.
+The Nostr transport client owns NIP-59 unwrapping, kind `445` outer AEAD authentication, and outer recipient checks. It
+passes recovered `MLSMessage` bytes unchanged to the MLS/Foundation layer. That layer parses the MLS wire format,
+extracts a KeyPackage when applicable, and performs MLS, account-proof, lifetime, and capability validation. Protocol
+core validates group state and join rules. A transport checklist MUST NOT require a decoded inner field before the
+owning MLS parser has recovered it.
 
 ## Duplicate and replay handling
 

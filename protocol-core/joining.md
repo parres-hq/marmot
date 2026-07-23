@@ -20,9 +20,11 @@ have not seen yet.
 
 Founding group creation is the exception, including both one-member creation and creation with initial invitees. There
 are no existing peers that can be forked by a missing creation Commit. A one-member creation has an empty creation
-publish obligation. A founding creation with initial invitees has the same empty epoch-0 creation obligation: the
-creator makes epoch 0 canonical, then attempts the independent per-invitee Welcome deliveries defined in
-[publish-lifecycle.md](./publish-lifecycle.md). It does not publish the founding Add commit as a group message.
+publish obligation and ends at epoch 0. For founding creation with initial invitees, the creator first creates the
+one-member epoch-0 group, then creates and locally merges one founding Add Commit from epoch 0 to epoch 1 containing the
+initial invitees. That Add Commit has no group-message publication obligation because no pre-existing peer needs it.
+The creator then attempts the independent per-invitee epoch-1 Welcome deliveries defined in
+[publish-lifecycle.md](./publish-lifecycle.md).
 
 The GroupInfo encrypted in every Marmot Welcome MUST include the `ratchet_tree` extension. Marmot does not support
 out-of-band ratchet tree distribution for the Welcome join path. A joiner MUST reject a Welcome whose GroupInfo does
@@ -74,8 +76,9 @@ group. The concrete recommended completion window is operational, not interop-vi
 The group-id check in step 9 makes this receiving flow a first join for a locally unknown MLS group id. If the resulting
 MLS group id matches a group copy the client already retains, the Welcome MUST NOT silently replace or merge into that
 group's canonical state. The receiver rejects it through this flow without rotating or deleting the referenced
-KeyPackage. A deliberate repair or rejoin may use a Welcome only through a separately verified repair path as defined by
-[group-state.md](./group-state.md); otherwise the existing group copy must first be explicitly discarded.
+KeyPackage. Marmot v1 defines no in-place repair-by-Welcome procedure. To rejoin, the client first explicitly discards
+the retained active cryptographic state, then processes a fresh valid Welcome through this first-join flow. It MAY
+preserve local history and a removal tombstone outside the replaced active state.
 
 ## Welcome-bootstrap trust
 
@@ -114,7 +117,7 @@ A receiver rejects the Welcome if:
 - any resulting member leaf is missing a valid account identity proof;
 - the Welcome author cannot be identified as a member leaf in the resulting group;
 - the resulting group state lacks required Marmot state;
-- the resulting MLS group id matches a retained local group outside a separately verified repair or rejoin flow;
+- the resulting MLS group id matches retained active cryptographic state;
 - the Welcome author's MLS-authenticated account identity is not an active admin in the resulting group state (the
   sole membership-add authority for v1 groups; see
   [../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md));

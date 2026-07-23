@@ -38,6 +38,17 @@ a different outer envelope.
 Transport docs MAY define routing ids, relay lists, publish targets, fetch rules, and transport-specific validation.
 They MUST NOT redefine Marmot account identity or inner app payload shape.
 
+## Redundant delivery
+
+A transport binding used for required Marmot group delivery MUST support redundant publication so group traffic does
+not depend on one server, relay, or endpoint. The binding defines how its independently selectable targets are
+authenticated, snapshotted, attempted, acknowledged, and retired.
+
+One successful target MAY satisfy the protocol-core publish-before-apply lifecycle when the binding says so, but that
+success MUST NOT silently cancel any additional first-attempt fanout the binding requires. An optional acceleration
+transport that does not carry required MLS group delivery, such as a transient preview data plane, MAY state that this
+redundancy requirement does not apply to it.
+
 ## Message ids
 
 A Marmot message id is used for duplicate detection, replay rejection, and for marking the losing commit in a

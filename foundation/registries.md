@@ -22,6 +22,7 @@ Marmot app components use MLS private-use component ids.
 | `0x8008`     | `marmot.group.encrypted-media.v1`               | [doc](../app-components/group-encrypted-media-v1.md)                |
 | `0x8009`     | `marmot.member.account-identity-proof.v2`       | [doc](../app-components/account-identity-proof-v2.md)               |
 | `0x800a`     | `marmot.authorization.multi-device-join.v1`     | [draft](../app-components/multi-device-join-authorization-v1.md)    |
+| `0x800b`     | `marmot.group.encrypted-media.v2`               | [doc](../app-components/group-encrypted-media-v2.md)                |
 
 ## Upstream MLS extension draft ids
 
@@ -97,11 +98,10 @@ seal), kind `10002` (NIP-65 relay list), and kind `10050` (NIP-17 DM inbox relay
 
 | Kind    | Name                                | Layer                               | Document                                                |
 | ------- | ----------------------------------- | ----------------------------------- | ------------------------------------------------------- |
-| `7`     | Reaction                            | Marmot app payload                  | [application-messages.md](application-messages.md)      |
-| `9`     | Chat message                        | Marmot app payload                  | [application-messages.md](application-messages.md)      |
+| `9`     | Default chat message                | Marmot app payload                  | [application-messages.md](application-messages.md)      |
 | `444`   | Marmot welcome rumor                | Nostr welcome transport             | [nostr.md](../transports/nostr.md)                      |
 | `445`   | Marmot group message                | Nostr group transport               | [nostr.md](../transports/nostr.md)                      |
-| `446`   | Push notification rumor             | Push notification transport         | [push-notifications.md](../features/push-notifications.md) |
+| `446`   | Push notification rumor             | Push notification transport         | [nostr.md](../transports/nostr.md)                      |
 | `447`   | Push token request                  | Marmot app payload                  | [push-notifications.md](../features/push-notifications.md) |
 | `448`   | Push token list response            | Marmot app payload                  | [push-notifications.md](../features/push-notifications.md) |
 | `449`   | Push token removal                  | Marmot app payload                  | [push-notifications.md](../features/push-notifications.md) |
@@ -109,19 +109,25 @@ seal), kind `10002` (NIP-65 relay list), and kind `10050` (NIP-17 DM inbox relay
 | `451`   | Multi-device join authorization v1 | Local signing template, not relayed | [multi-device-join-authorization-v1.md](../app-components/multi-device-join-authorization-v1.md) |
 | `1009`  | Message edit                        | Marmot app payload                  | [application-messages.md](application-messages.md)      |
 | `1200`  | Agent text stream start             | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
-| `1201`  | Agent activity                      | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
-| `1202`  | Agent operation event               | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
 | `1210`  | Group system event                  | Marmot app payload                  | [application-messages.md](application-messages.md)      |
 | `30443` | Marmot KeyPackage event             | Nostr KeyPackage publication        | [nostr.md](../transports/nostr.md)                      |
 
-The experimental agent text stream QUIC feature claims kind `1200` for durable stream start app events, kind `1201` for
-agent activity rows, and kind `1202` for agent operation rows. Live stream chunks are transient QUIC records. Future durable
-abort, media-final, or fallback preview app-event kinds MUST be added to this registry before use.
+The experimental agent text stream QUIC feature claims kind `1200` for durable stream start app events. Live stream
+chunks are transient QUIC records.
+
+Kinds `1201` and `1202` are reserved for possible experimental agent activity and operation events. Marmot currently
+defines no payload schema or conformance behavior for them; application experiments use them under the ordinary
+unknown-app-event rules. Future adoption MUST add their exact semantics to the main table before relying on them for
+interoperability. Future durable abort, media-final, or fallback preview app-event kinds likewise MUST be added before
+use.
 
 Kind `450` is the local signing event for the adopted account identity proof v2. Kind `451` is the separate local
 signing event for the draft multi-device active-admin join authorization. Neither event is a transport object, and
 clients MUST NOT publish either event to relays. Their exact event shapes are defined by their component documents and
 share the envelope and validation rules in [authorization-proofs.md](./authorization-proofs.md).
+
+The `d` tag strings in these local signing events are fixed proof-domain labels, not component names. Implementations
+MUST use the exact `d` value in each owning proof document and MUST NOT derive it from the component name.
 
 Kind `1210` is reserved for durable group system rows, such as membership, name, avatar, or other group-lifecycle
 notices that clients render separately from human chat.

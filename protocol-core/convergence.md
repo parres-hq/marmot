@@ -18,10 +18,10 @@ The convergence policy contains:
 - `max_rewind_commits`: how far back from the current tip a branch MAY fork and still be eligible.
 - `app_payload_past_epoch_limit`: how many past MLS epochs MAY still produce delivered app payloads or app-payload
   witnesses (the exact window formula is in [retained-history.md](./retained-history.md), "App-payload retention").
-- `settlement_quiescence_ms`: the minimum time without new convergence-relevant input before a client MAY treat a
+- `settlement_quiescence_ms`: the minimum time without new selection-relevant input before a client MAY treat a
   convergence pass as settled and release queued outbound work.
-- `max_convergence_pass_ms`: the maximum duration of one convergence pass. This deadline is measured from the start of
-  the pass and MUST NOT be extended by later input.
+- `max_convergence_pass_ms`: the maximum duration of one convergence input-collection window. This deadline is measured
+  from the start of collection and MUST NOT be extended by later input.
 - `witness_quorum_senders_per_epoch`: the number of distinct senders needed for one branch epoch to count toward witness
   quorum.
 - `witness_quorum_epochs`: the number of branch epochs that MUST meet sender quorum.
@@ -46,42 +46,55 @@ push a branch past the rollback horizon; allowing it to would let app-payload tr
 commit branch, violating the invariant below. The version-1 values satisfy this bound, and any future policy component
 MUST satisfy it.
 
-`settlement_quiescence_ms` and `max_convergence_pass_ms` bound one convergence pass. A pass starts when the client first
-retains or reclassifies input that can change convergence. Both intervals are measured with the client's local
-monotonic clock. The quiescence interval restarts only when newly retained or reclassified input can still change the
-current pass's branch selection, for example by adding or invalidating an eligible candidate edge, changing a bounded
-witness score, supplying a missing parent, or making deferred input processable. Ordinary app-payload delivery that
-cannot change branch selection does not restart quiescence. Neither do duplicate, invalid, stale, already-dominated, or
-already-fully-counted witness inputs.
+`settlement_quiescence_ms` and `max_convergence_pass_ms` bound one convergence input-collection window. A pass starts
+when the convergence scheduler admits eligible retained input into a new collection batch; receipt or durable retention
+alone does not start a pass. Both intervals are measured with the client's local monotonic clock.
 
-A valid Commit that linearly advances the canonical tip starts or joins this bounded pass even when no divergent edge
-is yet known. The canonical tip does not advance while the pass is `Syncing`; the linear Commit is applied only when the
-pass reaches its cutoff and resolves the frozen batch. If an eligible divergent edge becomes available before that
-cutoff, the same pass changes the group lifecycle from `Stable` to `Recovering`. It MUST NOT restart either timer,
-resnapshot `pass_base_epoch`, or briefly apply the formerly linear edge as canonical state.
+Selection-relevant input is newly retained or reclassified input that can still change deterministic resolution of the
+current batch, for example by adding or invalidating an eligible candidate edge, changing a bounded witness score,
+supplying a missing parent, or making deferred input processable. Selection-relevant input restarts quiescence. Ordinary
+app-payload delivery that cannot change branch selection does not restart it. Neither do duplicate, invalid, stale,
+already-dominated, or already-fully-counted witness inputs.
+
+While the lifecycle is `PendingPublish` or `Merging`, inbound input is retained but the scheduler MUST NOT admit it into
+a new pass. After the lifecycle returns to `Stable`, the fair scheduling rule below runs before queued inbound input
+alone can start another pass.
+
+A valid Commit that linearly advances the canonical tip starts or joins this bounded pass when the scheduler admits it,
+even when no divergent edge is yet known. The canonical tip does not advance while the pass is `Syncing`; the linear
+Commit is applied only when the collection window reaches its cutoff and resolves the frozen batch. If an eligible
+divergent edge becomes available before that cutoff, the same pass changes the group lifecycle from `Stable` to
+`Recovering`. It MUST NOT restart either timer, resnapshot `pass_base_epoch`, or briefly apply the formerly linear edge
+as canonical state.
 
 The absolute pass deadline starts when the pass starts and MUST NOT restart. A client closes the pass at the earlier of:
 
-1. `settlement_quiescence_ms` elapsing without score-changing input; or
+1. `settlement_quiescence_ms` elapsing without selection-relevant input; or
 2. `max_convergence_pass_ms` elapsing.
 
-At that cutoff, the client freezes the pass's retained input batch and reaches a deterministic fixed point using only
-already-retained state in that batch. This `Resolving` phase MUST NOT wait for a fetch, admit newly retained input, or
-restart either timer. A Commit whose parent is absent from the frozen batch remains deferred to a later pass; the
-missing parent does not keep this pass open. The original `max_convergence_pass_ms` deadline bounds the entire pass,
-including this fixed-point work, and MUST NOT restart.
+At that cutoff, the client freezes the exact batch: every candidate Commit, proposal, application-message witness,
+candidate-parent state, and other authenticated dependency admitted to the pass. It reaches a deterministic fixed point
+using only that batch. This `Resolving` phase MUST NOT wait for a fetch, admit newly retained input, or restart either
+collection timer. A Commit whose parent is absent from the frozen batch remains deferred to a later pass; the missing
+parent does not keep this pass open.
 
-The client returns to `Stable` only after successfully selecting and applying the canonical branch. If required
-retained state, including the retained anchor, is missing, it does not mutate canonical group state and enters
-`Unrecoverable` as required below. Input retained after the cutoff is not discarded; it belongs to a later pass. The
-local cutoff controls scheduling and batch membership only. Input arrival time, cutoff time, and pass membership MUST
-NOT enter candidate validity or the branch score.
+Fixed-point resolution is not subject to a protocol wall-clock deadline: device speed MUST NOT make clients resolve the
+same frozen batch differently. An implementation MAY yield and resume the work locally, but it MUST complete
+deterministic resolution of that immutable batch before starting another pass.
 
-After a bounded pass returns the group to `Stable`, the client MUST give one already-queued, admin-authorized local
-group-state intent an opportunity to be prepared against the selected canonical state before it begins another
-convergence pass solely because more inbound input is queued. Inbound input remains durably retained during that
-opportunity. The prepared commit then follows the normal publication and convergence rules; this scheduling guarantee
-does not make it valid, accepted, or canonical.
+A recovering client returns to `Stable` only after successfully selecting and applying the canonical branch. A linear
+pass that began in `Stable` remains `Stable` after applying its selected advancement. If required retained state,
+including the retained anchor, is missing, the client does not mutate canonical group state and enters `Unrecoverable`
+as required below. Input retained after the cutoff is not discarded; it belongs to a later pass. The local cutoff
+controls scheduling and batch membership only. Input arrival time, cutoff time, and pass membership MUST NOT enter
+candidate validity or the branch score.
+
+After a bounded pass settles in `Stable`, the client MUST give one already-queued, admin-authorized local group-state
+intent one preparation attempt against the selected canonical state before it begins another convergence pass solely
+because more inbound input is queued. Inbound input remains durably retained during that attempt. If the attempt cannot
+proceed with currently available authorization, prerequisites, or signing capability, the scheduler proceeds rather
+than waiting indefinitely. A prepared Commit then follows the normal publication and convergence rules; this scheduling
+guarantee does not make it valid, accepted, or canonical.
 
 Convergence parameters are deliberately not group-tunable: a bad policy choice can fork a group. A future protocol
 version that changes convergence behavior MUST ship the new policy as a new app component behind a required capability.
@@ -104,17 +117,27 @@ from validated MLS bytes and retained states, never from transport metadata.
 
 A client builds candidate branches by replaying MLS commit bytes from retained group states.
 
+A candidate parent is the retained group state at the Commit's authenticated source epoch against which the Commit's
+parent-dependent MLS authentication succeeds. It is the prior state used for commit authorization and resulting-state
+validation; transport metadata never identifies it. Marmot's handshake messages are MLS `PublicMessage` values, so the
+membership tag and sender signature cryptographically bind the Commit to that source-epoch state. Merely sharing an
+epoch number does not make another retained state an alternate candidate parent.
+
 A commit creates a candidate edge only when it validates against a candidate parent state. Validation here is full
 commit validity: MLS validation; authorization of the authenticated committer against that parent state; and Marmot
 component validation of the resulting state, including cross-component resulting-epoch checks such as the admin/leaf
 coupling in [../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md) ("Validation").
 
-Authorization is parent-relative. A committer can be authorized on one retained branch and unauthorized on another, so
-failure against one candidate parent MUST NOT reject the commit against every parent. The commit creates an edge only
-from a parent against which all checks succeed. A candidate edge whose resulting state fails Marmot component
-invariants MUST NOT be created, so convergence can never select that invalid transition. A commit that is unauthorized
-for every available matching parent is rejected as `authorization_failed` only when no unavailable parent could change
-that result; otherwise it remains deferred while that parent may still arrive.
+Authorization is parent-relative: the client first identifies the candidate parent through MLS authentication, then
+evaluates the committer against that state's policy. Failure against a retained state whose MLS authentication does not
+match is not an authorization failure and cannot reject the Commit. The Commit creates an edge only from its candidate
+parent when all checks succeed. A candidate edge whose resulting state fails Marmot component invariants MUST NOT be
+created, so convergence can never select that invalid transition.
+
+If no retained state passes the Commit's parent-dependent MLS authentication, the Commit remains deferred while its
+authenticated source epoch is inside or ahead of the rollback horizon. Once authentication identifies its candidate
+parent, a failed authorization check is terminal `authorization_failed`. An implementation MUST NOT infer terminal
+authorization failure merely from the current absence of that parent.
 
 A commit whose parent is not available remains deferred while its authenticated MLS source epoch is inside or ahead of
 the rollback horizon. Deferred Commit expiry is epoch-based, not a local wall-clock policy:
@@ -175,6 +198,12 @@ pass_base_epoch - fork_epoch <= max_rewind_commits
 Branches outside that horizon MUST NOT be selected.
 
 A branch that needs a retained state older than the retained anchor MUST NOT be selected.
+
+A losing branch remains eligible for a later pass while its `fork_epoch` is inside the rollback horizon measured from
+the live canonical tip and all state needed to replay it remains at or after the retained anchor. It becomes permanently
+ineligible, and its retained-only inputs become stale, when the live canonical tip moves it outside that horizon, its
+required state is older than the retained anchor, or it has a terminal validity failure. Losing one pass is not by
+itself permanent ineligibility.
 
 ## App-payload witnesses
 
@@ -286,9 +315,10 @@ The client then assigns dispositions (the disposition vocabulary is pinned in
 
 - commits on the selected path are accepted;
 - valid commits retained only on a non-selected eligible branch are deferred while that branch can still participate in
-  a later pass, and become stale once the branch is permanently ineligible;
+  a later pass, and become stale under the permanent-ineligibility rule in "Eligibility";
 - proposals consumed by selected commits are accepted;
-- proposals consumed only by losing branches are stale;
+- proposals consumed only by a losing branch are deferred while that branch remains eligible for a later pass and
+  become stale under the permanent-ineligibility rule in "Eligibility";
 - MLS application messages that decrypt on the selected branch are accepted, and their Marmot app payloads are
   delivered to the application;
 - MLS application messages that decrypt only on losing branches are invalidated, and their app payloads are withdrawn
@@ -307,7 +337,7 @@ client previously applied — including the client's own published and confirmed
 group-state-change invalidation naming the superseded commit, and every state notification attributed to that commit
 is withdrawn: the application treats the changes it announced as not having happened. This is the state-notification
 counterpart of app-payload invalidation. The superseded Commit's disposition changes from `accepted` to `deferred` if
-its branch remains eligible for a later pass, or to `stale` if that branch is permanently ineligible.
+its branch remains eligible for a later pass, or to `stale` under the permanent-ineligibility rule in "Eligibility."
 
 Notification objects are local API surface, so their exact shape is implementation-defined; the conformance
 requirement is the resulting view. Once convergence is settled, the state notifications still in effect are exactly

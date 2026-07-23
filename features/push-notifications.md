@@ -12,10 +12,8 @@ Push notification support is optional. A group MUST still work when no client su
   "Token gossip event shapes").
 - Transport: Nostr push notification rumor kind `446` for the current Nostr binding. Unlike the kinds above, `446` is
   not an inner group payload: it is the rumor inside a separately gift-wrapped trigger addressed to the notification
-  server's inbox (see "Notification trigger").
+  server's inbox. The Nostr binding owns that outer envelope and its publish targets.
 - Group state: no group-state transition.
-- Account transport: trigger publish targets are gossiped relay hints, with the server account's inbox relays from the
-  Nostr binding as fallback (see "Notification trigger").
 
 No persistent group app component is required for push notifications v1.
 
@@ -124,10 +122,11 @@ Kinds `447` and `448` share one content shape:
 }
 ```
 
-- `tokens` MUST be an array of at most 32 token entries. A missing `tokens` member is read as an empty array. A sender with
-  more records splits them across multiple app events. If the decoded array contains more than 32 entries, the recipient
-  treats the entire array as advisory-invalid before performing any entry signature verification; the carrying group
-  message remains valid.
+- `tokens` MUST be an array of at most 32 token entries. A missing `tokens` member is read as an empty array. A present
+  non-array `tokens` member is advisory-invalid and contributes no entries. A sender with more records splits them
+  across multiple app events. If the decoded array contains more than 32 entries, the recipient treats the entire
+  array as advisory-invalid before performing any entry signature verification; the carrying group message remains
+  valid.
 - `member_id_hex` is the owning member's account public key as 32-byte lowercase hex.
 - `leaf_index` is the owning device's MLS leaf index as an unsigned-integer JSON number.
 - `platform` is the string `apns` or `fcm`.
@@ -242,10 +241,11 @@ signatures it does not hold.
 }
 ```
 
-- `removals` MUST be an array of at most 32 removal entries. A missing `removals` member is read as an empty array. A sender
-  with more removals splits them across multiple app events. If the decoded array contains more than 32 entries, the
-  recipient treats the entire array as advisory-invalid before performing any entry signature verification; the
-  carrying group message remains valid.
+- `removals` MUST be an array of at most 32 removal entries. A missing `removals` member is read as an empty array. A
+  present non-array `removals` member is advisory-invalid and contributes no removals. A sender with more removals
+  splits them across multiple app events. If the decoded array contains more than 32 entries, the recipient treats the
+  entire array as advisory-invalid before performing any entry signature verification; the carrying group message
+  remains valid.
 - The first five members identify the token record being removed and use the encodings defined for token entries. A
   removal entry MUST carry `leaf_index` so it targets exactly one device's record and cannot revoke a sibling leaf's
   active token for the same account, platform, and server.
@@ -312,14 +312,14 @@ subsequent kind `447`/`448` entry whose stamp is strictly greater than the tombs
 for the key and clears the tombstone.
 
 A tombstone is durable: it persists until a strictly-greater-stamped kind `447`/`448` entry clears it (as above) or
-the owning member leaf is removed from the group (see leaf-scoped cleanup below). It MUST NOT be garbage-collected on any
-wall-clock, `owner_ts`, or MLS-epoch basis. Owner authentication makes records relay-portable: any current member can
-re-emit another member's still-valid `owner_sig`/`owner_ts` record inside a fresh, in-window kind `448` at any later
-epoch. So a tombstone (and, equivalently, the stored ordering stamp for a live record) is the only durable high-water
-mark that stops a relayed but stale signed record from resurrecting a revoked or superseded token, and it cannot be
-bounded by the retained app-payload window: unlike a record that could only ever arrive in its original carrying epoch,
-a relayed record's carrying epoch is unbounded. The per-key stamp and tombstone therefore persist for the owning leaf's
-whole lifetime in the group, and are cleared only when that leaf leaves (see leaf-scoped cleanup below).
+the owning member leaf is removed from the group, as defined in the final paragraph of this section. It MUST NOT be
+garbage-collected on any wall-clock, `owner_ts`, or MLS-epoch basis. Owner authentication makes records relay-portable:
+any current member can re-emit another member's still-valid `owner_sig`/`owner_ts` record inside a fresh, in-window kind
+`448` at any later epoch. So a tombstone (and, equivalently, the stored ordering stamp for a live record) is the only
+durable high-water mark that stops a relayed but stale signed record from resurrecting a revoked or superseded token,
+and it cannot be bounded by the retained app-payload window: unlike a record that could only ever arrive in its original
+carrying epoch, a relayed record's carrying epoch is unbounded. The per-key stamp and tombstone therefore persist for
+the owning leaf's whole lifetime in the group, and are cleared only when that leaf leaves.
 
 #### Race handling
 
@@ -355,27 +355,17 @@ or group-state validity.
 
 ## Notification trigger
 
-When a sender wants to wake recipients, it publishes a NIP-59 gift-wrapped event addressed to the notification server:
-
-```text
-kind 1059 gift wrap
-  kind 13 seal
-    unsigned kind 446 Marmot notification rumor
-```
-
 The kind `446` rumor contains:
 
-- `content`: one standard-base64 string with 1 to 32 concatenated 1084-byte `EncryptedToken` values;
+- `content`: one standard-base64 string with 1 to 32 concatenated 1084-byte chunks, each either an `EncryptedToken` or
+  optional random padding as defined below;
 - a `["v", "marmot-push-v1"]` tag, and no other tag;
 - `pubkey`: a fresh ephemeral key.
 
 The content field follows the Nostr transport byte-encoding rule: standard base64 with padding and no `encoding` tag.
 
-The seal is signed by the same ephemeral key used as the rumor `pubkey`. The gift wrap uses a separate ephemeral key
-and is addressed to the notification server.
-
-The sender publishes the gift wrap using the notification-trigger publish-target rule in the Nostr binding
-([../transports/nostr.md](../transports/nostr.md), "Publish targets and acknowledgements").
+The Nostr binding owns the outer NIP-59 seal and gift wrap, recipient addressing, and the notification-trigger
+publish-target rule ([../transports/nostr.md](../transports/nostr.md), "Push notification delivery").
 
 ### Replay and freshness
 
@@ -393,8 +383,9 @@ ignores a chunk that does not decrypt or whose plaintext is invalid. The server 
 successfully decrypted chunk against group token-record history; removal and supersession are sender-side selection
 rules under "Record state", not server-visible trigger checks.
 
-A client that receives a redundant or stale wake performs a silent fetch and returns to sleep (see "Decoys and
-batching"); duplicate wakes are expected and are never surfaced as errors.
+A trigger can be redundant or stale and does not prove that corresponding group content is currently fetchable.
+Applications using mutable notifications reconcile presentation with their eventual fetch result. The exact
+platform-notification presentation is application policy, not protocol validity.
 
 ### Server retention
 
@@ -405,15 +396,16 @@ plaintext, group identifiers, or recipient linkage derived from a trigger. A ser
 nothing about group membership or message content from a trigger; the only material it needs is the platform token it
 decrypts to dispatch the native push.
 
-## Decoys and batching
+## Padding and batching
 
-Clients SHOULD batch notifications for a short period and include decoy tokens when possible. A decoy MUST be a valid
-encrypted token owned by the sender's local MLS leaf, either from this group or another group. A sender MUST NOT use
-another member or sibling leaf's token as a decoy: doing so wakes that other device and creates avoidable cross-group
-correlation. Random bytes are not decoys because they are distinguishable by curve or AEAD failure.
+Clients MAY batch notifications for a short period and MAY append padding to obscure the real chunk count from relays
+or other observers of the encrypted gift-wrap length. Each padding chunk is exactly 1084 bytes sampled independently
+and uniformly with a cryptographically secure random generator. Padding is allowed to fail notification-server parsing
+or decryption and is distinguishable to that server.
 
-Silent wakes that lead to no new messages are expected. Clients SHOULD fetch, find nothing, and return to sleep without
-showing user-facing errors.
+A sender MUST NOT use any real device token as padding. A decryptable token would cause a real mutable notification and
+can produce a visible notification with no corresponding content. The 32-chunk trigger maximum includes padding, so
+padding cannot create unbounded server work.
 
 ## Validation
 
@@ -449,9 +441,11 @@ including:
 - missing or unsupported `v` tags;
 - invalid base64 content;
 - empty decoded content, content whose length is not a multiple of 1084 bytes, or content containing more than 32
-  chunks (`34,688` decoded bytes); this length check occurs before any ECDH or AEAD work;
-- token chunks with invalid ephemeral keys, failed ECDH/HKDF, failed AEAD authentication, invalid platform bytes, or
-  invalid token lengths.
+  chunks (`34,688` decoded bytes); this length check occurs before any ECDH or AEAD work.
+
+Within a structurally valid trigger, the server processes each 1084-byte chunk independently. It skips a chunk with an
+invalid ephemeral key, failed ECDH/HKDF, failed AEAD authentication, invalid platform bytes, or invalid token length and
+continues with the remaining chunks. Random padding is discarded through this same per-chunk path.
 
 ## Status and interop surface
 

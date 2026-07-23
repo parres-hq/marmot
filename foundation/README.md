@@ -13,8 +13,6 @@ Foundation docs SHOULD change slowly. A change here usually means the whole prot
 - [authorization-proofs.md](./authorization-proofs.md) - common local Nostr-event proof envelope and validation rules.
 - [account-identity-proof-v1.md](./account-identity-proof-v1.md) - superseded custom-extension account proof retained
   for legacy wire documentation.
-- [../app-components/account-identity-proof-v2.md](../app-components/account-identity-proof-v2.md) - current LeafNode
-  component binding account identity to the MLS leaf signature key.
 - [key-packages.md](./key-packages.md) - KeyPackage meaning, discovery requirements, and lifecycle.
 - [canonical-encoding.md](./canonical-encoding.md) - byte encoding rules used across Marmot-owned structures.
 - [application-messages.md](./application-messages.md) - the unsigned Nostr-shaped payload inside MLS messages.

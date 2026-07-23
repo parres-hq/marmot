@@ -25,7 +25,7 @@ For a Marmot member leaf:
 
 - the credential identity is exactly 32 bytes;
 - those bytes are the member account's Nostr public key;
-- Clients MUST reject credentials whose identity is not a valid x-only secp256k1 public key.
+- clients MUST reject credentials whose identity is not a valid x-only secp256k1 public key.
 
 The MLS signature key for a leaf is not the Marmot account identity. It proves the MLS leaf. The credential identity
 says which Marmot account that leaf belongs to.

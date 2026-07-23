@@ -49,10 +49,9 @@ it inside MLS.
 
 ## Encoding
 
-A Marmot app payload that uses the unsigned Nostr event shape — including chat kind `9` and reaction kind `7` — is
-serialized as one UTF-8 JSON object with exactly the members `id`, `pubkey`, `created_at`, `kind`, `tags`, and
-`content`, and no others. Field values, tag arrays, and string content follow Nostr event conventions; the signature
-member is absent.
+A Marmot app payload that uses the unsigned Nostr event shape is serialized as one UTF-8 JSON object with exactly the
+members `id`, `pubkey`, `created_at`, `kind`, `tags`, and `content`, and no others. Field values, tag arrays, and string
+content follow Nostr event conventions; the signature member is absent.
 
 Decoders MUST reject a payload that:
 
@@ -68,20 +67,23 @@ message-kind document and MUST name the exact bytes carried inside MLS.
 
 ## Receiver authentication
 
-After structural decoding, a receiver MUST compare the inner event's `pubkey` with the Marmot account identity
-authenticated by the MLS sender leaf for that application message. If they are not byte-equal, the receiver MUST drop
+After structural decoding, a receiver MUST decode the inner event's `pubkey` from exactly 64 lowercase hexadecimal
+characters to a raw 32-byte x-only public key and compare those bytes with the Marmot account identity authenticated by
+the MLS sender leaf for that application message. If decoding fails or the bytes are not equal, the receiver MUST drop
 the Marmot app payload and MUST NOT render or deliver it to the application. The mismatch does not alter canonical group
 state or roll back other authenticated MLS processing.
 
 ## Message kinds
 
-The foundation only defines the shared envelope shape. It does not require every client to render every Nostr kind.
+Kind `9` is Marmot's default ordinary chat-message kind. Its `content` is the chat body unless an owning optional
+feature, such as encrypted media, adds feature-specific tags or handling.
 
-Feature or app-payload docs define which kinds are protocol-required, which kinds are optional, and how a client handles
-an unsupported kind.
+The registry is not an allowlist of inner event kinds. Any Nostr-shaped event that satisfies the shared encoding and
+receiver-authentication rules is a valid Marmot app payload unless an active required feature imposes another check.
+Protocol processing MUST NOT reject an otherwise-valid app payload merely because its event kind is unknown.
 
-Unknown app-event kinds SHOULD NOT break group state. A client MAY ignore or display unsupported content unless the
-owning feature document says the kind changes protocol state.
+Feature or app-payload docs define which additional kinds are protocol-required and what they mean. A client MAY ignore
+or decline to render unsupported application semantics after delivering the accepted payload to its application layer.
 
 ## Message edits (kind 1009)
 
@@ -105,13 +107,18 @@ A kind `1009` event is an ordinary Marmot app event and carries exactly the six 
 `v`; its `content` is the replacement plaintext, not JSON).
 
 - The original message's projected `kind` does not change; only its rendered body is overlaid.
-- The chat-list preview MUST NOT bump or reorder the conversation list when an edit targets a stale message.
+- The edit does not change the original message's logical transcript position or ordering timestamp. The edit event's
+  `created_at` orders competing edits; it is not a replacement activity timestamp for the target.
 - The unread count MUST NOT advance on an edit. A receiver who is caught up with the original is caught up with the
   edit.
 
-Authorship is enforced client-side: an edit is honored only when its MLS-authenticated sender equals the original
-message's authenticated author. A client receiving a kind `1009` from a different sender MUST ignore the edit. A client
-MAY retain accepted edit events for history while rendering only the selected overlay.
+Applications normally should not treat an edit as new conversation activity or bump a chat-list preview, regardless of
+the target message's age; chat-list presentation remains application policy.
+
+Authorship is enforced by Marmot account identity: an edit is honored only when the account identity authenticated by
+its MLS sender leaf equals the original message's authenticated account author. Another valid leaf for the same account
+therefore may edit that account's message. A client receiving a kind `1009` from a different account MUST ignore the
+edit. A client MAY retain accepted edit events for history while rendering only the selected overlay.
 
 Multiple edits to the same target are ordered by their inner event's `created_at`. The most recent edit wins as the
 overlaid body. A history surface MAY list each version with its timestamp.

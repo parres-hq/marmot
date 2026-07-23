@@ -91,7 +91,7 @@ Offline members and non-QUIC members miss the live preview and read the final me
 An agent turn SHOULD have at most one active Marmot text preview that represents the eventual kind `9` answer. Cursor-only
 frames, gateway notices, pre-operation chatter, and operation progress SHOULD NOT open their own kind `1200` starts. If
 the sender started a preview and later determines that the text was not part of the final answer, it SHOULD abort that
-preview and MAY publish a kind `1201` activity row instead.
+preview and MAY publish an application-defined durable activity event instead.
 
 ## Start payload
 
@@ -185,7 +185,8 @@ build the provisional preview text. Senders SHOULD batch output instead of sendi
 
 `ProgressDelta` records carry UTF-8 operation-progress text or JSON. Receivers MAY display this as live non-chat agent
 progress chrome. Receivers MUST NOT append `ProgressDelta` plaintext to preview text, final message content,
-notifications, indexes, or automation input. Durable operation history uses kind `1202`.
+notifications, indexes, or automation input. An application MAY publish separate application-defined durable operation
+history.
 
 `Status` records carry UTF-8 provisional state labels such as `thinking`. Receivers MAY display, replace, or ignore the
 latest status for local UI. Receivers MUST NOT append `Status` plaintext to preview text, final message content,
@@ -206,11 +207,10 @@ receiver ignores them in UI.
 
 ## Typed durable agent rows
 
-Kind `1201` and `1202` are normal Marmot app events reserved for application-defined agent activity and operation rows.
-They are end-to-end encrypted with the group like any other inner app event. This protocol version does not define a
-JSON field schema, ordering model, storage rule, or presentation contract for either kind. Applications that agree on
-such a profile may use one; other clients treat unsupported content under the normal app-payload rules. Neither kind is
-a kind `9` chat body or part of the authoritative final answer.
+Kinds `1201` and `1202` are reserved for possible experimental agent activity and operation rows. This protocol version
+does not define a JSON field schema, ordering model, storage rule, presentation contract, or conformance requirement for
+either kind. Applications that experiment with those values do so under the normal unknown-app-event rules. Neither
+kind is part of the interoperable QUIC preview flow, a kind `9` chat body, or the authoritative final answer.
 
 Kind `1210` group system events (durable membership/admin/profile rows) are defined in
 [foundation application payloads](../foundation/application-messages.md#group-system-events-kind-1210), not here.

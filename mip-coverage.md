@@ -31,11 +31,14 @@ work and is tracked here because it affects this spec's design.
   - App payloads: [foundation/application-messages.md](./foundation/application-messages.md)
 - MIP-04, Encrypted Media: Review and required for new app groups.
   - Feature flow: [features/encrypted-media.md](./features/encrypted-media.md)
-  - App component: [app-components/group-encrypted-media-v1.md](./app-components/group-encrypted-media-v1.md)
+  - Current app component: [app-components/group-encrypted-media-v2.md](./app-components/group-encrypted-media-v2.md)
+  - Frozen v1 behavior: [features/encrypted-media-v1.md](./features/encrypted-media-v1.md) and
+    [app-components/group-encrypted-media-v1.md](./app-components/group-encrypted-media-v1.md)
 - MIP-05, Push Notifications: Draft and optional.
   - Feature flow: [features/push-notifications.md](./features/push-notifications.md)
 - MIP-06, Multi-Device Support: Branch-draft and optional.
   - Feature flow: [features/multi-device.md](./features/multi-device.md)
+  - Commit authorization boundary: [protocol-core/group-messaging.md](./protocol-core/group-messaging.md)
   - Join authorization component:
     [app-components/multi-device-join-authorization-v1.md](./app-components/multi-device-join-authorization-v1.md)
   - Foundation: [foundation/identity.md](./foundation/identity.md)

@@ -9,7 +9,7 @@ This document preserves the legacy wire format so extension type `0xf2f1` is nev
 current Marmot profile. Current clients use
 [../app-components/account-identity-proof-v2.md](../app-components/account-identity-proof-v2.md).
 
-Within a legacy v1 group, clients MUST reject member leaves and KeyPackages that do not carry a valid v1 proof.
+When validating a legacy v1 LeafNode or KeyPackage, clients MUST reject it unless it carries a valid v1 proof.
 
 ## Registry
 

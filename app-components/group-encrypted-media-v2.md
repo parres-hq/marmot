@@ -1,14 +1,14 @@
-# marmot.group.encrypted-media.v1
+# marmot.group.encrypted-media.v2
 
-Status: deprecated; retained for legacy wire documentation.
+Status: adopted.
 
 ## Registry
 
-- Component id: `0x8008`
-- Name: `marmot.group.encrypted-media.v1`
+- Component id: `0x800b`
+- Name: `marmot.group.encrypted-media.v2`
 - Location: GroupContext `app_data_dictionary`
 - Default requirement: required for new app groups under a media-capable application profile; optional otherwise
-- Owning feature: [encrypted-media-v1.md](../features/encrypted-media-v1.md)
+- Owning feature: [encrypted-media.md](../features/encrypted-media.md)
 
 ## State
 
@@ -20,23 +20,25 @@ items):
 ```text
 struct {
   opaque locator_kind<V>;
-} MediaLocatorKindV1;
+} MediaLocatorKindV2;
 
 struct {
   opaque locator_kind<V>;
-  opaque base_url<V>;
-} BlobStoreEndpointV1;
+  opaque base_url<1..2048>;
+} BlobStoreEndpointV2;
 
 struct {
   opaque              media_format<V>;
-  MediaLocatorKindV1  allowed_locator_kinds<V>;
-  BlobStoreEndpointV1 default_blob_endpoints<V>;
-} EncryptedMediaPolicyV1;
+  MediaLocatorKindV2  allowed_locator_kinds<V>;
+  BlobStoreEndpointV2 default_blob_endpoints<V>;
+} EncryptedMediaPolicyV2;
 ```
 
-`media_format` MUST be `encrypted-media-v1`.
+`media_format` MUST be `encrypted-media-v2`. It is a fixed format constant, not independent version negotiation. It
+cannot select another format under component id `0x800b`; another breaking format requires a new component id and
+document.
 
-`allowed_locator_kinds` is the list of locator kinds that media messages MAY use. The initial v1 locator kind is
+`allowed_locator_kinds` is the list of locator kinds that media messages MAY use. The initial v2 locator kind is
 `blossom-v1`.
 
 `default_blob_endpoints` is the fallback list for upload and fetch. Each endpoint carries the locator kind it serves and
@@ -51,14 +53,18 @@ canonical values.
 The default test/reference policy uses:
 
 ```text
-media_format = "encrypted-media-v1"
+media_format = "encrypted-media-v2"
 allowed_locator_kinds = ["blossom-v1"]
-default_blob_endpoints = [{ locator_kind = "blossom-v1", base_url = "https://blossom.primal.net" }]
+default_blob_endpoints = [{ locator_kind = "blossom-v1", base_url = "https://blossom.primal.net/" }]
 ```
 
 ## Update
 
-The update payload is a full replacement `EncryptedMediaPolicyV1`.
+The update payload is a full replacement state:
+
+```text
+EncryptedMediaPolicyV2 EncryptedMediaPolicyUpdateV2;
+```
 
 Endpoint updates are group-state updates. They are not message metadata and do not rewrite existing media references.
 
@@ -66,17 +72,14 @@ Endpoint updates are group-state updates. They are not message metadata and do n
 
 A policy state is valid if:
 
-- `media_format` is exactly `encrypted-media-v1`
+- `media_format` is exactly `encrypted-media-v2`
 - every locator kind is 1..64 bytes and contains only lowercase ASCII letters (`a-z`), digits (`0-9`), and `-`
 - `allowed_locator_kinds` is non-empty and contains at most 16 unique entries
 - `default_blob_endpoints` is non-empty and contains at most 16 unique entries
 - every endpoint locator kind appears in `allowed_locator_kinds`
-- every endpoint base URL is a normalized `https` URL, or a normalized `http` URL whose host is loopback
-- endpoints with userinfo, fragments, or missing hosts are invalid
-- an endpoint whose host is in the frozen v1 unsafe-host set is invalid, with the single exception of a loopback host
-  (which carries the `http`-to-loopback dev/test endpoint allowed above); the set comprises loopback, private, CGNAT,
-  link-local, unspecified, documentation, benchmarking, reserved or broadcast, multicast, ULA, and IPv6 transition
-  prefixes with an unsafe embedded address
+- every endpoint base URL is 1..2048 bytes
+- every endpoint base URL is a normalized `http` or `https` URL
+- endpoints with userinfo, queries, fragments, or missing hosts are invalid
 
 A base URL is normalized when it is byte-equal to its own parse-and-serialize output under the
 [WHATWG URL Standard](https://url.spec.whatwg.org/) — the same normalization
@@ -88,31 +91,33 @@ and MUST NOT trim, case-fold, normalize, or deduplicate a value while decoding i
 producer-side rules; a decoder rejects a duplicate entry rather than removing it, and rejects a non-normalized URL or
 locator kind rather than repairing it.
 
-Component-state validity is the same for every member. An endpoint with scheme `http` and a loopback host is valid
-state, and validators MUST accept it, so commit validity never depends on local configuration.
-
-Whether a client acts on such an endpoint is a separate, local rule: a client MUST NOT upload to or download from a
-loopback HTTP endpoint unless it is explicitly configured for development or testing. In a production configuration
-those endpoints are unusable, and attachments that rely on them are unfetchable.
+Component-state validity is the same for every member. Destination reachability, trust, and permission to contact an
+endpoint are local application policy and MUST NOT affect whether the component bytes or their carrying Commit are
+valid. Non-normative guidance for that contact decision is in
+[../implementation-model.md](../implementation-model.md) ("Network destination safety").
 
 ## Authorization
 
 Only an active admin MAY send a standalone encrypted-media policy update proposal.
 
-Only an active admin MAY commit an encrypted-media policy update. The admin check is evaluated against the candidate
-parent state.
+Only an active admin MAY commit an encrypted-media policy update.
+
+Commit authorization, including removal authorization, follows the shared candidate-parent rule in
+[README.md](./README.md) ("Authorization Evaluation").
 
 ## Removal
 
 Only an active admin MAY commit removal of this component.
 
-This component MUST NOT be removed while it is listed as required in GroupContext `app_components`. Under a media-capable
-legacy application profile it is required for new app groups, so removing it from such a group is invalid. A group whose
-profile does not require encrypted media MAY omit it.
+This component MAY be removed in the same authorized Commit that removes it from resulting GroupContext
+`app_components`; it is invalid if the resulting state still lists it as required. Application-profile policy is not
+authenticated group state and MUST NOT independently make otherwise-valid component removal invalid.
 
 ## Migration
 
-This component carries the legacy Encrypted Media V1 group policy. It is frozen under component id `0x8008` and MUST
-NOT be interpreted using v2 endpoint or validity rules. Current groups use
-[`marmot.group.encrypted-media.v2`](./group-encrypted-media-v2.md); v2 has a new component id because its policy bytes
-and validation behavior are breaking changes.
+This component supersedes [`marmot.group.encrypted-media.v1`](./group-encrypted-media-v1.md). Component id `0x8008`
+remains the frozen v1 policy and MUST NOT be reinterpreted as v2.
+
+An authorized Commit MAY atomically add this component, replace `0x8008` with `0x800b` in resulting
+`app_components`, and remove the v1 component. That migration does not rewrite historical v1 media references. A client
+MAY retain legacy v1 rendering support; current-profile senders create only v2 references.

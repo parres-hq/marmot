@@ -9,7 +9,7 @@ profile images are separate and remain owned by their own group image or avatar 
 
 ## Surfaces
 
-- App component: `marmot.group.encrypted-media.v1` owns the group media policy.
+- App component: `marmot.group.encrypted-media.v2` owns the group media policy.
 - MLS protocol: media key material comes from `MLS-Exporter("marmot", "encrypted-media", 32)`.
 - App payload: kind-9 chat messages carry ordered NIP-92-style `imeta` tags.
 - Blob storage: locators identify upload/fetch backends. Blossom is the first reference locator kind.
@@ -18,10 +18,11 @@ Blob upload and download are outside MLS group state. A failed upload or failed 
 
 ## Current Version
 
-The current media format is `encrypted-media-v1`.
+The current media format is `encrypted-media-v2`.
 
-New media references MUST use `encrypted-media-v1`. Legacy media version strings are not compatibility formats in this
-spec and MUST be rejected by V1 clients.
+New media references MUST use `encrypted-media-v2`. A legacy v1 reference is processed only under the frozen
+[v1 profile](./encrypted-media-v1.md) when the client supports it; a receiver MUST NOT reinterpret another version as
+v2.
 
 ## Message Shape
 
@@ -30,11 +31,11 @@ Media messages are regular Marmot kind-9 chat app events.
 - `content` is the message-level caption.
 - each attachment is one ordered `imeta` tag.
 - a message MAY contain multiple `imeta` tags.
-- per-attachment captions are out of scope for v1.
+- per-attachment captions are out of scope for v2.
 
-A V1 attachment `imeta` tag contains:
+A V2 attachment `imeta` tag contains:
 
-- `v encrypted-media-v1`
+- `v encrypted-media-v2`
 - one or more `locator <kind> <value>` fields
 - `ciphertext_sha256 <hex>`
 - `plaintext_sha256 <hex>`
@@ -44,7 +45,7 @@ A V1 attachment `imeta` tag contains:
 - optional `dim <width>x<height>` for render hints
 - optional `thumbhash <value>` for previews
 
-`blurhash` is invalid in `encrypted-media-v1`.
+`blurhash` is invalid in `encrypted-media-v2`.
 
 The source epoch is not an `imeta` field. It is the MLS epoch of the application message that carried the media tag.
 Clients need that epoch to select the correct media exporter secret.
@@ -90,12 +91,12 @@ Its UTF-8 bytes are preserved exactly; senders and receivers MUST NOT normalize 
 
 ## Key Derivation
 
-`encrypted-media-v1` uses the group media exporter secret for the message source epoch:
+`encrypted-media-v2` uses the group media exporter secret for the message source epoch:
 
 ```text
 media_secret = MLS-Exporter("marmot", "encrypted-media", 32) at source_epoch
 file_key     = HKDF-Expand(media_secret,
-                           "encrypted-media-v1" || 0x00 || plaintext_sha256_bytes ||
+                           "encrypted-media-v2" || 0x00 || plaintext_sha256_bytes ||
                            0x00 || media_type || 0x00 || filename ||
                            0x00 || "key",
                            32)
@@ -104,8 +105,9 @@ file_key     = HKDF-Expand(media_secret,
 HKDF is HKDF-SHA256. `media_secret` is used directly as the HKDF PRK (Expand only, no Extract step). This choice is
 fixed and independent of the group's MLS ciphersuite; only the `MLS-Exporter` line is computed with the ciphersuite's
 own hash, as MLS defines. The info bytes are exactly the concatenation shown: fields joined by single `0x00` separator
-bytes, with no length prefixes. This delimiter is unambiguous because the media-type profile is ASCII and the filename
-profile forbids U+0000.
+bytes, with no length prefixes. This inherited delimiter is unambiguous because `plaintext_sha256_bytes` has a fixed
+32-byte length, the media-type profile permits only the listed ASCII token bytes and therefore excludes U+0000, and the
+filename profile also forbids U+0000.
 
 `media_secret` is key material. Clients MUST NOT publish, transmit, log, or expose it in diagnostics. Clients SHOULD
 protect cached source-epoch media secrets at rest with confidentiality controls appropriate to the platform. Clients
@@ -114,11 +116,11 @@ policy. If a past-epoch media secret is no longer available, media from that epo
 
 ## Encryption
 
-`encrypted-media-v1` uses ChaCha20-Poly1305.
+`encrypted-media-v2` uses ChaCha20-Poly1305.
 
 ```text
 nonce             = random(12)
-aad               = "encrypted-media-v1" || 0x00 || plaintext_sha256_bytes || 0x00 || media_type || 0x00 || filename
+aad               = "encrypted-media-v2" || 0x00 || plaintext_sha256_bytes || 0x00 || media_type || 0x00 || filename
 encrypted_content = ChaCha20-Poly1305.encrypt(file_key, nonce, plaintext, aad)
 ```
 
@@ -140,7 +142,7 @@ A receiver MUST reject an encrypted media reference when its authenticated field
 reference-level locator rule below. A receiver MUST reject a reference if:
 
 - the `imeta` tag cannot be decoded
-- the version is absent or not `encrypted-media-v1`
+- the version is absent or not `encrypted-media-v2`
 - no locator is present
 - a locator has an empty kind or an empty value, or its value does not parse as a URL
 - a `blossom-v1` locator uses a URL scheme other than `http` or `https`
@@ -169,7 +171,7 @@ payload:
 - the decrypted media type or size violates application policy
 
 A locator kind is NOT a validity condition. A well-formed locator whose kind is not in the group's
-`marmot.group.encrypted-media.v1` `allowed_locator_kinds`, or whose kind the receiving client does not support, makes
+`marmot.group.encrypted-media.v2` `allowed_locator_kinds`, or whose kind the receiving client does not support, makes
 that locator UNFETCHABLE: the client skips it, and the attachment is unfetchable if no usable locator or fallback
 endpoint remains. An out-of-policy or unsupported locator MUST NOT invalidate the media reference and MUST NOT
 invalidate or drop the containing message. The rationale is that media content is authenticated by its
@@ -179,3 +181,13 @@ locator cannot forge content; only the structural conditions above protect integ
 Fetchability is judged at fetch time against the group's current `allowed_locator_kinds` and the receiving client's
 current support and configuration, not against the source epoch. Because the locator policy no longer gates delivery,
 validation needs no source-epoch policy snapshot.
+
+## Migration
+
+Encrypted media v2 supersedes the frozen [v1 feature](./encrypted-media-v1.md) and uses the new
+[`marmot.group.encrypted-media.v2`](../app-components/group-encrypted-media-v2.md) component id. Current-profile senders
+MUST NOT create v1 references.
+
+A group migrating from v1 may atomically add the v2 component, replace the required component id, and remove the v1
+component. Historical v1 references remain v1 and are not rewritten. A client MAY retain legacy rendering support, but
+v1 support is not required for a newly created v2-only group.

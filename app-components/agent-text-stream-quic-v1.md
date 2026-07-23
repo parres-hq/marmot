@@ -72,6 +72,10 @@ contain. It constrains future component updates, not LeafNode capability adverti
 for additional role capabilities that are not in `allowed_member_roles`; advertising support does not grant permission
 to exercise a role and does not make that role required by the group.
 
+For a component replacement, the subset check compares `required_member_roles` and `allowed_member_roles` from the same
+complete resulting state. The prior allowed-role mask determines neither mask in the replacement. Commit authorization
+is still evaluated against the candidate-parent state, so a replacement cannot grant its own committer authority.
+
 For the first user-to-agent profile:
 
 - `required_member_roles` includes `receive` so every member can process agent-stream start/final semantics;
@@ -144,7 +148,8 @@ Commit authorization, including removal authorization, follows the shared candid
 
 Only an active admin MAY commit removal of this component.
 
-This component MUST NOT be removed while it is listed as required in GroupContext `app_components`.
+This component MAY be removed in the same authorized Commit that removes it from resulting GroupContext
+`app_components`; it is invalid if the resulting state still lists it as required.
 
 If removed from a group that no longer requires it, live QUIC text streams are disabled for that group. Existing durable
 Marmot messages and final kind `9` stream messages remain valid.

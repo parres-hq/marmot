@@ -1,6 +1,6 @@
 # Marmot Implementation Model
 
-Status: non-normative draft for internal review.
+Status: non-normative.
 
 This document describes one way to implement the Marmot protocol. It is not a wire contract.
 
@@ -99,12 +99,12 @@ Use aggregate counts, method names, local enum names, and redacted or hashed val
 
 ## Deferred implementation surfaces
 
-Some surfaces are fully specified but not yet implemented in this repository. They remain normative; the deferral is a
-property of the current darkmatter code, not of the protocol.
+A normative surface may land in this specification before every implementation supports it. That implementation status
+does not weaken the owning protocol rule.
 
-Implementation repositories track deferred work such as per-group agent-stream `replay_ttl_secs` /
-`max_plaintext_frame_len` enforcement and exposing the MLS own-leaf-index through an engine API for push `leaf_index`.
-This spec repository does not assign implementation-work issue numbers.
+Implementation repositories track their own deferred work, such as per-group agent-stream `replay_ttl_secs` /
+`max_plaintext_frame_len` enforcement and exposing the MLS own-leaf index needed for push `leaf_index`. This
+specification does not assign implementation-work issue numbers.
 
 ## Darkmatter Mapping
 

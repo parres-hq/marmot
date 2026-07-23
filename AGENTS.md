@@ -50,7 +50,7 @@ top-level file stays cross-surface only.
 - Protocol-core docs own required group flows and group-state transitions.
 - Feature docs own optional or user-visible flows and cross-reference the surfaces that implement them.
 - AppDataUpdate proposal forms and their default request path are defined in
-  [`app-components/README.md`](app-components/README.md) ("Update Processing").
+  [`app-components/README.md`](app-components/README.md) ("GroupContext Update Processing").
 
 ## Verification
 
@@ -68,5 +68,6 @@ rg -n \
   protocol-core
 ```
 
-Matches in `AGENTS.md`, `principles.md`, and `implementation-model.md` may be intentional. Matches in normative
-foundation, component, or lifecycle documents need review.
+Matches in `AGENTS.md`, `layout.md`, `principles.md`, `implementation-model.md`, and explicit surface-boundary
+disclaimers may be intentional. Review every match; do not treat the exemption list as an instruction to ignore it.
+Matches in normative foundation, component, or lifecycle rules usually need closer review.

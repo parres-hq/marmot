@@ -112,7 +112,10 @@ member LeafNode, the owning component document MUST require and validate that en
 
 A member that does not support every required component id MUST NOT join the group.
 
-Groups that change GroupContext component state also require the registered `app_data_update` proposal.
+Every current-profile Marmot KeyPackage MUST advertise the registered `app_data_update` proposal (`0x0008`), and every
+new Marmot group MUST list it among the group's required proposal capabilities. Every current-profile group carries
+mutable GroupContext component state, including the required admin-policy component, so this requirement is not
+conditional on enabling a particular optional component.
 
 ## Common Rules
 
@@ -157,17 +160,16 @@ Each Marmot GroupContext component document defines two byte formats:
 - state bytes stored in `AppDataDictionary.component_data.data`;
 - update bytes carried in `AppDataUpdate.update`.
 
-For each Commit, a Marmot client groups AppDataUpdate proposals by component id. For each component id, the client
-evaluates the prior state and ordered update bytes using that component's update rule.
+For each Commit, a Marmot client groups AppDataUpdate operations by component id. A Commit MUST contain at most one
+operation for a given component id, whether that operation adds, updates, or removes the component. More than one
+operation for the same component id makes the Commit invalid.
 
 The update rule returns new state bytes or rejects the Commit. A component's update rule decides how update bytes relate
-to prior state. In v1 every GroupContext component document defines its update payload as a full replacement state.
-When a Commit contains one or more update operations for the same v1 component, the client MUST validate every proposal
-sender and every update payload's component-local encoding and value rules in Commit order. Any invalid proposal or
-payload makes the whole Commit invalid. Each valid payload replaces the working component state, so the last update
-operation's payload is the resulting component state; earlier valid replacements do not override it. Resulting-epoch
-and cross-component invariants are then checked against that final state. Partial field updates are not defined (see
-"Common Rules" above).
+to prior state. In v1 every GroupContext component document defines its update payload as a full replacement state. The
+client validates the operation's proposal sender, committer, component-local encoding, value rules, and removal policy.
+Any invalid operation makes the whole Commit invalid. Resulting-epoch and cross-component invariants are then checked
+against the complete final state. Partial field updates and last-wins processing are not defined (see "Common Rules"
+above).
 
 A future component MAY define a diff-style update rule, but it MUST say so explicitly in its own document; no v1
 component does.
@@ -182,9 +184,9 @@ group-level components default to the same active-admin role that may commit it.
 component change, if a feature defines one, is carried as a Marmot app payload or feature-owned request flow rather than
 as an MLS AppDataUpdate proposal.
 
-For a Commit, a Marmot client evaluates all AppDataUpdate proposals for a component in Commit order. The component
-validates every proposal sender, the committer, the prior state, and the ordered updates. It returns the new state bytes
-or an invalid result. If any component update is invalid, the Commit is invalid.
+For a Commit, a Marmot client evaluates the single AppDataUpdate operation, if any, for each component. The component
+validates the proposal sender, the committer, the prior state, and the operation. It returns the new state bytes, removes
+the component, or returns an invalid result. If any component operation is invalid, the Commit is invalid.
 
 ## Authorization Evaluation
 
@@ -207,7 +209,10 @@ Removal is a component change and inherits that component's commit authorization
 defines a different removal actor. Each component's Removal section restates the authorized actor so the rule does not
 depend on treating the word "update" as implicit coverage of `remove`.
 
-Required components MUST NOT be removed while still listed in GroupContext `app_components`.
+Required components MUST NOT be present in the resulting epoch's required-component list after they are removed. One
+authorized Commit MAY atomically update `app_components` to stop requiring a component and remove that component from
+the dictionary unless the owning component freezes stricter legacy sequencing. Authorization is evaluated against the
+candidate parent and the required-component invariant against the complete resulting state, as defined above.
 
 ## Unknown Data
 
@@ -240,9 +245,15 @@ The currently adopted persistent GroupContext components are:
 - [marmot.group.admin-policy.v1](./admin-policy-v1.md)
 - [marmot.transport.nostr.routing.v1](./nostr-routing-v1.md)
 - [marmot.group.message-retention.v1](./message-retention-v1.md)
-- [marmot.group.agent-text-stream.quic.v1](./agent-text-stream-quic-v1.md)
 - [marmot.group.avatar-url.v1](./group-avatar-url-v1.md)
-- [marmot.group.encrypted-media.v1](./group-encrypted-media-v1.md)
+- [marmot.group.encrypted-media.v2](./group-encrypted-media-v2.md)
+
+The following persistent GroupContext component is experimental and is not required for baseline Marmot conformance:
+
+- [marmot.group.agent-text-stream.quic.v1](./agent-text-stream-quic-v1.md)
+
+The frozen [marmot.group.encrypted-media.v1](./group-encrypted-media-v1.md) component remains documented for legacy
+bytes but is not part of the current profile.
 
 Every Marmot leaf uses the adopted
 [marmot.member.account-identity-proof.v2](./account-identity-proof-v2.md) LeafNode component.
@@ -261,10 +272,10 @@ in `AppEphemeral`. Its assigned bytes do not make the feature adopted.
 - `marmot.group.blossom.image.v1` is Blossom-specific. Other image-reference models SHOULD use separate components.
 - `marmot.transport.nostr.routing.v1` is required for Nostr-routed Marmot groups.
 - Nostr relays in `marmot.transport.nostr.routing.v1` are canonical signed group state, not local hints.
-- Application profiles MAY require `marmot.group.agent-text-stream.quic.v1` by default for agent-stream-ready groups. Its
-  `receive` role is final-message fallback compatibility, not a requirement to implement the raw QUIC live-preview data
-  plane.
+- Experimental application profiles MAY require `marmot.group.agent-text-stream.quic.v1` for agent-stream-ready
+  groups. Its `receive` role is final-message fallback compatibility, not a requirement to implement the raw QUIC
+  live-preview data plane.
 - AppDataUpdate proposals MAY be inline or standalone. Inline is the default path when the committer is authorized;
   standalone MLS proposals are not the default non-admin request path for admin-gated component changes.
-- `marmot.group.encrypted-media.v1` owns the group media policy. Individual media attachments remain message metadata
-  and are described in [encrypted-media.md](../features/encrypted-media.md).
+- `marmot.group.encrypted-media.v2` owns the current group media policy. Individual media attachments remain message
+  metadata and are described in [encrypted-media.md](../features/encrypted-media.md).

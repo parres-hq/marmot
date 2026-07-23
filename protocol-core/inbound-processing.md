@@ -53,15 +53,10 @@ that input (e.g. a welcome requires capabilities the client does not support).
 
 Encoding, branch-independent required-signature, and required-feature checks run before convergence. Required MLS
 authentication that needs retained source-epoch or candidate-parent state — including membership-tag or sender-signature
-validation — instead runs while replaying the input against each candidate parent. Authentication failure against one
-parent rejects only that candidate edge while another available or still-missing matching parent could authenticate the
-input.
-
-A commit authorization check that depends on group state is likewise candidate-relative: convergence evaluates the
-authenticated committer against each candidate parent state. The same commit can be unauthorized on one retained parent
-and authorized on another, so a client MUST NOT reject it globally as `authorization_failed` before attempting every
-available matching parent. The candidate-edge and terminal-rejection rules are defined in
-[convergence.md](./convergence.md), "Candidate branches."
+validation — instead runs while replaying the input against retained source-epoch states. If no state authenticates the
+membership tag, the input remains deferred while its parent may still arrive. Once MLS authentication identifies the
+candidate parent, a failed sender-signature or authorization check is terminal for that input. The candidate-edge and
+terminal-rejection rules are defined in [convergence.md](./convergence.md), "Candidate branches."
 
 Input naming a group for which the client has no processable group state receives the `unknown_group` category before
 convergence and no convergence disposition. The client cannot authenticate or classify a branch without that state.
@@ -84,16 +79,13 @@ branch.
 
 Input that cannot affect the group MUST receive a stale disposition. This includes:
 
-- duplicate messages (`duplicate`);
-- welcomes addressed to another member (`wrong_recipient`);
-- own echoes (`own_echo`);
 - commits older than the retained anchor (`BeyondAnchor` -> `stale_epoch`, per
   [retained-history.md](./retained-history.md));
 - MLS application messages older than the retained app-payload window (`stale_epoch`; the window is
   `app_payload_past_epoch_limit` past epochs, see [convergence.md](./convergence.md));
 - commits that fork from outside the rollback horizon: these are ineligible for branch selection (see
   [convergence.md](./convergence.md), "Eligibility") and receive the `stale_epoch` category; when their source epoch is
-  also older than the retained anchor, the named outcome is `BeyondAnchor`;
+  also older than the retained anchor, the named outcome is `BeyondAnchor`.
 
 The `snake_case` names in parentheses are the shared categories in [../foundation/errors.md](../foundation/errors.md);
 `BeyondAnchor` is a named convergence outcome that maps to the `stale` disposition and the `stale_epoch` category.
