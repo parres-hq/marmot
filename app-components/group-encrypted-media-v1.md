@@ -94,7 +94,8 @@ locator kind rather than repairing it.
 
 Component-state validity is the same for every member. Destination reachability, trust, and permission to contact an
 endpoint are local application policy and MUST NOT affect whether the component bytes or their carrying commit are
-valid.
+valid. Non-normative guidance for that contact decision is in
+[../implementation-model.md](../implementation-model.md) ("Network destination safety").
 
 ## Authorization
 

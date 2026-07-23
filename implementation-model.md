@@ -70,6 +70,26 @@ self-update within 24 hours of joining. This window is local operational guidanc
 other client can observe or enforce it — so it lives here rather than in the protocol document. An implementation may
 schedule the rotation sooner.
 
+## Network destination safety
+
+A URL or endpoint carried in authenticated Marmot state or an authenticated app payload proves only that a
+protocol-authenticated author selected those bytes. It does not authorize a client to contact that destination from its
+own network environment.
+
+Before automatically fetching from or uploading to such a destination, implementations should apply
+platform-appropriate server-side request forgery protections to the initial destination, every redirect, and every
+address selected for connection after name resolution. By default, this should refuse loopback, link-local, private or
+unique-local, multicast, unspecified, platform-metadata, and other non-public special-purpose destinations unless
+explicit local application or deployment configuration permits an intended private service. Implementations should
+account for DNS rebinding and should not treat a check of the URL string alone as sufficient.
+
+This is local availability and network-safety policy. Refusal makes the resource unavailable on that client; it does not
+change the decoded bytes, invalidate a component, message, or Commit, alter canonical group state, or participate in
+convergence. The
+[IANA IPv4 and IPv6 special-purpose address registries](https://www.iana.org/numbers/registries) and
+[OWASP SSRF prevention guidance](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html)
+are useful operational references, not fixed Marmot protocol data.
+
 ## Diagnostics
 
 Logs, errors, metrics, and traces should avoid account ids, group ids, message ids, relay URLs, pubkeys, payloads,

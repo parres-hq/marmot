@@ -68,7 +68,8 @@ query, or fragment. The upload URL is `server_root || "/upload"` and uses the
 by the server is stored exactly as received after structural URL validation; it need not equal the fallback URL or be
 WHATWG-canonical. Explicit locators are authenticated message metadata, not canonical group state or a cryptographic
 input. Whether a client contacts the parsed destination is local application policy and does not affect reference
-validity.
+validity. Non-normative guidance for that contact decision is in
+[../implementation-model.md](../implementation-model.md) ("Network destination safety").
 
 The protocol is not Blossom-specific. Additional locator kinds require component policy support and backend-specific
 upload/fetch rules.

@@ -55,7 +55,8 @@ A non-empty avatar state is valid only if `url` validates and normalizes:
 - the URL includes a host and no userinfo (no `user:password@`) and no fragment
 
 Whether a client contacts or renders the parsed destination is local application policy and MUST NOT affect component
-or commit validity.
+or commit validity. Non-normative guidance for that contact decision is in
+[../implementation-model.md](../implementation-model.md) ("Network destination safety").
 
 The producer normalizes the URL before encoding and stores the normalized form. Normalization is defined by the
 [WHATWG URL Standard](https://url.spec.whatwg.org/): the producer parses the URL and serializes the parse result as
