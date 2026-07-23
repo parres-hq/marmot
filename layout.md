@@ -101,14 +101,15 @@ database schemas, or API boundaries.
 
 ## App Components
 
-App component documents define custom MLS app components carried in the
-GroupContext `app_data_dictionary`.
+App component documents define custom MLS app components carried in `app_data_dictionary`. The component document
+chooses the location whose lifecycle matches the data: GroupContext for authenticated group state, LeafNode for
+per-member data, KeyPackage for package-specific data, or GroupInfo for data attached to one GroupInfo object.
 
 The authoritative component-document checklist is
 [app-components/README.md](./app-components/README.md) ("Common Rules"). Component ids carry the major version; there is
 no generic separate payload version field.
 
-Most feature-owned group state SHOULD land here.
+Most feature-owned group state and per-member application metadata SHOULD land here.
 
 ## Transports
 

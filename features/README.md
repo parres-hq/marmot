@@ -24,8 +24,9 @@ they used to be described in a MIP. The old-to-new MIP map lives in [../mip-cove
 
 App components stay in [../app-components/](../app-components/).
 
-A feature MAY require one or more app components. The feature doc explains when the feature reads or changes that state.
-The component doc owns the component id, state bytes, update bytes, validation, authorization, removal, and migration.
+A feature MAY require one or more app components. The feature doc explains when the feature reads or changes the
+component data. The component doc owns the component id, valid locations, bytes, validation, lifecycle, authorization,
+replacement or removal, and migration.
 
 For example, a group profile feature can point to `marmot.group.profile.v1`. The group profile component still owns the
 two UTF-8 fields and their length limits.

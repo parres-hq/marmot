@@ -46,18 +46,22 @@ by convergence is well defined: the `commit_digest` / `tip_digest` (see
 [wire-envelopes.md](./wire-envelopes.md)) are each `SHA-256` over the serialized commit `MLSMessage` bytes, and two
 members never derive different digests for the same authenticated commit by choosing a different carriage.
 
-## App components and group state
+## App components
 
-New group-level feature state SHOULD use MLS app components carried in `app_data_dictionary` when the backend supports
-the MLS extensions draft features Marmot needs.
+New application-owned data SHOULD use MLS app components carried in `app_data_dictionary` at the location whose
+lifecycle matches the data. Persistent group state belongs in GroupContext components. Per-member metadata and
+application-owned leaf proofs normally belong in LeafNode components. KeyPackage- or GroupInfo-specific data belongs
+in a component on that object.
 
 The shared component model is defined in [../app-components/](../app-components/). Component ids are registered in
 [registries.md](./registries.md).
 
 ## Custom extensions and proposals
 
-Persistent group state SHOULD use app components. A custom MLS proposal type is appropriate only when the feature needs
-proposal semantics that a component update cannot express.
+Persistent group state SHOULD use app components. Leaf scope or security-critical validation is not, by itself, a reason
+to allocate a custom extension. A custom MLS extension is appropriate only when a feature needs MLS protocol machinery
+or extension semantics that the application-component mechanisms cannot express. A custom MLS proposal type is
+appropriate only when the feature needs proposal semantics that a component update cannot express.
 
 `marmot.account-identity-proof.v1` is the required custom LeafNode extension used to authenticate Marmot account
 ownership of MLS leaf signature keys. New custom extensions MUST be registered in [registries.md](./registries.md).
@@ -66,6 +70,11 @@ ownership of MLS leaf signature keys. New custom extensions MUST be registered i
 
 Marmot documents that write MLS `authenticated_data` MUST own their byte contribution and define how it composes with
 other contributors.
+
+If the GroupContext dictionary contains the upstream `safe_aad` component, the entire `authenticated_data` field MUST
+be the draft-10 `SafeAAD` structure. No unframed prefix or suffix is permitted. A feature that enables `safe_aad` MUST
+define its component id, require that id in the GroupContext `safe_aad` list, and require every member LeafNode to
+advertise support for that SafeAAD component.
 
 Marmot documents that use MLS exporter secrets MUST define:
 

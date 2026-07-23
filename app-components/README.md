@@ -2,10 +2,18 @@
 
 Status: adopted.
 
-Marmot group state is split into custom MLS app components carried by the MLS `app_data_dictionary` extension. Each
-component has a `ComponentID` and owns the opaque state bytes stored under that id.
+Marmot app-owned MLS data is split into application components carried by the MLS `app_data_dictionary` extension. Each
+component has a `ComponentID` and owns the opaque bytes stored under that id.
 
-The dictionary is the shared GroupContext carrier:
+An `app_data_dictionary` can appear in a GroupContext, LeafNode, KeyPackage, or GroupInfo. The containing MLS object
+determines the scope of its component entries:
+
+- GroupContext entries are authenticated group state agreed for an epoch.
+- LeafNode entries describe and advertise data associated with one member leaf.
+- KeyPackage entries describe data associated with one KeyPackage, separate from entries in its embedded LeafNode.
+- GroupInfo entries carry application data for a particular GroupInfo object.
+
+The dictionary is the common carrier at all of those locations:
 
 ```text
 uint16 ComponentID;
@@ -32,17 +40,17 @@ canonical encoding profile. Marmot does not wrap every entry in another generic 
 
 This spec follows:
 
-- [draft-ietf-mls-extensions-09](https://datatracker.ietf.org/doc/html/draft-ietf-mls-extensions-09)
+- [draft-ietf-mls-extensions-10](https://datatracker.ietf.org/doc/html/draft-ietf-mls-extensions-10)
 - [OpenMLS AppData handling](https://book.openmls.tech/user_manual/app_data_updates.html)
 
-OpenMLS exposes this support behind its `extensions-draft-08` feature. Marmot targets the draft-09 code points; the
-pinned ids in [../foundation/registries.md](../foundation/registries.md) match draft-ietf-mls-extensions-09. Where
-OpenMLS's draft-08 implementation emits a different code point or wire layout than draft-09, that gap MUST be reconciled
-before interop rather than papered over locally.
+OpenMLS exposes this support behind its `extensions-draft-08` feature. Marmot targets the draft-10 code points and
+semantics; the pinned ids in [../foundation/registries.md](../foundation/registries.md) match
+draft-ietf-mls-extensions-10. Where OpenMLS's draft-08 implementation emits a different code point or wire layout than
+draft-10, that gap MUST be reconciled before interop rather than papered over locally.
 
-For the profile Marmot currently implements, the pinned upstream ids for `app_components`, `app_data_dictionary`, and
-`app_data_update` are listed in [../foundation/registries.md](../foundation/registries.md). Changing them is a
-wire-compatibility change, not a local implementation detail.
+For the profile Marmot currently implements, the pinned upstream component, extension, and proposal ids are listed in
+[../foundation/registries.md](../foundation/registries.md). Changing them is a wire-compatibility change, not a local
+implementation detail.
 
 ## Component IDs
 
@@ -66,16 +74,39 @@ negotiates component ids, not `(component_id, version)` pairs.
 
 Assigned component ids are registered in [../foundation/registries.md](../foundation/registries.md).
 
+## Placement
+
+Application data SHOULD use a component at the MLS location whose existing lifecycle matches the data. Leaf-scoped data
+does not become a custom extension merely because it is security-critical or must be validated before accepting a
+member. A custom MLS extension is appropriate only when the feature needs MLS protocol machinery or extension semantics
+that `app_data_dictionary` and the safe application interface cannot express.
+
+Persistent Marmot group state uses GroupContext components. Per-member application metadata or an application-owned
+proof about a leaf normally uses a LeafNode component. A component document MUST state every valid location and define
+the bytes and validation rules for each location.
+
+Location also determines how the bytes change:
+
+- GroupContext component entries change through `AppDataUpdate`.
+- LeafNode component entries change only when a new or replacement LeafNode is created.
+- KeyPackage and GroupInfo component entries are set when their containing object is created.
+
+An `AppDataUpdate` targets only the GroupContext dictionary. It MUST NOT be used or reinterpreted as an update mechanism
+for a LeafNode, KeyPackage, or GroupInfo component.
+
 ## Negotiation
 
-Groups that use Marmot app components require MLS support for the registered `app_data_dictionary` extension and
-`app_data_update` proposal. Marmot uses the registered upstream `app_components` component to advertise supported and
-required component ids:
+Every implementation that advertises support for `app_data_dictionary` MUST understand and advertise the registered
+upstream `app_components` component, and MUST understand the registered upstream `safe_aad` component. A LeafNode
+advertises supported component ids in its `app_components` entry. A GroupContext lists the component ids required by
+the group in its `app_components` entry.
 
-- In a LeafNode, `app_components` lists the component ids supported by that member.
-- In the GroupContext, `app_components` lists the component ids required by the group.
+The LeafNode support list does not replace a required component's data. If a Marmot component requires an entry in each
+member LeafNode, the owning component document MUST require and validate that entry separately.
 
 A member that does not support every required component id MUST NOT join the group.
+
+Groups that change GroupContext component state also require the registered `app_data_update` proposal.
 
 ## Common Rules
 
@@ -85,16 +116,20 @@ Each component document MUST define:
 
 - component id
 - component name
-- component entry location
-- state bytes
-- update bytes
-- validation
-- proposal authorization
-- commit authorization
-- removal rule
+- every valid component entry location
+- bytes and validation at each location
+- negotiation and presence requirements
+- the location-appropriate creation or update lifecycle
+- authorization rules for every mutation the component permits
+- removal or replacement rules
 - migration rule
 
-For v1 component documents, these defaults apply unless the component says otherwise:
+GroupContext component documents additionally MUST define state bytes, update bytes, proposal authorization, commit
+authorization, and removal rules. LeafNode, KeyPackage, and GroupInfo component documents MUST NOT invent
+`AppDataUpdate` bytes; they instead define validation and the rules for creating or replacing the containing MLS
+object.
+
+For v1 GroupContext component documents, these defaults apply unless the component says otherwise:
 
 - If the update payload is a full replacement state, partial field updates are not defined. A caller that wants to
   change one field reads the current state, changes that field, and sends a full replacement.
@@ -108,9 +143,9 @@ Component state and update decoders follow the canonical decoding rule in
 and a decoder MUST NOT trim, case-fold, normalize, deduplicate, or reorder values while decoding. Fields an owning
 component document marks as opaque hints are validated only against their stated bounds.
 
-## Update Processing
+## GroupContext Update Processing
 
-Each Marmot component document defines two byte formats:
+Each Marmot GroupContext component document defines two byte formats:
 
 - state bytes stored in `AppDataDictionary.component_data.data`;
 - update bytes carried in `AppDataUpdate.update`.
@@ -119,12 +154,12 @@ For each Commit, a Marmot client groups AppDataUpdate proposals by component id.
 evaluates the prior state and ordered update bytes using that component's update rule.
 
 The update rule returns new state bytes or rejects the Commit. A component's update rule decides how update bytes relate
-to prior state. In v1 every component document defines its update payload as a full replacement state. When a Commit
-contains one or more update operations for the same v1 component, the client MUST validate every proposal sender and
-every update payload's component-local encoding and value rules in Commit order. Any invalid proposal or payload makes
-the whole Commit invalid. Each valid payload replaces the working component state, so the last update operation's
-payload is the resulting component state; earlier valid replacements do not override it. Resulting-epoch and
-cross-component invariants are then checked against that final state. Partial field updates are not defined (see
+to prior state. In v1 every GroupContext component document defines its update payload as a full replacement state.
+When a Commit contains one or more update operations for the same v1 component, the client MUST validate every proposal
+sender and every update payload's component-local encoding and value rules in Commit order. Any invalid proposal or
+payload makes the whole Commit invalid. Each valid payload replaces the working component state, so the last update
+operation's payload is the resulting component state; earlier valid replacements do not override it. Resulting-epoch
+and cross-component invariants are then checked against that final state. Partial field updates are not defined (see
 "Common Rules" above).
 
 A future component MAY define a diff-style update rule, but it MUST say so explicitly in its own document; no v1
@@ -156,7 +191,7 @@ the Commit cannot grant their own committer authority or revoke authority before
 are authorized. After authorization, every component and cross-component invariant is evaluated against the complete
 resulting epoch state.
 
-## Removal
+## GroupContext Removal
 
 The MLS AppDataUpdate `remove` operation removes a component entry from the GroupContext dictionary. Each Marmot
 component states whether removal is allowed.
@@ -174,7 +209,7 @@ Unknown required components fail closed through negotiation.
 Unknown non-required component entries MUST be preserved byte-for-byte when a client rewrites `app_data_dictionary`. The
 client MUST NOT parse, normalize, sort inside, partially copy, or re-encode unknown component bytes.
 
-## Default Authorization
+## Default GroupContext Authorization
 
 The component validates authorization. OpenMLS validates the MLS message shape; Marmot validates whether the sender MAY
 make the requested semantic change.
@@ -187,9 +222,12 @@ Group-level component proposals and commits are admin-gated by default.
 A component MAY define a looser rule, but it MUST do so explicitly. In v1, the admin set is defined by
 `marmot.group.admin-policy.v1`.
 
-## Current Components
+## Current Marmot Components
 
 Assigned component ids are registered in [../foundation/registries.md](../foundation/registries.md).
+
+The currently adopted Marmot-owned components below are all GroupContext components. LeafNode, KeyPackage, and
+GroupInfo components use the same registry and directory when Marmot defines them.
 
 - [marmot.group.profile.v1](./group-profile-v1.md)
 - [marmot.group.blossom.image.v1](./group-blossom-image-v1.md)

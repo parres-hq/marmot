@@ -6,8 +6,9 @@ Agent operating rules for the app-component surface. Read [`README.md`](README.m
 
 ## Scope
 
-App components own the versioned MLS `app_data_dictionary` component bytes. One component id per file. The rules here
-are mechanical and easy to get wrong, so treat this file as the checklist and the README as the model.
+App components own the versioned MLS `app_data_dictionary` component bytes at GroupContext, LeafNode, KeyPackage, and
+GroupInfo locations. One component id per file. The rules here are mechanical and easy to get wrong, so treat this file
+as the checklist and the README as the model.
 
 ## Read order
 
@@ -25,8 +26,12 @@ are mechanical and easy to get wrong, so treat this file as the checklist and th
 - The component id IS the major version. A breaking change gets a NEW component id and a NEW file; do not add a generic
   version field to the payload. A component-specific constant retained by an inherited schema is not version
   negotiation.
-- Each component doc MUST define the full required set: component id, name, entry location, state bytes, update bytes,
-  validation, proposal authorization, commit authorization, removal rule, and migration rule.
+- Each component doc MUST define the full required set: component id, name, every valid entry location, bytes and
+  validation per location, negotiation and presence requirements, lifecycle, mutation authorization, replacement or
+  removal rules, and migration.
+- GroupContext components additionally define state bytes, AppDataUpdate bytes, proposal authorization, commit
+  authorization, and removal. LeafNode, KeyPackage, and GroupInfo components change with their containing MLS object
+  and MUST NOT define AppDataUpdate as their mutation mechanism.
 - Group-level component proposals and commits are admin-gated by default. A component MAY loosen this, but it MUST say
   so explicitly, against the admin set in `marmot.group.admin-policy.v1`.
 - Unknown non-required component entries MUST be preserved byte-for-byte; never parse, sort inside, partially copy, or
@@ -37,7 +42,7 @@ are mechanical and easy to get wrong, so treat this file as the checklist and th
 - After adding or renaming a component, grep that the id and file appear in
   [`../foundation/registries.md`](../foundation/registries.md), the README "Current Components" list, and
   [`../layout.md`](../layout.md).
-- Confirm the file defines all ten required sections above.
+- Confirm the file defines every location-appropriate requirement above.
 
 ## Pointers
 

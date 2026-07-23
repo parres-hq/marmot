@@ -28,8 +28,10 @@ Group settings are authenticated group state. A client MUST NOT treat local UI p
 data, or cached transport data as group settings.
 
 At creation, the GroupContext MUST include the `required_capabilities` and `app_data_dictionary` extensions. The
-`app_data_dictionary` MUST contain `marmot.group.admin-policy.v1` and the other app components required by the selected
-feature set. The GroupContext `app_components` list MUST mark `marmot.group.admin-policy.v1` as required.
+`app_data_dictionary` MUST contain `marmot.group.admin-policy.v1` and the other required GroupContext component entries
+selected by the feature set. The GroupContext `app_components` list MUST mark `marmot.group.admin-policy.v1` and every
+other component required by the selected feature set as required, including any required component whose data appears
+only in member LeafNodes rather than in the GroupContext dictionary.
 
 The admin-policy presence and requirement are lifetime invariants, not creation defaults. Every resulting epoch MUST
 retain the `marmot.group.admin-policy.v1` entry in `app_data_dictionary` and MUST retain component id `0x8003` in the
