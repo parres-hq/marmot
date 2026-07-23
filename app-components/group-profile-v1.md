@@ -48,11 +48,16 @@ Only an active admin MAY send a standalone profile update proposal.
 
 Only an active admin MAY commit a profile update.
 
-The admin check is evaluated against the prior epoch state.
+Proposal-sender authorization follows the shared source-epoch rule, while commit authorization, including removal
+authorization, follows the shared candidate-parent rule in [README.md](./README.md) ("Authorization Evaluation").
 
 ## Removal
 
+Only an active admin MAY commit removal of this component.
+
 If the component is not required, removal means the group has no signed Marmot display profile.
+An absent component and a present component with two empty fields are distinct canonical group states: the latter is a
+signed empty profile. Applications MAY render the same local fallback for both.
 
 ## Migration
 

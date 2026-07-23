@@ -16,7 +16,7 @@ Foundation docs own the choices that make Marmot Marmot:
 - Marmot app payloads use an unsigned Nostr event shape inside MLS.
 - MLS is the current continuous group key agreement layer.
 - Marmot transports MUST support redundant delivery so a group does not depend on one server, relay, or endpoint.
-- Marmot specs SHOULD avoid new metadata leaks unless the feature cannot work without them.
+- Marmot SHOULD avoid new metadata leaks unless the feature cannot work without them.
 - Encodings that are commonly used across multiple surfaces.
 
 Do not restate these rules in every feature doc. Point to the foundation doc and describe only what the feature adds.
@@ -55,8 +55,10 @@ exist, and both documents read as complete when they are not.
 
 ## Define protocol bytes exactly
 
-Anything signed, hashed, referenced, stored for replay, compared for equality, or used to choose state needs a canonical
-byte encoding.
+The normative canonical-byte requirements for values that are signed, hashed, referenced, stored for replay, compared
+for equality, or used to choose state are defined in
+[foundation/canonical-encoding.md](./foundation/canonical-encoding.md). An owning document identifies the encoding that
+applies to its bytes.
 
 The owning document MUST say:
 
@@ -93,8 +95,9 @@ For Marmot group messages using Nostr relays for transport, the random `nostr_gr
 delivery-address state. The Nostr event shape, relay behavior, gift wrapping, filters, and publishing rules belong in
 the Nostr transport binding.
 
-Do not derive delivery addresses from identity material. Do not let a generic group rule depend on Nostr event ids,
-relay URLs, pubkeys, tag shapes, or any other transport-specific address shape.
+[foundation/identity.md](./foundation/identity.md) owns the normative prohibition on deriving delivery addresses from
+identity material. Keep generic group rules independent of Nostr event ids, relay URLs, pubkeys, tag shapes, and every
+other transport-specific address shape.
 
 ## Describe state changes completely
 
@@ -118,8 +121,8 @@ such as credential validation.
 
 Transport input is evidence that bytes exist. It is not consensus.
 
-Transport arrival order, transport timestamps, event ids, subscription order, fetch order, and local receive order MUST
-not choose the canonical group branch. Protocol-core docs own convergence, publish-before-apply, retained history,
+Transport arrival order, transport timestamps, event ids, subscription order, fetch order, and local receive order
+MUST NOT choose the canonical group branch. Protocol-core docs own convergence, publish-before-apply, retained history,
 duplicate handling, and stale-input handling.
 
 A transport doc can say how to find and deliver bytes. It SHOULD NOT define which commit branch wins.
@@ -129,16 +132,9 @@ A transport doc can say how to find and deliver bytes. It SHOULD NOT define whic
 Feature state SHOULD live in small versioned app components unless the feature changes a shared foundation or
 protocol-core surface.
 
-Each component SHOULD own:
-
-- its component id;
-- state bytes;
-- update bytes;
-- validation;
-- proposal and commit authorization;
-- removal rules;
-- migration rules;
-- compatible and breaking change rules.
+Each component document MUST satisfy the authoritative checklist in
+[app-components/README.md](./app-components/README.md) ("Common Rules"). The component-id breaking-change rule is in
+that document's "Component IDs" section.
 
 Large objects SHOULD NOT be stored directly in GroupContext component data. Store hashes, content ids, encrypted media
 references, or application-layer records when the data belongs elsewhere.

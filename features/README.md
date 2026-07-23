@@ -5,7 +5,7 @@ Status: adopted.
 Feature specs describe user-visible Marmot behavior that spans several surfaces.
 
 A feature doc SHOULD explain the flow, name the protocol surfaces involved, and point to the documents that own exact
-bytes. It SHOULD avoid copying component schemas, MLS structures, transport event shapes, or foundation rules.
+bytes. It MUST NOT copy component schemas, MLS structures, transport event shapes, or foundation rules.
 
 Features are optional or user-visible behavior built from foundation, protocol core, transports, and app components.
 
@@ -14,7 +14,8 @@ they used to be described in a MIP. The old-to-new MIP map lives in [../mip-cove
 
 ## Current feature docs
 
-- [encrypted-media.md](./encrypted-media.md) - message-attached encrypted blobs.
+- [encrypted-media.md](./encrypted-media.md) - current v2 message-attached encrypted blobs.
+- [encrypted-media-v1.md](./encrypted-media-v1.md) - frozen legacy encrypted-media v1 wire behavior.
 - [agent-text-streams-quic.md](./agent-text-streams-quic.md) - experimental QUIC-backed live previews for agent text
   streams, anchored by normal durable final messages.
 - [push-notifications.md](./push-notifications.md) - optional native push notification flow.
@@ -24,8 +25,9 @@ they used to be described in a MIP. The old-to-new MIP map lives in [../mip-cove
 
 App components stay in [../app-components/](../app-components/).
 
-A feature MAY require one or more app components. The feature doc explains when the feature reads or changes that state.
-The component doc owns the component id, state bytes, update bytes, validation, authorization, removal, and migration.
+A feature MAY require one or more app components. The feature doc explains when the feature reads or changes the
+component data. The component doc owns the component id, valid locations, bytes, validation, lifecycle, authorization,
+replacement or removal, and migration.
 
 For example, a group profile feature can point to `marmot.group.profile.v1`. The group profile component still owns the
 two UTF-8 fields and their length limits.
@@ -46,7 +48,8 @@ Each feature document SHOULD define:
 
 ## Versioning
 
-Git history records prose changes. Interop-visible feature versions need names inside the spec.
+Git history is not a version-negotiation mechanism; an interop-visible change needs an explicit protocol versioning
+hook.
 
 Use component ids for app component state versions. Use proposal ids for custom MLS proposal versions. Use event kinds
 or payload versions for app messages. Use a new feature document name when the high-level flow changes enough that

@@ -21,9 +21,11 @@ Each transport document MUST define:
 - transport name and version;
 - transport-specific group delivery address;
 - recipient inbox address, if the transport has one;
-- envelope bytes for MLS group messages;
-- envelope bytes for MLS Welcome delivery;
+- envelope bytes for MLS group messages, if the transport carries them;
+- envelope bytes for MLS Welcome delivery, if the transport carries Welcomes;
 - publish targets and acknowledgement rules;
+- redundant target fanout and the lifecycle of outstanding first-attempt obligations, or an explicit statement that
+  the binding does not carry required MLS group delivery;
 - receive filters or fetch rules;
 - duplicate ids and replay handling inputs;
 - stale-input hints, if the envelope carries any;
@@ -39,7 +41,7 @@ group-state branch selection, or app component payload bytes.
 
 ## Versioning
 
-Git history records edits to these documents. Interop-visible transport changes need an explicit protocol versioning
+Git history is not a version-negotiation mechanism; an interop-visible change needs an explicit protocol versioning
 hook.
 
 Use the narrowest hook that fits the change:

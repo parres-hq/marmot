@@ -40,4 +40,5 @@ and deliberately.
 
 - Up to the cross-surface map: [`../AGENTS.md`](../AGENTS.md).
 - Component-id assignments and component byte rules: [`../app-components/`](../app-components/README.md).
-- Transports must not redefine identity or inner payload shape: [`../transports/`](../transports/README.md).
+- Transport ownership boundary: [`wire-envelopes.md`](wire-envelopes.md) ("Transport envelopes") and
+  [`../transports/`](../transports/README.md).

@@ -12,10 +12,8 @@ Push notification support is optional. A group MUST still work when no client su
   "Token gossip event shapes").
 - Transport: Nostr push notification rumor kind `446` for the current Nostr binding. Unlike the kinds above, `446` is
   not an inner group payload: it is the rumor inside a separately gift-wrapped trigger addressed to the notification
-  server's inbox (see "Notification trigger").
+  server's inbox. The Nostr binding owns that outer envelope and its publish targets.
 - Group state: no group-state transition.
-- Account transport: trigger publish targets are gossiped relay hints, with the server account's inbox relays from the
-  Nostr binding as fallback (see "Notification trigger").
 
 No persistent group app component is required for push notifications v1.
 
@@ -77,6 +75,9 @@ convention. `shared_x` is the 32-byte big-endian X coordinate of the resulting s
 no hashing before HKDF. `ephemeral_privkey` is a fresh secp256k1 scalar; its x-only public key is the
 `ephemeral_pubkey[32]` carried in `EncryptedToken`.
 
+Both encryption and decryption MUST reject an invalid x-only public key, an invalid local scalar, any ECDH failure, or
+an all-zero `shared_x`. A failed or all-zero result MUST NOT be passed to HKDF.
+
 The token is encrypted with ChaCha20-Poly1305, a random 12-byte nonce, and empty AAD. `ciphertext[1040]` is the combined
 AEAD output: the 1024-byte ciphertext of `TokenPlaintext` followed by the 16-byte Poly1305 authentication tag as a
 suffix (1024 + 16 = 1040). A recipient splits off the trailing 16 bytes as the tag and authenticates before decrypting.
@@ -121,7 +122,11 @@ Kinds `447` and `448` share one content shape:
 }
 ```
 
-- `tokens` is an array of token entries. A missing `tokens` member is read as an empty array.
+- `tokens` MUST be an array of at most 32 token entries. A missing `tokens` member is read as an empty array. A present
+  non-array `tokens` member is advisory-invalid and contributes no entries. A sender with more records splits them
+  across multiple app events. If the decoded array contains more than 32 entries, the recipient treats the entire
+  array as advisory-invalid before performing any entry signature verification; the carrying group message remains
+  valid.
 - `member_id_hex` is the owning member's account public key as 32-byte lowercase hex.
 - `leaf_index` is the owning device's MLS leaf index as an unsigned-integer JSON number.
 - `platform` is the string `apns` or `fcm`.
@@ -134,7 +139,8 @@ Kinds `447` and `448` share one content shape:
 - `encrypted_token` is one 1084-byte `EncryptedToken` as standard base64 with padding.
 - `owner_ts` is the owning member's claimed Unix time in milliseconds as an unsigned-integer JSON number. It is the
   owner-signed ordering stamp for this record (see "Owner authentication" and "Record key and ordering primitive"); a
-  recipient MUST NOT substitute the carrying event's `created_at` for it.
+  recipient MUST NOT substitute the carrying event's `created_at` for it. At entry validation, `owner_ts` MUST NOT be
+  more than `3,600,000` milliseconds (one hour) ahead of the recipient's local wall clock.
 - `owner_sig` is the owner's BIP-340 Schnorr signature over the record, as 64-byte (128 lowercase hex character)
   signature bytes (see "Owner authentication"). It binds every other field to `member_id_hex`, so the record stays
   verifiable no matter which member relays it.
@@ -142,7 +148,10 @@ Kinds `447` and `448` share one content shape:
 A recipient MUST reject an entry whose `member_id_hex` or `server_pubkey_hex` is not 32-byte lowercase hex, whose
 `token_fingerprint` is not `sha256:` followed by exactly 24 hex characters, whose `platform` is unknown, whose
 `encrypted_token` does not decode to exactly 1084 bytes, whose `owner_sig` is not 64-byte lowercase hex, or whose
-`owner_sig` does not verify under "Owner authentication".
+`owner_sig` does not verify under "Owner authentication". It MUST also reject an entry whose `owner_ts` exceeds the
+one-hour future bound above. This local-time check can temporarily differ across clients, but token records are advisory
+local push state and never affect group-message or Commit validity; the finite bound prevents a far-future signed stamp
+from becoming a permanent high-water mark.
 
 ### Owner authentication
 
@@ -163,17 +172,24 @@ SignedRecord = domain_tag
             || server_pubkey[32]
             || token_fingerprint[12]      the 12 bytes the sha256: prefix encodes
             || owner_ts[8]                big-endian u64, milliseconds
-            || relay_hint_len[2]          big-endian u16, 0 when absent
+            || relay_hint_len[2]          big-endian u16, 0 when absent or for a removal
             || relay_hint[relay_hint_len] UTF-8 bytes of the relay hint, empty when absent
             || encrypted_token[1084]      removal entries omit this field
 ```
 
+`SignedRecord` deliberately uses this feature-specific fixed-width v1 encoding rather than the Marmot binary profile's
+QUIC variable-length integers. Every integer is unsigned big-endian at the exact width shown, the two variable fields
+use the shown `u16` byte lengths, and the fields are concatenated without alignment or padding. Signers and verifiers
+MUST NOT substitute QUIC varints, TLS vectors, or a serialization-library default. A future incompatible encoding needs
+a new push content version and domain tag; it cannot reinterpret `marmot-push-v1` signatures.
+
 `domain_tag` is the 27-byte ASCII string `marmot-push-token-record-v1` for token entries (kinds `447`/`448`) and the
-28-byte ASCII string `marmot-push-token-removal-v1` for removal entries (kind `449`); a removal omits the trailing
-`encrypted_token`. `group_id` is the raw MLS group id of the carrying group and is length-prefixed because the MLS group
-id is variable-length. `member_id` and `server_pubkey` are the raw 32-byte values the corresponding hex fields encode
-(both are Nostr x-only public keys). The signature is a BIP-340 Schnorr signature over `SHA-256(SignedRecord)`, produced
-with the secret key for `member_id_hex` and carried as `owner_sig`.
+28-byte ASCII string `marmot-push-token-removal-v1` for removal entries (kind `449`). A removal encodes
+`relay_hint_len` as zero, includes no `relay_hint` bytes, and omits the trailing `encrypted_token`. `group_id` is the raw
+MLS group id of the carrying group and is length-prefixed because the MLS group id is variable-length. `member_id` and
+`server_pubkey` are the raw 32-byte values the corresponding hex fields encode (both are Nostr x-only public keys). The
+signature is a BIP-340 Schnorr signature over `SHA-256(SignedRecord)`, produced with the secret key for `member_id_hex`
+and carried as `owner_sig`.
 
 A recipient verifies `owner_sig` against `member_id_hex` over the same canonical bytes, reconstructing `group_id` from
 the carrying group message. An entry whose signature does not verify is dropped as advisory-invalid and never mutates
@@ -225,12 +241,17 @@ signatures it does not hold.
 }
 ```
 
-- `removals` is an array of removal entries. A missing `removals` member is read as an empty array.
+- `removals` MUST be an array of at most 32 removal entries. A missing `removals` member is read as an empty array. A
+  present non-array `removals` member is advisory-invalid and contributes no removals. A sender with more removals
+  splits them across multiple app events. If the decoded array contains more than 32 entries, the recipient treats the
+  entire array as advisory-invalid before performing any entry signature verification; the carrying group message
+  remains valid.
 - The first five members identify the token record being removed and use the encodings defined for token entries. A
   removal entry MUST carry `leaf_index` so it targets exactly one device's record and cannot revoke a sibling leaf's
   active token for the same account, platform, and server.
 - `owner_ts` and `owner_sig` are the owner-signed ordering stamp and signature, using the removal `domain_tag` and the
-  removal `SignedRecord` form (no `encrypted_token`) from "Owner authentication".
+  removal `SignedRecord` form (zero-length relay hint and no `encrypted_token`) from "Owner authentication". The same
+  one-hour future bound on `owner_ts` applies to removals; a removal beyond it is advisory-invalid.
 
 A recipient deletes the stored token record for the removal's record key (`member_id_hex`, `leaf_index`, `platform`,
 `server_pubkey_hex`) only when the removal passes "Owner authentication", `member_id_hex` is a current member, and the
@@ -248,10 +269,12 @@ suppress a differently-fingerprinted stale record from resurrecting the key).
 
 ### Record state
 
-A device keeps one push registration at a time, so a leaf has at most one active token record. Clients store one token
-record per member id, leaf index, platform, and server public key in a group: an incoming entry that matches a stored
-record on those four values replaces it — including its fingerprint, relay hint, and encrypted token — and any
-other entry inserts a new record. Entries are applied in array order, so a later entry replaces an earlier match.
+Push v1 does not impose a one-record-per-leaf invariant. Clients store one token record per member id, leaf index,
+platform, and server public key in a group: an incoming entry that matches a stored record on those four values addresses
+the same record key — including its replaceable fingerprint, relay hint, and encrypted token — and any other entry
+addresses a different key. A leaf may therefore have distinct active records for different platform or server values;
+those records remain separate until individually removed or the leaf leaves the group. Whether a same-key entry replaces
+the stored record is decided only by the ordering primitive below, never by its array position.
 
 Token records are local push state, never group state. The rules below order and revoke them so that two members'
 clients can converge on the same token set without any of it affecting group validity. None of this ordering touches
@@ -277,9 +300,8 @@ cannot advance or rewind that record's position, because it cannot re-sign `owne
 
 A client stamps each stored record with the `(owner_ts, record digest)` of the entry that last wrote it. Apply an
 incoming entry or removal to a record key only when its ordering primitive is strictly greater than the stored stamp
-for that key; otherwise ignore it as stale. Within a single event the array-order rule above still holds, but ordering
-is decided per entry by its own primitive, so a lower-stamped entry never overwrites a higher-stamped one even when it
-appears later in the array.
+for that key; otherwise ignore it as stale. The same comparison applies between same-key entries in one array. Array
+position is not a tie-breaker, so the highest-stamped entry wins regardless of where it appears.
 
 #### Removal and tombstones
 
@@ -290,22 +312,23 @@ subsequent kind `447`/`448` entry whose stamp is strictly greater than the tombs
 for the key and clears the tombstone.
 
 A tombstone is durable: it persists until a strictly-greater-stamped kind `447`/`448` entry clears it (as above) or
-the owning member is removed from the group (see member cleanup below). It MUST NOT be garbage-collected on any
-wall-clock, `owner_ts`, or MLS-epoch basis. Owner authentication makes records relay-portable: any current member can
-re-emit another member's still-valid `owner_sig`/`owner_ts` record inside a fresh, in-window kind `448` at any later
-epoch. So a tombstone (and, equivalently, the stored ordering stamp for a live record) is the only durable high-water
-mark that stops a relayed but stale signed record from resurrecting a revoked or superseded token, and it cannot be
-bounded by the retained app-payload window: unlike a record that could only ever arrive in its original carrying epoch,
-a relayed record's carrying epoch is unbounded. The per-key stamp and tombstone therefore persist for the owning
-member's whole lifetime in the group, and are cleared only when that member leaves (see member cleanup below).
+the owning member leaf is removed from the group, as defined in the final paragraph of this section. It MUST NOT be
+garbage-collected on any wall-clock, `owner_ts`, or MLS-epoch basis. Owner authentication makes records relay-portable:
+any current member can re-emit another member's still-valid `owner_sig`/`owner_ts` record inside a fresh, in-window kind
+`448` at any later epoch. So a tombstone (and, equivalently, the stored ordering stamp for a live record) is the only
+durable high-water mark that stops a relayed but stale signed record from resurrecting a revoked or superseded token,
+and it cannot be bounded by the retained app-payload window: unlike a record that could only ever arrive in its original
+carrying epoch, a relayed record's carrying epoch is unbounded. The per-key stamp and tombstone therefore persist for
+the owning leaf's whole lifetime in the group, and are cleared only when that leaf leaves.
 
 #### Race handling
 
 - **Removal versus a stale list response.** A kind `449` and a kind `448` that both reference the same record key are
   resolved by their ordering primitives, not by arrival order. The higher-stamped event wins; a lower-stamped list
   entry is dropped even if it arrives later.
-- **Removal versus a stale trigger.** A kind `446` trigger whose target token record has been removed or superseded is
-  ignored as a stale trigger (see "Replay and freshness"). The trigger never deletes or mutates a record.
+- **Removal versus a stale trigger.** Honest clients stop selecting a removed or superseded record for new kind `446`
+  triggers. The notification server cannot determine that record state from a trigger; the residual behavior is defined
+  under "Best-effort revocation" below. A trigger never deletes or mutates a record.
 - **Concurrent self-updates.** Two kind `447` self-updates for the same key from re-registration are ordered by their
   primitives; the higher-stamped record is the active one. Equal `owner_ts` is broken by the record digest, so clients
   converge.
@@ -313,33 +336,36 @@ member's whole lifetime in the group, and are cleared only when that member leav
   Two entries with the same `owner_ts` and the same digest are the same signed record: applying it again is idempotent,
   whether it arrives as a fresh self-update or relayed in a kind `448`.
 
-When a member is removed from the group, clients delete every stored token record and tombstone for that member as part
-of local cleanup. No kind `449` event is required for that cleanup.
+When an accepted canonical Commit removes a member leaf, clients delete every stored token record and tombstone whose
+`member_id_hex` and `leaf_index` match that removed leaf. Records for another current leaf with the same account identity
+remain active. No kind `449` event is required for this cleanup.
+
+#### Best-effort revocation
+
+The v1 record model is stateless and best-effort. Kind `449`, record replacement, and member cleanup change which
+records honest group members select for future triggers; they do not register revocation state with a notification
+server. The server does not receive the MLS-encrypted kind `447`/`448`/`449` events and has no group membership, record,
+or tombstone view against which it could prove that a presented `EncryptedToken` is current.
+
+Consequently, a cached `EncryptedToken` remains a wake capability for a removed or malicious member until the native
+platform token stops working or is replaced outside this protocol. Marmot push v1 provides no cryptographic token
+revocation guarantee after disclosure to a group member. Server-side abuse controls, rate limits, platform-token
+rotation, and notification-server key rotation are application and operator concerns; they MUST NOT affect MLS message
+or group-state validity.
 
 ## Notification trigger
 
-When a sender wants to wake recipients, it publishes a NIP-59 gift-wrapped event addressed to the notification server:
-
-```text
-kind 1059 gift wrap
-  kind 13 seal
-    unsigned kind 446 Marmot notification rumor
-```
-
 The kind `446` rumor contains:
 
-- `content`: one standard-base64 string with one or more concatenated 1084-byte `EncryptedToken` values;
+- `content`: one standard-base64 string with 1 to 32 concatenated 1084-byte chunks, each either an `EncryptedToken` or
+  optional random padding as defined below;
 - a `["v", "marmot-push-v1"]` tag, and no other tag;
 - `pubkey`: a fresh ephemeral key.
 
 The content field follows the Nostr transport byte-encoding rule: standard base64 with padding and no `encoding` tag.
 
-The seal is signed by the same ephemeral key used as the rumor `pubkey`. The gift wrap uses a separate ephemeral key
-and is addressed to the notification server.
-
-The sender publishes the gift wrap to the relay hints carried in the stored token records for that server. When no
-stored record carries a relay hint, the sender publishes to the server account's inbox relays from the Nostr binding
-([../transports/nostr.md](../transports/nostr.md)).
+The Nostr binding owns the outer NIP-59 seal and gift wrap, recipient addressing, and the notification-trigger
+publish-target rule ([../transports/nostr.md](../transports/nostr.md), "Push notification delivery").
 
 ### Replay and freshness
 
@@ -352,30 +378,34 @@ which a replayer can change freely by re-wrapping. A server that has already act
 retention window SHOULD ignore a later trigger with the same hash rather than wake the recipient again. Because the
 outer wrap uses a fresh ephemeral key per publish, the server MUST NOT rely on the outer event id for dedup.
 
-A server MUST treat a trigger whose target token record it can no longer match — because the token was removed,
-superseded by a newer record, or never registered — as a stale trigger and ignore it. A stale or replayed trigger never
-mutates token state; only kind `447`/`448`/`449` group events do, under "Record state".
+A server attempts to decrypt each well-formed token chunk and MAY dispatch a native wake for each successful result. It
+ignores a chunk that does not decrypt or whose plaintext is invalid. The server is neither required nor able to match a
+successfully decrypted chunk against group token-record history; removal and supersession are sender-side selection
+rules under "Record state", not server-visible trigger checks.
 
-A client that receives a redundant or stale wake performs a silent fetch and returns to sleep (see "Decoys and
-batching"); duplicate wakes are expected and are never surfaced as errors.
+A trigger can be redundant or stale and does not prove that corresponding group content is currently fetchable.
+Applications using mutable notifications reconcile presentation with their eventual fetch result. The exact
+platform-notification presentation is application policy, not protocol validity.
 
 ### Server retention
 
 Trigger material is ephemeral. A notification server retains a decoded trigger and its content-hash dedup entry only as
 long as needed to deliver the wake and suppress immediate replays — a short bound measured in minutes, not a durable
-log. A server MUST NOT retain decrypted device tokens beyond the active push registration it needs them for, and MUST
-NOT persist trigger plaintext, group identifiers, or recipient linkage derived from a trigger. A server holds no group
-state and learns nothing about group membership or message content from a trigger; the only material it needs is the
-platform token it decrypts to dispatch the native push.
+log. A server MUST discard each decrypted device token after its dispatch attempt and MUST NOT persist trigger
+plaintext, group identifiers, or recipient linkage derived from a trigger. A server holds no group state and learns
+nothing about group membership or message content from a trigger; the only material it needs is the platform token it
+decrypts to dispatch the native push.
 
-## Decoys and batching
+## Padding and batching
 
-Clients SHOULD batch notifications for a short period and include decoy tokens when possible. Decoys are valid encrypted
-tokens from other groups or the sender's own token, not random bytes. Random bytes are distinguishable because they fail
-curve or AEAD validation.
+Clients MAY batch notifications for a short period and MAY append padding to obscure the real chunk count from relays
+or other observers of the encrypted gift-wrap length. Each padding chunk is exactly 1084 bytes sampled independently
+and uniformly with a cryptographically secure random generator. Padding is allowed to fail notification-server parsing
+or decryption and is distinguishable to that server.
 
-Silent wakes that lead to no new messages are expected. Clients SHOULD fetch, find nothing, and return to sleep without
-showing user-facing errors.
+A sender MUST NOT use any real device token as padding. A decryptable token would cause a real mutable notification and
+can produce a visible notification with no corresponding content. The 32-chunk trigger maximum includes padding, so
+padding cannot create unbounded server work.
 
 ## Validation
 
@@ -393,12 +423,10 @@ Push notifications draw a sharp line between two failure classes:
   mutates group state, or changes which commit wins. A single bad entry in a kind `447`/`448`/`449` event is dropped on
   its own; the rest of the array still applies and the carrying group message remains valid. In particular, an
   `owner_sig` that fails verification fails the entry, never the carrying group message.
-- **Protocol-invalid group data.** The only protocol-invalid conditions are the ones the owning foundation/transport
-  docs already define for the carrying surface: an inner app payload whose canonical app-event `id` does not match its
-  bytes, a forbidden `sig` member, or a duplicate object key (see
-  [../foundation/application-messages.md](../foundation/application-messages.md)). Those are decided by the app-payload
-  decoder, not by this feature, and they are not specific to push. This feature adds no new way for push content to
-  invalidate a group message.
+- **Protocol-invalid group data.** Protocol-invalid conditions are the ones the owning foundation/transport docs define
+  for the carrying surface (see [../foundation/application-messages.md](../foundation/application-messages.md),
+  "Encoding"). Those are decided by the app-payload decoder, not by this feature, and they are not specific to push.
+  This feature adds no new way for push content to invalidate a group message.
 
 Put plainly: kind `447`/`448`/`449` are ordinary unsigned Marmot app events, so they share the app payload's
 validity rules; their push-specific `content` checks below only decide whether an individual token entry or removal is
@@ -407,13 +435,17 @@ applied, never whether the group message is valid.
 A recipient applies the per-field rejection rules in "Token entries" and "Removal" at the entry granularity: reject the
 individual entry, keep processing the rest, and never let an entry failure propagate to group-message validity.
 
-Notification servers MUST reject or ignore malformed notification triggers, including:
+Notification servers MUST ignore malformed notification triggers and MUST NOT dispatch a notification for them,
+including:
 
 - missing or unsupported `v` tags;
 - invalid base64 content;
-- decoded content whose length is not a multiple of 1084 bytes;
-- token chunks with invalid ephemeral keys, failed ECDH/HKDF, failed AEAD authentication, invalid platform bytes, or
-  invalid token lengths.
+- empty decoded content, content whose length is not a multiple of 1084 bytes, or content containing more than 32
+  chunks (`34,688` decoded bytes); this length check occurs before any ECDH or AEAD work.
+
+Within a structurally valid trigger, the server processes each 1084-byte chunk independently. It skips a chunk with an
+invalid ephemeral key, failed ECDH/HKDF, failed AEAD authentication, invalid platform bytes, or invalid token length and
+continues with the remaining chunks. Random padding is discarded through this same per-chunk path.
 
 ## Status and interop surface
 

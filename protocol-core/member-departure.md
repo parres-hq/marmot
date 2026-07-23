@@ -24,12 +24,12 @@ proposal from the MLS extensions work and does not define a Marmot custom propos
 A current member MAY create a SelfRemove proposal for itself.
 
 A non-admin member MAY self-remove if the MLS proposal is valid. A SelfRemove proposal whose sender is an active admin
-in the prior epoch is invalid (see [../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md) for the
-definition of an active admin).
+in its authenticated source-epoch state is invalid (see
+[../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md) for the definition of an active admin).
 
-A departing admin first commits an admin-policy update that removes it from the admin list, then uses SelfRemove. The
-admin-policy update is an ordinary admin-gated group-state change and is valid only if at least one other active admin
-remains, so the last active admin MUST designate another admin before leaving.
+A departing admin MUST first complete an accepted admin-policy update that removes its account from the admin list
+before creating a SelfRemove proposal. The admin-policy update is an admin-gated group-state change and is valid only
+if at least one other active admin remains, so the last active admin MUST designate another admin before leaving.
 
 This two-step flow applies to voluntary departure through SelfRemove only. An admin removed by another admin does not
 use it: the removing commit drops the account's last leaf and its `admins` key together, under the coupling rule in
@@ -42,9 +42,12 @@ that group. While `Leaving`, the member MUST NOT send MLS application messages, 
 MLS proposals in that group; it MAY publish a fresh SelfRemove proposal for a newer source epoch when the prior
 SelfRemove becomes stale. Transport-level retries of the same serialized SelfRemove proposal MAY continue, but the
 client MUST NOT generate fresh SelfRemove proposal bytes for the same source epoch. The `Leaving` state is backed by a
-durable leave request and ends only when an accepted commit removes the member, the member repairs or rejoins through a
-future specified recovery flow, a future explicit cancel flow clears the request, or the client discards the local group
-copy.
+durable leave request. While canonical state contains the local leaf, it ends only if the member repairs or rejoins
+through a future specified recovery flow, a future explicit cancel flow clears the request, or the client discards the
+local group copy. An accepted removing Commit moves the copy to the removed condition described below.
+
+Applying an accepted removing Commit ends `Leaving` and puts the local copy in the terminal removed condition below.
+The client MAY release the durable leave request after it durably records that condition.
 
 If an accepted commit advances the group to a later epoch without removing the leaving member, the prior SelfRemove is
 stale because MLS proposals are epoch-bound. The client remains in `Leaving`, MUST NOT reuse the old SelfRemove
@@ -53,8 +56,13 @@ are allowed.
 
 ## SelfRemove commits
 
-Any remaining member that is authorized to commit the resulting state MAY commit a valid retained SelfRemove proposal.
-Marmot does not elect one deterministic SelfRemove committer.
+A SelfRemove-only Commit MAY reference one or more valid retained SelfRemove proposals and MUST NOT contain another
+proposal type. Each referenced SelfRemove proposal is validated independently, and one invalid proposal makes the whole
+Commit invalid.
+
+Any remaining member whose authenticated account is authorized in the candidate-parent state MAY commit the retained
+SelfRemove proposals, provided the complete resulting state satisfies every Marmot invariant. Marmot does not elect one
+deterministic SelfRemove committer.
 
 A client that observes a valid peer SelfRemove proposal SHOULD schedule a SelfRemove-only Commit after a short
 randomized jitter while the group lifecycle permits local group-state commits. Before preparing the commit, the client
@@ -69,10 +77,24 @@ convergence chooses the canonical branch from their MLS-valid commit bytes.
 A client whose own SelfRemove-only commit publish fails MUST follow the normal publish-before-apply failure rule:
 discard the pending state and keep the SelfRemove available if it is still valid and unconsumed.
 
-A client that receives multiple SelfRemove proposals from the same leaving member for the same source epoch before one
-is consumed MUST bound storage and commit eligibility to one retained proposal. Byte-identical repeats are duplicates
-under [inbound-processing.md](./inbound-processing.md), and non-identical redundant proposals are stale unless a future
-protocol version defines a distinct retry identity.
+A client that receives multiple distinct valid SelfRemove proposals from the same leaving leaf for the same source
+epoch before one is consumed MUST retain all of them for MLS proposal-reference resolution. For local Commit
+preparation, it selects the proposal with the lexicographically lowest `self_remove_proposal_digest`, where:
+
+```text
+self_remove_proposal_digest = SHA-256(serialized_proposal_mls_message)
+```
+
+`serialized_proposal_mls_message` is the complete serialized handshake `MLSMessage` carrying the SelfRemove proposal,
+under Marmot's pinned [handshake wire format](../foundation/mls-protocol.md#handshake-wire-format). The lowest digest is
+only the deterministic choice for a new local SelfRemove-only Commit. A valid Commit that references any retained valid
+alternative remains processable; non-selected alternatives are not stale merely because the client would prepare a
+different Commit. Byte-identical repeats are duplicates under [inbound-processing.md](./inbound-processing.md).
+
+The client MAY release the alternatives after one SelfRemove for that leaf is accepted on the selected branch, after
+the source epoch is outside the rollback horizon and no staged or retained Commit can still reference them, or when
+another ordinary MLS proposal-release rule applies. Local arrival order MUST NOT choose the proposal used for local
+Commit preparation.
 
 ## Realizing removal
 
@@ -80,22 +102,22 @@ Both departure paths end the same way for the removed member: its client realize
 application, and stops treating the group as active.
 
 The authenticated evidence of removal is always the same bytes: an accepted commit on the selected canonical branch
-that removes the local member's last leaf — an admin-initiated Remove or a committed SelfRemove — recorded in retained
-canonical state. When the client applies such a commit, it MUST emit a self-removed state notification (see
-[inbound-processing.md](./inbound-processing.md), "Application-visible output") and mark the local group copy removed.
+that removes this local client's own MLS leaf — an admin-initiated Remove or a committed SelfRemove — recorded in
+retained canonical state. This evidence is leaf-scoped: other current leaves with the same Marmot account identity do
+not prevent this local leaf from realizing its removal. When the client applies such a commit, it MUST emit a
+self-removed state notification (see [inbound-processing.md](./inbound-processing.md), "Application-visible output")
+and mark the local group copy removed.
 
-Realization is a state-derived obligation, not a one-shot event at commit-apply time: whenever retained canonical group
-state records the local member's removal and the local group copy is not yet marked removed, the client MUST perform
-the realization above. A client MAY have recorded the removing commit without the application ever observing the
-resulting notification; the obligation stands until the group copy is marked removed.
+`SelfEvicted` names this state-derived realization, not an input disposition. Whenever retained canonical group state
+records the local member's removal and the local group copy is not yet marked removed, the client MUST perform the
+realization above. It MUST check this obligation when it applies or restores canonical state and whenever it loads or
+attempts to process the retained group copy. A client MAY have recorded the removing commit without the application
+ever observing the resulting notification; the obligation stands until the group copy is marked removed.
 
-Later group input for such a group is the fallback trigger. It receives the `SelfEvicted` outcome (`stale`
-disposition, `stale_epoch` category, see [../foundation/errors.md](../foundation/errors.md)). `SelfEvicted` attaches
-to that later input, not to the removing commit and not to a local presentation mismatch; the input itself proves
-nothing and need not be decrypted or authenticated, because the evidence of removal is the retained canonical state —
-the input is classified by its group, like other stale input for groups the client cannot process further. Processing
-it MUST perform the realization above when it has not already happened. The client MUST NOT classify such input as
-ordinary stale traffic while continuing to present the group as active.
+Later group input can therefore cause the client to notice an outstanding realization, but the input does not receive
+a `SelfEvicted` outcome and need not be trusted as evidence. If the client classifies that input at all, it does so
+under the ordinary validation and disposition rules. The client MUST NOT continue to present the group as active merely
+because the later bytes could not be decrypted or authenticated.
 
 Failure to decrypt group traffic is not, by itself, evidence of removal. Without authenticated evidence that the local
 member's own leaf was removed, undecryptable input is a missing-history or repair condition (see
@@ -109,18 +131,24 @@ A removed group copy is retained inactive, not deleted. The removed member:
 - MAY retain previously delivered content and group history for local display;
 - MAY discard the local group copy at any time.
 
-Removal is terminal for that group copy. Rejoining happens only through a new Welcome, which creates a new local group
-state under [joining.md](./joining.md). Retention does not weaken forward secrecy: a removed member cannot decrypt
-traffic from epochs after its removal.
+The removed condition is terminal for that local leaf. The client does not retain old epoch secrets or run convergence
+in order to resurrect it if continuing members later select another branch. Rejoining requires explicitly discarding
+the old active cryptographic state and processing a fresh valid Welcome under [joining.md](./joining.md). An
+implementation MAY preserve local history and a removal tombstone while replacing the active cryptographic state.
+Another current leaf with the same Marmot account identity remains independently active unless a Commit removes it too.
+Later group traffic presented only to this removed copy has no processable active group state and receives the
+`unknown_group` pre-convergence category under [inbound-processing.md](./inbound-processing.md), not a convergence
+disposition.
 
 ## Validation
 
-A SelfRemove flow is invalid if:
+A SelfRemove-only Commit is invalid if:
 
-- the proposal does not target the sender;
-- the proposal sender is an active admin in the prior epoch;
-- the leaving member commits the proposal;
-- applying the commit would leave the group with no active admin;
+- it references no SelfRemove proposal or includes a proposal of another type;
+- any referenced proposal does not target its authenticated sender;
+- any referenced proposal sender is an active admin in the proposal's authenticated source-epoch state;
+- the committer leaf is the sender and target of any referenced SelfRemove proposal; another current leaf with the same
+  Marmot account identity is not excluded by this leaf-scoped rule;
 - the committer is not a current member;
 - the commit fails the normal MLS and Marmot convergence checks.
 

@@ -25,7 +25,7 @@ sender to the group.
 MLS messages and MLS Welcomes are the transport-independent security bytes.
 
 Protocol-core docs decide which MLS bytes become canonical group state. Transport arrival order, transport timestamps,
-outer transport ids, subscription order, and local receive order do not choose the canonical branch.
+outer transport ids, fetch order, subscription order, and local receive order MUST NOT choose the canonical branch.
 
 ## Transport envelopes
 
@@ -36,7 +36,18 @@ KeyPackage publication, and NIP-59 welcome delivery. A future transport can carr
 a different outer envelope.
 
 Transport docs MAY define routing ids, relay lists, publish targets, fetch rules, and transport-specific validation.
-They SHOULD NOT redefine Marmot account identity or inner app payload shape.
+They MUST NOT redefine Marmot account identity or inner app payload shape.
+
+## Redundant delivery
+
+A transport binding used for required Marmot group delivery MUST support redundant publication so group traffic does
+not depend on one server, relay, or endpoint. The binding defines how its independently selectable targets are
+authenticated, snapshotted, attempted, acknowledged, and retired.
+
+One successful target MAY satisfy the protocol-core publish-before-apply lifecycle when the binding says so, but that
+success MUST NOT silently cancel any additional first-attempt fanout the binding requires. An optional acceleration
+transport that does not carry required MLS group delivery, such as a transient preview data plane, MAY state that this
+redundancy requirement does not apply to it.
 
 ## Message ids
 
@@ -55,9 +66,10 @@ app payload. The id is exactly 32 bytes (the raw `SHA-256` output; there is no d
 computes it over the recovered bytes without re-encoding, so two transport copies of the same MLS message yield the same
 id.
 
-This is the same `SHA-256`-over-`MLSMessage`-bytes construction used for `commit_digest` / `tip_digest` in
-[../protocol-core/convergence.md](../protocol-core/convergence.md) ("Same-epoch races"): for a commit, its dedup
-`message_id` is byte-for-byte its `commit_digest`. The dedup/replay use of the id is separate from its use as the
-same-epoch ordering tie-breaker, but the bytes are computed identically, so an implementation needs only one hash.
+This is the same `SHA-256`-over-`MLSMessage`-bytes construction used for `commit_digest` in
+[../protocol-core/convergence.md](../protocol-core/convergence.md) ("Same-epoch races") and for `tip_digest` there
+("Candidate branches"). For a commit, its dedup `message_id` is byte-for-byte its `commit_digest`. The dedup/replay use
+of the id is separate from its use as the same-epoch ordering tie-breaker, but the bytes are computed identically, so
+an implementation needs only one hash.
 
 A Nostr event id is transport evidence. It is not a Marmot consensus id.

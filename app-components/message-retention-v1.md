@@ -21,15 +21,29 @@ struct {
 
 Any nonzero value is a requested application retention duration in seconds.
 
-The retention duration is signed group state, but the transport-level expiry timestamp is computed from the sender's
-app-payload `created_at` plus this duration (see [../protocol-core/group-setup.md](../protocol-core/group-setup.md) and
-the active transport binding; for the Nostr binding that is "Message expiration" in
-[../transports/nostr.md](../transports/nostr.md)). Transport expiry applies to application messages only: group-state
-history — commits and proposals — never carries a transport expiry hint, so retention does not affect group-state
-catch-up. The duration is authenticated; the base timestamp is the sender's
-own `created_at`, so a sender that backdates or forward-dates `created_at` shifts when its own message expires.
+Each application message pins the retention state from its own MLS source epoch. Later component updates or removal do
+not shorten, extend, or restore that message's expiry. A retry or transport republication of the same MLS message uses
+the same pinned duration and expiry value.
+
+The retention duration is signed group state, and the transport-level expiry timestamp uses the exact calculation
+defined below. Transport expiry applies to application messages only: group-state history — commits and proposals —
+never carries a transport expiry hint, so retention does not affect group-state catch-up. The duration is authenticated;
+the base timestamp is the sender's own `created_at`, so a sender that backdates or forward-dates `created_at` shifts
+when its own message expires.
 Disappearing-message expiry is therefore advisory and inherits the trust already placed in the MLS-authenticated
 sender. It is not a deletion guarantee enforced against a hostile sender.
+
+The expiry calculation uses exact, checked unsigned-64-bit addition:
+
+```text
+expiry_timestamp = checked_u64(app_payload.created_at + disappearing_message_secs)
+```
+
+`app_payload.created_at` and `expiry_timestamp` are integer Unix timestamps in seconds. The calculation is defined only
+when `created_at` is a non-negative integer representable as `uint64` and the sum is no greater than `2^64 - 1`. An
+implementation MUST NOT wrap, saturate, or compute through an inexact JSON number. When the calculation is undefined or
+the active transport cannot represent the exact result, the sender omits the transport expiry hint; the component state
+and application message remain valid.
 
 ## Update
 
@@ -51,11 +65,16 @@ to be discarded.
 
 ## Authorization
 
-Only an active admin MAY send a standalone message-retention proposal.
+Only an active admin MAY send a standalone message-retention update proposal.
 
 Only an active admin MAY commit a message-retention update.
 
+Commit authorization, including removal authorization, follows the shared candidate-parent rule in
+[README.md](./README.md) ("Authorization Evaluation").
+
 ## Removal
+
+Only an active admin MAY commit removal of this component.
 
 Removal is equivalent to `disappearing_message_secs = 0`.
 

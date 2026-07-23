@@ -27,11 +27,14 @@ convergence, and retained history. It says *when* MLS-valid bytes become canonic
 - Describe every state change completely: name the prior state, input bytes, validation, authorization, the
   deterministic update, output bytes, and the rejection result (see [`../principles.md`](../principles.md), "Describe
   state changes completely").
-- Keep the lifecycle-state, convergence-status, and disposition vocabularies consistent across these files and mapped
-  back to [`../foundation/errors.md`](../foundation/errors.md).
+- Keep lifecycle-state and disposition vocabularies mapped to [`../foundation/errors.md`](../foundation/errors.md).
+  Keep convergence-status names consistent between [`group-state.md`](group-state.md) and
+  [`convergence.md`](convergence.md); they are status projections, not input-disposition categories.
 
 ## Verification
 
+- When adding, renaming, or removing a spec document, update [`../layout.md`](../layout.md) and this surface's
+  [`README.md`](README.md) in the same change.
 - Run the leak grep from [`../AGENTS.md`](../AGENTS.md) ("Verification") scoped to this directory; confirm no
   transport address shapes or darkmatter code names leaked in.
 - Confirm any disposition or outcome name you introduce maps to a category in

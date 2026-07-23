@@ -20,9 +20,11 @@ have not seen yet.
 
 Founding group creation is the exception, including both one-member creation and creation with initial invitees. There
 are no existing peers that can be forked by a missing creation Commit. A one-member creation has an empty creation
-publish obligation. A founding creation with initial invitees satisfies its creation publish obligation through the
-Welcome deliveries defined in [publish-lifecycle.md](./publish-lifecycle.md), and does not require a separate
-group-message publish of the founding Add commit before those Welcomes are sent.
+publish obligation and ends at epoch 0. For founding creation with initial invitees, the creator first creates the
+one-member epoch-0 group, then creates and locally merges one founding Add Commit from epoch 0 to epoch 1 containing the
+initial invitees. That Add Commit has no group-message publication obligation because no pre-existing peer needs it.
+The creator then attempts the independent per-invitee epoch-1 Welcome deliveries defined in
+[publish-lifecycle.md](./publish-lifecycle.md).
 
 The GroupInfo encrypted in every Marmot Welcome MUST include the `ratchet_tree` extension. Marmot does not support
 out-of-band ratchet tree distribution for the Welcome join path. A joiner MUST reject a Welcome whose GroupInfo does
@@ -51,17 +53,32 @@ After unwrapping a Welcome, the receiver:
 8. rejects the Welcome unless the author is an active admin in the resulting group state, per the admin-policy component
    ([../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md)), which is the sole membership-add
    authority for v1 groups;
-9. stores the group state and routing information;
-10. rotates the consumed published KeyPackage when appropriate;
-11. deletes consumed `init_key` material according to the KeyPackage lifecycle rules;
-12. catches up on outstanding Commits as best it can;
-13. performs a self-update as soon as practical.
+9. checks whether the client already retains the resulting MLS group id; outside a separately verified repair or rejoin
+   path, it rejects a match without modifying the existing state or the referenced KeyPackage material;
+10. stores the group state and routing information;
+11. rotates the consumed published KeyPackage when appropriate;
+12. deletes consumed `init_key` material according to the KeyPackage lifecycle rules;
+13. catches up on outstanding Commits as best it can;
+14. performs a self-update as soon as practical.
+
+Steps 4 through 9 are one tentative validation operation. They MUST NOT durably create or replace group state, consume
+or rotate the referenced KeyPackage, or delete its `init_key` material unless every check through step 9 succeeds. If
+the MLS Welcome-processing operation consumes KeyPackage material before exposing the resulting group id and state,
+the receiver MUST stage that mutation or provide equivalent rollback so rejection restores the exact pre-processing
+KeyPackage state. Durable group storage and KeyPackage rotation begin only at steps 10 through 12.
 
 A new member SHOULD perform the post-join self-update before sending application payloads when feasible, and SHOULD do
 so promptly after joining. This carries forward the MIP-02 post-join rotation guidance; this spec keeps it as a
 `SHOULD` because a member who never rotates is a forward-secrecy weakness for itself, not a correctness break for the
 group. The concrete recommended completion window is operational, not interop-visible, so it lives in
 [../implementation-model.md](../implementation-model.md) rather than here.
+
+The group-id check in step 9 makes this receiving flow a first join for a locally unknown MLS group id. If the resulting
+MLS group id matches a group copy the client already retains, the Welcome MUST NOT silently replace or merge into that
+group's canonical state. The receiver rejects it through this flow without rotating or deleting the referenced
+KeyPackage. Marmot v1 defines no in-place repair-by-Welcome procedure. To rejoin, the client first explicitly discards
+the retained active cryptographic state, then processes a fresh valid Welcome through this first-join flow. It MAY
+preserve local history and a removal tombstone outside the replaced active state.
 
 ## Welcome-bootstrap trust
 
@@ -78,16 +95,17 @@ The first-contact trust root is therefore the Welcome author. A joiner MUST auth
 identity — this is step 6 of the receiving flow — and a client SHOULD present that identity to the joining user
 before or at join, so accepting an invite is an explicit decision about who the inviter is.
 
-A client SHOULD treat a newly joined group as unverified until at least one MLS application message from a member
-account other than the Welcome author authenticates on the group's branch. A forged fork cannot produce such a message:
-the forger cannot sign for another account and cannot forge another account's identity proof. How an unverified group is
-presented is application-defined. This is a corroboration signal, not a proof — a genuine but quiet group also stays
-unverified until another member speaks, and a future feature may add an out-of-band anchor for the legitimate admin set.
+A client MAY treat a newly joined group as unverified until an MLS application message from an account other than the
+Welcome author authenticates on the group's branch. That message proves only that the other account participated on
+the received branch. It does not prove that the branch is the intended continuation: a forger can add genuine
+KeyPackages to a fork, and a genuine re-added member can later speak on it. Any unverified-group presentation is
+application-defined; this signal is an activity heuristic, not a group-authenticity proof.
 
 ## Failure behavior
 
-If Welcome processing fails, the receiver MUST NOT rotate away the KeyPackage that was referenced by the failed Welcome.
-The inviter MAY retry or choose another KeyPackage.
+If Welcome processing or any tentative validation through step 9 fails, the receiver MUST leave the referenced
+KeyPackage and its `init_key` material exactly as they were before processing. The inviter MAY retry or choose another
+KeyPackage.
 
 A receiver rejects the Welcome if:
 
@@ -99,6 +117,7 @@ A receiver rejects the Welcome if:
 - any resulting member leaf is missing a valid account identity proof;
 - the Welcome author cannot be identified as a member leaf in the resulting group;
 - the resulting group state lacks required Marmot state;
+- the resulting MLS group id matches retained active cryptographic state;
 - the Welcome author's MLS-authenticated account identity is not an active admin in the resulting group state (the
   sole membership-add authority for v1 groups; see
   [../app-components/admin-policy-v1.md](../app-components/admin-policy-v1.md));

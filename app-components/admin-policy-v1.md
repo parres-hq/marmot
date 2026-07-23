@@ -7,7 +7,7 @@ Status: adopted.
 - Component id: `0x8003`
 - Name: `marmot.group.admin-policy.v1`
 - Location: GroupContext `app_data_dictionary`
-- Default requirement: optional
+- Default requirement: required for every Marmot group
 
 ## State
 
@@ -57,55 +57,63 @@ MarmotAdminPolicyV1 MarmotAdminPolicyUpdateV1;
 
 An admin policy state is valid if:
 
+- the component entry is present in the resulting epoch's `app_data_dictionary`
+- component id `0x8003` is present in the resulting epoch's GroupContext `app_components` required-component list
 - every admin key is exactly 32 bytes
 - the admin list is sorted lexicographically by key bytes
 - the admin list has no duplicates
 - the admin list is not empty
 - every admin key corresponds to an account with at least one member leaf in the resulting epoch's group state
 
+v1 sets no smaller independent admin-count ceiling: every distinct current account may legitimately be an admin, and
+the uniqueness and membership checks bound the list by the resulting group's distinct account count.
+
 The last check is cross-component: it validates this component against the resulting epoch's member leaves rather than
 against the component bytes alone. Commit validity already spans components, so a commit whose resulting epoch lists an
 admin key with no member leaf is invalid.
 
-The cross-component check is a property of the resulting epoch, not of the commits that carry admin-policy bytes. It
-runs on every commit that changes the member leaf set or this component's state. When a commit carries no admin-policy
-update, the resulting epoch's admin set is the prior epoch's admin set carried forward, and the check is evaluated
-against that carried-forward set. A commit that removes a listed account's last member leaf without also updating this
-component is therefore invalid whether or not the commit re-serializes this component's bytes.
+The required-component and membership checks are properties of the resulting epoch, not only of commits that carry
+admin-policy bytes. They run on every Commit, including one that changes `app_components`, the member leaf set, or this
+component's state. When a Commit carries no admin-policy update, the resulting epoch's admin set is the candidate parent
+state's admin set carried forward, and the checks are evaluated against that carried-forward set. A Commit that omits
+`0x8003` from resulting `app_components`, removes the dictionary entry, or removes a listed account's last member leaf
+without also updating this component is invalid whether or not it re-serializes this component's bytes.
 
 ## Authorization
 
-Only an active admin MAY send a standalone admin policy proposal.
+Only an active admin MAY send a standalone admin policy update proposal.
 
 Only an active admin MAY commit an admin policy update.
 
-The commit authorization is evaluated against the prior epoch's active admins. An update that removes the committer
-from `admins` is valid only if at least one other active admin remains.
+Commit authorization, including removal authorization, follows the shared candidate-parent rule in
+[README.md](./README.md) ("Authorization Evaluation"). An update that removes the committer from `admins` is valid only
+if at least one other active admin remains.
 
 ## Admin-Gated Actions
 
-In v1, the following operations require an active admin to commit:
+Every v1 group-level Marmot component update requires an active admin to commit unless the owning component document
+explicitly defines a looser rule. No v1 group-level component currently defines one. This rule follows the component
+class rather than an enumerated list, so adding a registered component does not silently make its updates ungoverned.
 
-- update `marmot.group.profile.v1`
-- update `marmot.group.blossom.image.v1`
-- update `marmot.group.admin-policy.v1`
-- update `marmot.transport.nostr.routing.v1`
-- update `marmot.group.message-retention.v1`
-- invite a new member
-- remove another member
-- change required Marmot components
+The following non-component operations also require an active admin to commit:
 
-For Welcome-based joins, the receiver applies the same invite authorization check at join time. The receiver identifies
-the inviter from the MLS GroupInfo signer leaf and rejects the Welcome unless that leaf's MLS-authenticated Marmot
-account identity is an active admin in the joined group state. This component is the sole membership-add authority for
-v1 groups: if it is absent, no member is authorized to add, so the receiver rejects the Welcome. This check's trust
-model and its limits are described in [../protocol-core/joining.md](../protocol-core/joining.md) ("Welcome-bootstrap
-trust").
+- invite a new member;
+- remove another member;
+- change the GroupContext `app_components` list of required Marmot components; and
+- change the GroupContext `required_capabilities` extension through an MLS `GroupContextExtensions` proposal.
+
+Existing members authorize an Add Commit against its candidate parent state. A Welcome receiver cannot perform that
+same parent-state check; it instead applies the distinct join-time resulting-state check defined in
+[../protocol-core/joining.md](../protocol-core/joining.md). The receiver identifies the inviter from the MLS GroupInfo
+signer leaf and rejects the Welcome unless that leaf's MLS-authenticated Marmot account identity is an active admin in
+the joined group state. This component is the sole membership-add authority for v1 groups: if it is absent, no member is
+authorized to add, so the receiver rejects the Welcome. The resulting-state check's trust model and limits are described
+in [../protocol-core/joining.md](../protocol-core/joining.md), "Welcome-bootstrap trust."
 
 SelfRemove is special:
 
 - a non-admin member MAY self-remove
-- a SelfRemove proposal whose sender is an active admin in the prior epoch is invalid
+- a SelfRemove proposal whose sender is an active admin in its authenticated source-epoch state is invalid
 - a departing admin first commits an admin-policy update that removes it from `admins` (valid only if at least one
   other active admin remains), then uses SelfRemove
 - any remaining authorized member MAY commit a SelfRemove proposal
@@ -115,8 +123,16 @@ SelfRemove is special:
 
 ## Removal
 
-This component is the sole admin authority for v1 groups. If it is absent, components and operations that require an
-active admin are invalid (there is no other authorization component in v1).
+This component is the sole admin authority for v1 groups and MUST remain present and required for the lifetime of a
+Marmot group. An AppDataUpdate `remove` operation targeting this component is invalid, so no member, including an
+active admin, is authorized to commit one. Deleting or abandoning a local group is not a component removal and does not
+require a group-state commit.
+
+If every active admin loses access to all of its signing devices or keys, v1 has no in-band succession, override, or
+automatic-promotion mechanism. The group remains cryptographically valid, and ordinary application messages and
+non-admin SelfRemove may continue, but admin-gated membership and settings changes are permanently frozen. Members must
+create a new group to recover governance; local or out-of-band policy MUST NOT elevate another account inside the frozen
+group.
 
 ## Migration
 

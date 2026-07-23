@@ -25,21 +25,21 @@ For a Marmot member leaf:
 
 - the credential identity is exactly 32 bytes;
 - those bytes are the member account's Nostr public key;
-- clients reject credentials whose identity is not a valid x-only secp256k1 public key.
+- clients MUST reject credentials whose identity is not a valid x-only secp256k1 public key.
 
 The MLS signature key for a leaf is not the Marmot account identity. It proves the MLS leaf. The credential identity
 says which Marmot account that leaf belongs to.
 
 ## Account identity proof
 
-Every Marmot member LeafNode MUST carry `marmot.account-identity-proof.v1`, an MLS LeafNode extension that proves the
-account named by the `BasicCredential` authorized the leaf's MLS signature public key.
+Every Marmot member LeafNode MUST carry `marmot.member.account-identity-proof.v2`, a LeafNode application component
+that proves the account named by the `BasicCredential` authorized the leaf's MLS signature public key.
 
 Clients MUST reject a member leaf or KeyPackage if the proof is missing, malformed, does not match the credential
 identity, does not match the MLS leaf signature key, or does not verify under the account identity.
 
-The extension bytes and validation rules are defined in
-[account-identity-proof-v1.md](./account-identity-proof-v1.md).
+The component bytes, local Nostr signing event, capability rules, and validation requirements are defined in
+[../app-components/account-identity-proof-v2.md](../app-components/account-identity-proof-v2.md).
 
 ## KeyPackages
 
@@ -49,8 +49,10 @@ KeyPackage meaning, discovery requirements, and lifecycle are defined in [key-pa
 
 To ensure interoperability, capability negotiation is part of the Marmot protocol.
 
-Different clients MAY support different features. A group MUST be created with the strongest feature set that every
-intended member can support, and later members MUST support the group's required feature set before they can join.
+Different clients MAY support different features. The creator chooses which supported features the group requires; the
+required set need not be the largest set every intended member could support. A group MUST NOT require a feature that
+an intended initial member cannot process, and later members MUST support the group's required feature set before they
+can join.
 
 Marmot uses MLS capabilities for this:
 
@@ -65,7 +67,8 @@ app component id, or a combination named by the feature. Marmot-owned ids are re
 
 Optional features SHOULD NOT block basic messaging. If a feature is not supported by every member, the group can still
 exist without that feature. When all current members later support it, the group MAY upgrade its required feature set
-through the protocol-core rules for capability upgrades.
+through the required-capability change flow in
+[../protocol-core/group-setup.md](../protocol-core/group-setup.md) ("Required capability changes").
 
 ## Delivery addressing is separate
 
@@ -76,8 +79,8 @@ KeyPackage id, message id, relay URL, or other stable identity material. For exa
 random `nostr_group_id`, not a value derived from any member key.
 
 Account-level inbox addressing is the deliberate exception. A transport MAY address an account's own inbox by that
-account's public key, because reaching a specific account is the purpose of an inbox. The Nostr binding uses the account
-public key as the gift-wrap recipient and inbox filter for welcomes and other account-directed events.
+account's public key, because reaching a specific account is the purpose of an inbox. The active transport binding owns
+the concrete inbox-addressing mechanism; the Nostr rule is defined in [../transports/nostr.md](../transports/nostr.md).
 
 Examples of delivery addresses include a Nostr group `h` tag, an account inbox, a relay list, a topic, or an endpoint
 set. The owning transport document defines how those addresses are generated, updated, validated, and used.
@@ -87,5 +90,5 @@ set. The owning transport document defines how those addresses are generated, up
 Marmot app payloads use an unsigned Nostr event shape inside MLS. The shared shape is defined in
 [application-messages.md](./application-messages.md).
 
-The inner event's `pubkey` is the author's Marmot account identity. MLS authenticates who sent the MLS application
-message to the group, and the inner event's `pubkey` is validated against that authenticated MLS sender.
+The inner event's `pubkey` is the author's Marmot account identity. The receiver binding and mismatch outcome are
+defined in [application-messages.md](./application-messages.md) ("Receiver authentication").

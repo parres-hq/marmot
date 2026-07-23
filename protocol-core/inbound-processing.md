@@ -3,7 +3,7 @@
 Status: adopted.
 
 Inbound processing accepts bytes from a transport, turns them into Marmot protocol input, and gives each input a
-disposition.
+protocol outcome: either a rejection category or, for input that enters convergence, a convergence disposition.
 
 Transport delivery is evidence that bytes exist. It is not evidence that those bytes define the canonical group state.
 
@@ -14,21 +14,23 @@ transport message
   -> peel or decode transport envelope
   -> retain protocol bytes
   -> classify welcome, commit, proposal, or MLS application message
-  -> feed group-state input into convergence
-  -> emit accepted, stale, deferred, or invalidated disposition
-  -> emit application-visible output when canonical state or delivered payloads change
+  -> produce one protocol outcome:
+     -> reject before convergence with a rejection category; or
+     -> feed processable group-state input into convergence
+        -> emit accepted, stale, deferred, or invalidated disposition
+        -> emit application-visible output when canonical state or delivered payloads change
 ```
 
-The exact local API is implementation-defined. The protocol-visible result is the disposition. The disposition
-vocabulary (`accepted`, `deferred`, `stale`, `invalidated`) is pinned in
-[../foundation/errors.md](../foundation/errors.md).
+The exact local API is implementation-defined. The protocol-visible outcome is either a rejection category or a
+convergence disposition. The category and disposition vocabularies, including the four dispositions (`accepted`,
+`deferred`, `stale`, `invalidated`), are pinned in [../foundation/errors.md](../foundation/errors.md).
 
 ## Message identity
 
 Each inbound message has a message id used for deduplication. A client MUST deduplicate before applying state changes.
 
 The message id used for deduplication MUST be stable for the carried protocol bytes. It MUST NOT depend on local receive
-order, transport source order, subscription id, or database row id.
+order, transport source order, subscription id, or any local storage identifier.
 
 Duplicate input maps to the `duplicate` category in [../foundation/errors.md](../foundation/errors.md) and MUST NOT be
 applied twice. Convergence outcomes named in `PascalCase` below, such as `BeyondAnchor`, map to a disposition and a
@@ -49,6 +51,16 @@ rules.
 Malformed input MUST fail closed. Unsupported input MUST fail closed when the active group policy requires support for
 that input (e.g. a welcome requires capabilities the client does not support).
 
+Encoding, branch-independent required-signature, and required-feature checks run before convergence. Required MLS
+authentication that needs retained source-epoch or candidate-parent state — including membership-tag or sender-signature
+validation — instead runs while replaying the input against retained source-epoch states. If no state authenticates the
+membership tag, the input remains deferred while its parent may still arrive. Once MLS authentication identifies the
+candidate parent, a failed sender-signature or authorization check is terminal for that input. The candidate-edge and
+terminal-rejection rules are defined in [convergence.md](./convergence.md), "Candidate branches."
+
+Input naming a group for which the client has no processable group state receives the `unknown_group` category before
+convergence and no convergence disposition. The client cannot authenticate or classify a branch without that state.
+
 ## Deferred input
 
 A client MAY defer an input when it cannot yet be processed but could become processable after more protocol bytes
@@ -67,21 +79,13 @@ branch.
 
 Input that cannot affect the group MUST receive a stale disposition. This includes:
 
-- duplicate messages (`duplicate`);
-- messages for unknown groups (`unknown_group`);
-- welcomes addressed to another member (`wrong_recipient`);
-- own echoes (`own_echo`);
 - commits older than the retained anchor (`BeyondAnchor` -> `stale_epoch`, per
   [retained-history.md](./retained-history.md));
 - MLS application messages older than the retained app-payload window (`stale_epoch`; the window is
   `app_payload_past_epoch_limit` past epochs, see [convergence.md](./convergence.md));
 - commits that fork from outside the rollback horizon: these are ineligible for branch selection (see
-  [convergence.md](./convergence.md), "Eligibility") and, when their source epoch is also older than the retained
-  anchor, are reported as `BeyondAnchor`;
-- group input for a group whose retained canonical state records the local member's own removal (`SelfEvicted` ->
-  `stale_epoch`, per [member-departure.md](./member-departure.md), "Realizing removal"): stale for convergence, but
-  processing it MUST also surface the member's removal as a state notification when the application has not yet
-  observed it, instead of failing silently.
+  [convergence.md](./convergence.md), "Eligibility") and receive the `stale_epoch` category; when their source epoch is
+  also older than the retained anchor, the named outcome is `BeyondAnchor`.
 
 The `snake_case` names in parentheses are the shared categories in [../foundation/errors.md](../foundation/errors.md);
 `BeyondAnchor` is a named convergence outcome that maps to the `stale` disposition and the `stale_epoch` category.
@@ -107,6 +111,10 @@ State notifications include events such as:
 - group-state change invalidated because the commit it was derived from was superseded by branch selection.
 
 A state notification is not a delivered app payload. It tells the application what changed in the group state.
+
+Realizing the local member's own removal is derived from retained canonical state, independently of any later input's
+validity or disposition. The required check and notification are defined in
+[member-departure.md](./member-departure.md), "Realizing removal."
 
 State notifications track the selected canonical branch. When convergence supersedes a commit the client previously
 applied, the client MUST emit a group-state-change invalidation naming the superseded commit, and state notifications

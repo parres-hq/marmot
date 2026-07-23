@@ -30,7 +30,11 @@ span multiple epoch-bound SelfRemove proposals.
 
 A member whose own removal has been realized holds the group as a removed, inactive copy per
 [member-departure.md](./member-departure.md) ("Realizing removal"). Like `Leaving`, this is not a canonical lifecycle
-state; it is a terminal local condition for that group copy.
+state. It is locally inactive and does not resume without an explicit rejoin.
+
+The optional "unverified" presentation described in [joining.md](./joining.md) ("Welcome-bootstrap trust") is neither
+a lifecycle state nor a protocol condition. It is an application-defined activity heuristic and does not change the
+legal transitions below.
 
 ## Legal transitions
 
@@ -45,6 +49,8 @@ Merging
   -> Stable              staged commit applied
 Stable
   -> Recovering          fork detected and retained recovery is required
+Stable
+  -> Unrecoverable       required retained state is permanently missing or corrupt
 Recovering
   -> Stable              a canonical branch was selected and applied
 Recovering
@@ -53,11 +59,18 @@ Unrecoverable
   -> Stable              state was repaired, restored, or replaced by a verified join
 ```
 
-Fork detection runs only from `Stable`, against settled canonical state. There is no `Merging -> Recovering` edge: a
-competing branch observed while the client is applying its own confirmed commit is retained, the merge completes to
-`Stable`, and fork detection then runs from `Stable`. `Recovering` re-entry is implicit: convergence-relevant input
-that arrives while the group is already in `Recovering` is folded into the same recovery pass, and the group stays in
-`Recovering` until a branch is selected and applied (`-> Stable`) or no safe branch exists (`-> Unrecoverable`).
+Fork detection runs only from `Stable`, against settled canonical state, using the operational rule in
+[convergence.md](./convergence.md) ("Fork detection"). Linear advancement does not enter `Recovering`. There is no
+`Merging -> Recovering` edge: a competing branch observed while the client is applying its own confirmed commit is
+retained, the merge completes to `Stable`, and fork detection then runs from `Stable`. `Recovering` re-entry is implicit:
+convergence-relevant input that arrives while the group is already in `Recovering` and before the bounded pass cutoff is
+folded into that recovery pass. Input retained after the cutoff belongs to a later pass. The group stays in `Recovering`
+until a branch is selected and applied (`-> Stable`) or no safe branch exists (`-> Unrecoverable`).
+
+The direct `Stable -> Unrecoverable` transition applies when normal linear processing discovers that required retained
+history or authenticated state inside the rollback horizon is permanently unavailable or corrupt and no defined
+authenticated repair path can restore it. A client does not enter `Recovering` merely to pass through to
+`Unrecoverable` when no fork recovery is possible.
 
 A client MUST reject a local group-state commit while the group is in `PendingPublish`, `Merging`, `Recovering`, or
 `Unrecoverable`.
@@ -89,17 +102,18 @@ Examples include:
 A client in `Unrecoverable` MUST NOT choose the current local state merely because it is the only state available. It
 MUST stop applying group-state changes until it has a verified repair path.
 
-A repair path MAY restore retained state, import a verified current snapshot, rejoin through MLS, or use another
-recovery method defined by a future protocol-core document.
+A repair path MAY restore retained state, rejoin through MLS, or use another recovery method defined by a future
+protocol-core document.
 
 ## Convergence status
 
 Convergence has a separate derived status:
 
-- `Syncing`: convergence-relevant input is still arriving or the quiescence window defined in
-  [convergence.md](./convergence.md) has not elapsed since the last retained or reclassified convergence-relevant input.
-- `Resolving`: the quiescence window has elapsed, but the client still has unresolved convergence work, such as a child
-  commit whose parent has not been retained or fetched yet.
+- `Syncing`: a bounded convergence pass is collecting selection-relevant input and neither the quiescence window nor the
+  absolute collection deadline defined in [convergence.md](./convergence.md) has elapsed.
+- `Resolving`: the pass input batch is frozen and the client is computing a deterministic fixed point over state already
+  retained in that batch. It does not wait for fetches or admit later input; unresolved children remain deferred to a
+  later pass.
 - `Settled`: candidate processing reached a fixed point and the selected branch, if any, has been applied.
 - `Blocked`: candidate processing cannot safely continue without a repair path or missing retained material.
 
@@ -110,8 +124,8 @@ The legal combinations are:
 
 | Convergence status | Lifecycle states it can appear in | Notes                                                                 |
 | ------------------ | --------------------------------- | --------------------------------------------------------------------- |
-| `Syncing`          | `Stable`, `Recovering`            | input still arriving or quiescence not elapsed                        |
-| `Resolving`        | `Stable`, `Recovering`            | quiescence elapsed, work outstanding (e.g. a child commit's parent)   |
+| `Syncing`          | `Stable`, `Recovering`            | bounded pass still collecting selection-relevant input                |
+| `Resolving`        | `Stable`, `Recovering`            | frozen-batch fixed-point work; no waiting or new input                |
 | `Settled`          | `Stable`                          | fixed point reached and any selected branch applied                   |
 | `Blocked`          | `Recovering`, `Unrecoverable`     | needs a repair path or missing retained material                      |
 
@@ -123,12 +137,15 @@ is not meaningful while the group is in them.
 
 ## Local actions during convergence
 
-When convergence status is `Syncing`, `Resolving`, or `Blocked`, a client SHOULD queue local outbound intents instead
-of preparing them against a state that MAY lose branch selection or require repair.
+When convergence status is `Syncing`, `Resolving`, or `Blocked`, a client MUST NOT prepare a group-state change or
+encrypt an app payload against the unresolved state. It MAY queue the local intent until the group settles or reject it
+as locally unavailable; the queue representation and user-visible behavior are application concerns.
 
 Queued app-payload sends are encrypted after convergence status reaches `Settled` and the lifecycle state allows
 outbound work.
 
 Queued group-state changes are regenerated after convergence status reaches `Settled` and the lifecycle state allows
 outbound work. A staged commit created before branch selection MUST NOT be reused after convergence changes the
-canonical state.
+canonical state. After a bounded pass, the fair scheduling rule in [convergence.md](./convergence.md) gives one
+already-queued admin-authorized group-state intent a preparation opportunity before queued inbound input alone starts
+another pass.

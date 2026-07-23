@@ -1,12 +1,15 @@
 # Account identity proof v1
 
-Status: adopted.
+Status: superseded.
 
-`marmot.account-identity-proof.v1` is a Marmot custom MLS LeafNode extension that binds the Marmot account identity in
-an MLS `BasicCredential` to that leaf's MLS signature public key.
+`marmot.account-identity-proof.v1` was the legacy Marmot custom MLS LeafNode extension that bound the Marmot account
+identity in an MLS `BasicCredential` to that leaf's MLS signature public key.
 
-This is a breaking protocol requirement. Marmot clients MUST reject member leaves and KeyPackages that do not carry a
-valid proof.
+This document preserves the legacy wire format so extension type `0xf2f1` is never reinterpreted. It is not part of the
+current Marmot profile. Current clients use
+[../app-components/account-identity-proof-v2.md](../app-components/account-identity-proof-v2.md).
+
+When validating a legacy v1 LeafNode or KeyPackage, clients MUST reject it unless it carries a valid v1 proof.
 
 ## Registry
 
@@ -56,26 +59,54 @@ uint16 mls_signature_public_key_len
 opaque mls_signature_public_key[mls_signature_public_key_len]
 ```
 
+The literal zero byte terminates the ASCII domain label and separates it from the following fixed-width binary fields.
+It is part of the v1 domain separator, not padding or an optional string terminator.
+
 The signature is a 64-byte BIP-340 Schnorr signature over that digest, verified with `account_identity`. The 32-byte
 `SHA-256` digest above is itself the BIP-340 message: the account key signs and a verifier checks it as a prehashed
 32-byte value. Marmot reuses only the account key's BIP-340 scheme here; it does NOT apply the Nostr canonical
-event-id construction (`[0, pubkey, created_at, kind, tags, content]`) to build this preimage. This proof is not a Nostr
-event and is never published.
+event-id construction (`[0, pubkey, created_at, kind, tags, content]`) to build this preimage. This signing preimage is
+not a Nostr event and is not serialized on the wire. The resulting extension payload, including the signature, is
+carried in LeafNodes and published KeyPackages.
 
 The signing input is a standalone, domain-separated preimage, not the extension payload re-serialized. It length-prefixes
 `account_identity` only to make that field boundary explicit; the payload and preimage both cover the same 32 account-key
 bytes. `mls_signature_scheme` is still carried and verified directly, even though the ciphersuite implies it.
 
+## Signing test vector
+
+This fixture uses BIP-340 secret key `3` and all-zero 32-byte auxiliary randomness. The secret is test material only.
+
+```text
+mls_ciphersuite           = 0x0001
+mls_signature_scheme      = 0x0807
+account_identity          = f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9
+mls_signature_public_key  = 000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+```
+
+The 108-byte signing preimage is:
+
+```text
+6d61726d6f742e6163636f756e742d6964656e746974792d70726f6f662e763100f2f101000108070020f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f90020000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+```
+
+Its `SHA-256` digest and resulting 64-byte BIP-340 signature are:
+
+```text
+digest     = 1567ad994c132d6678bc74b96887380ab93e0351cb2c9f300426195366eee7a5
+signature  = 78c1f3d5ccbe816e01266327a3c68b1f5d4ee1900cbe368ea86dde8d641b69b2ccca423b5db00716be2672f6b345cf5b63fc6939f5b11e295abeb398408eda2f
+```
+
 ## Required capabilities
 
-Every Marmot KeyPackage and group member LeafNode MUST advertise support for extension type `0xf2f1` in MLS
-capabilities.
+Every KeyPackage and group member LeafNode in the legacy v1 profile MUST advertise support for extension type `0xf2f1`
+in MLS capabilities.
 
-Every Marmot group MUST require extension type `0xf2f1` in MLS `RequiredCapabilities`.
+Every legacy v1 group MUST require extension type `0xf2f1` in MLS `RequiredCapabilities`.
 
 ## Validation
 
-A client MUST reject a LeafNode or KeyPackage if:
+A client validating the legacy v1 profile MUST reject a LeafNode or KeyPackage if:
 
 - the extension is missing;
 - the payload is truncated or has trailing bytes;
@@ -87,4 +118,8 @@ A client MUST reject a LeafNode or KeyPackage if:
 - `mls_signature_public_key` does not exactly match the LeafNode MLS signature public key;
 - `schnorr_signature` is not a valid BIP-340 signature for the signing input digest and `account_identity`.
 
-There is no legacy fallback. A member without a valid proof is not a Marmot member under this spec.
+There is no fallback within the legacy v1 profile: a member without a valid v1 proof is not a valid v1 member.
+
+The current v2 profile MUST NOT accept this extension as a substitute for component id `0x8009`, and this extension
+MUST NOT be required or emitted in a newly created v2 group. The clean-break migration rules are defined in
+[../app-components/account-identity-proof-v2.md](../app-components/account-identity-proof-v2.md) ("Migration from v1").

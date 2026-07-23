@@ -23,11 +23,13 @@ rule below is the load-bearing one.
 - Mandatory protocol flows belong in [`../protocol-core/`](../protocol-core/README.md) or
   [`../foundation/`](../foundation/README.md), not here, even when they used to live in a MIP.
 - Interop-visible feature versions get a name inside the spec: a component id, a proposal id, an event kind, or a new
-  feature document when the high-level flow changes enough to need both versions side by side. Git history is not
-  version negotiation.
+  feature document when the high-level flow changes enough to need both versions side by side. Git history is not a
+  version-negotiation mechanism; an interop-visible change needs an explicit protocol versioning hook.
 
 ## Verification
 
+- When adding, renaming, or removing a spec document, update [`../layout.md`](../layout.md) and this surface's
+  [`README.md`](README.md) in the same change.
 - Grep the feature doc for `struct`/component-id definitions that should live in [`../app-components/`](../app-components/README.md);
   a feature doc should reference those, not define them.
 - Confirm every surface the feature names resolves to a real owning doc and every link works.

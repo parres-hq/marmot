@@ -5,7 +5,8 @@ Status: adopted.
 The deprecated MIP set mixes stable protocol surfaces with feature behavior. This
 spec organizes docs around the surface an implementer is building.
 
-MIPs remain useful history. They SHOULD point to the stable docs they changed.
+MIPs remain useful history. This repository records their adopted replacements in [`mip-coverage.md`](mip-coverage.md);
+the frozen MIP repository is not maintained as part of this specification.
 
 ## Top Level
 
@@ -17,6 +18,7 @@ mip-coverage.md
 foundation/
   README.md
   identity.md
+  authorization-proofs.md
   account-identity-proof-v1.md
   key-packages.md
   canonical-encoding.md
@@ -46,6 +48,9 @@ app-components/
   agent-text-stream-quic-v1.md
   group-avatar-url-v1.md
   group-encrypted-media-v1.md
+  group-encrypted-media-v2.md
+  account-identity-proof-v2.md
+  multi-device-join-authorization-v1.md
 transports/
   README.md
   nostr.md
@@ -53,15 +58,17 @@ transports/
 features/
   README.md
   encrypted-media.md
+  encrypted-media-v1.md
+  agent-text-streams-quic.md
   push-notifications.md
   multi-device.md
-  agent-text-streams-quic.md
 implementation-model.md
 ```
 
-This tree is the canonical file list. When you add, rename, or remove a doc, update this tree in the same change, and
-update the matching index in the surface's `README.md` (and `foundation/registries.md` when an id changes). The subdir
-`AGENTS.md` files carry this as a verification step.
+This tree is the canonical list of spec documents and per-surface `README.md` indexes. Repository-operating files such
+as `AGENTS.md`, and compatibility symlinks, are not entries in the normative spec tree. When you add, rename, or remove
+a spec document, update this tree in the same change, and update the matching index in the surface's `README.md` (and
+`foundation/registries.md` when an id changes). The subdir `AGENTS.md` files carry this as a verification step.
 
 ## Foundation
 
@@ -99,30 +106,24 @@ database schemas, or API boundaries.
 
 ## App Components
 
-App component documents define custom MLS app components carried in the
-GroupContext `app_data_dictionary`.
+App component documents define custom MLS app components carried in `app_data_dictionary`. The component document
+chooses the location whose lifecycle matches the data: GroupContext for authenticated group state, LeafNode for
+per-member data, KeyPackage for package-specific data, or GroupInfo for data attached to one GroupInfo object.
 
-Each component document owns:
+The authoritative component-document checklist is
+[app-components/README.md](./app-components/README.md) ("Common Rules"). Component ids carry the major version; there is
+no generic separate payload version field.
 
-- component id
-- component name (its `v1` suffix records the major version; the component id is the version, so there is no separate
-  version field in the payload)
-- payload schema
-- update schema
-- canonical encoding
-- authorization
-- update operation
-- removal behavior
-- migration behavior
-
-Most feature-owned group state SHOULD land here.
+Most feature-owned group state and per-member application metadata SHOULD land here.
 
 ## Transports
 
 Transport documents define how Marmot bytes move over a network.
 
-Transport documents MAY define transport-specific delivery addresses, event shapes, relay or endpoint selection, fetch
-rules, and app components. They SHOULD NOT define generic group semantics.
+Transport documents MAY define transport-specific delivery addresses, event shapes, relay or endpoint selection, and
+fetch rules. They MUST follow the ownership boundary in
+[transports/README.md](./transports/README.md): transport documents do not define identity, inner app payloads, MLS
+credential binding, branch selection, or app-component bytes.
 
 ## Features
 
@@ -132,13 +133,13 @@ A feature document SHOULD mostly reference foundation, protocol-core, and compon
 their rules.
 
 Feature documents stay separate from app components. The feature doc explains the flow. The app component doc owns the
-component bytes. Encrypted media follows that split: [app-components/group-encrypted-media-v1.md](./app-components/group-encrypted-media-v1.md)
+component bytes. Encrypted media follows that split: [app-components/group-encrypted-media-v2.md](./app-components/group-encrypted-media-v2.md)
 owns group policy bytes, while [features/encrypted-media.md](./features/encrypted-media.md) owns message attachment
 format, key derivation, and AEAD behavior.
 
 When a feature has an interop-visible breaking change, the owning document MUST name the new version in a capability,
-component id, proposal id, event kind, or feature document. Git history is useful, but it is not a version-negotiation
-mechanism.
+component id, proposal id, event kind, or feature document. Git history is not a version-negotiation mechanism; an
+interop-visible change needs an explicit protocol versioning hook.
 
 ## Implementation Model
 

@@ -5,8 +5,9 @@ transport-document checklist; the cross-surface map is in [`../AGENTS.md`](../AG
 
 ## Scope
 
-A transport doc owns the outer envelope, delivery addressing, publish/fetch rules, transport-specific validation, and
-any transport-owned app components (e.g. Nostr routing). One file per transport binding. Current bindings:
+A transport doc owns the outer envelope, delivery addressing, publish/fetch rules, and transport-specific validation.
+App-component payload bytes, including signed Nostr routing state, remain owned by `app-components/`. One file per
+transport binding. Current bindings:
 [`nostr.md`](nostr.md) (primary) and [`quic.md`](quic.md) (experimental agent-stream previews).
 
 ## Read order
@@ -25,13 +26,16 @@ any transport-owned app components (e.g. Nostr routing). One file per transport 
 - Nostr routing and relays are signed group state owned by `marmot.transport.nostr.routing.v1`
   ([`../app-components/nostr-routing-v1.md`](../app-components/nostr-routing-v1.md)), not local hints.
 - An interop-visible transport change needs an explicit hook (a new envelope version, a new kind/route/topic/frame
-  type, a new app component id, or a new required capability) — git history is not a versioning mechanism.
+  type, a new app component id, or a new required capability). Git history is not a version-negotiation mechanism; an
+  interop-visible change needs an explicit protocol versioning hook.
 
 ## Verification
 
+- When adding, renaming, or removing a spec document, update [`../layout.md`](../layout.md) and this surface's
+  [`README.md`](README.md) in the same change.
 - Confirm the transport doc references only delivery mechanics, not group-state selection.
 - Confirm Nostr kinds match those registered in [`../foundation/registries.md`](../foundation/registries.md) and that
-  no removed kinds (legacy `443`, `10051`) linger.
+  no removed kind (legacy `443`) lingers.
 
 ## Pointers
 

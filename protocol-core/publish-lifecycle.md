@@ -15,9 +15,9 @@ This rule applies to:
 - invite
 - member removal by an admin
 - group profile update
-- capability upgrade
+- required-capability change
 - admin policy update
-- policy-generated commits
+- self-update Commit
 - SelfRemove-only commits prepared by remaining members
 
 A member's own departure is a SelfRemove *proposal*, not a local commit. The leaver publishes the proposal and does not
@@ -54,25 +54,28 @@ acknowledgement signal. A transport binding or client MAY apply a stricter succe
 accept is the minimum, and a client MUST NOT treat anything weaker (such as a queued or sent-without-acknowledgement
 state) as success.
 
+A transport MAY require attempts to additional targets after its acknowledgement rule has been satisfied. The
+acknowledgement that satisfies that rule releases publish-before-apply; outstanding transport fanout MUST NOT keep the
+group in `PendingPublish`, reopen that state after apply, undo the applied state, or require the Commit to be re-staged.
+The active transport document defines which remaining targets require an attempt and whether later retries are
+required.
+
 Group creation is special because there is no existing group recipient set before the group exists.
 
-For one-member group creation, the creation publish obligation has an empty outbound byte set and an empty recipient
-scope. The creator MUST treat the empty obligation as immediately satisfied and make the initial state canonical
-without publishing any group message bytes.
+The one-member epoch-0 group creation has an empty outbound byte set and an empty recipient scope. The creator MUST
+treat that empty obligation as immediately satisfied and make epoch 0 canonical without publishing group-message bytes.
 
-For founding creation with initial invitees, the creation publish obligation contains the MLS Welcome deliveries for the
-initial invitees whose KeyPackages were consumed. Its recipient scope is exactly those initial invitees, addressed by the
-active transport binding for Welcome delivery. It does not include a group-message publish of the founding Add
-commit to existing members, because no existing peers can be forked by a missing creation Commit. This exception
-is limited to the epoch-0 founding commit. Any further commits — including additional component bootstrapping
-bundled with group creation — follow the normal publish-before-apply rule.
-
-The founding creator's local state becomes canonical immediately after the epoch-0 founding commit, regardless
-of Welcome delivery outcome. Welcome delivery to initial invitees is a separate retryable per-invitee obligation:
-each invitee's Welcome delivery succeeds or fails independently and does not affect the group's canonical state.
+When founding creation includes initial invitees, the creator next prepares and locally merges one founding Add Commit
+from epoch 0 to epoch 1. That Commit also has an empty group-message publication obligation: the creator is the only
+pre-existing member, so no peer can be forked by failure to publish it. Each resulting epoch-1 Welcome is a separate
+retryable per-invitee delivery obligation after the Add Commit becomes canonical. A Welcome delivery succeeds or fails
+independently and does not affect canonical group state.
 Consumed KeyPackage material for founding invitees cannot be restored on Welcome delivery failure; if a Welcome
 cannot be delivered, the founding creator MAY re-invite the unreachable member using a new Add commit against
 the now-canonical group with a fresh KeyPackage.
+
+The empty-obligation exception is limited to the epoch-0 creation and, when applicable, its immediately following
+founding Add Commit. Every subsequent Commit follows the normal publish-before-apply rule.
 
 ## Proposal-driven commits
 

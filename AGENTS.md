@@ -44,13 +44,13 @@ top-level file stays cross-surface only.
 - Component major versions are represented by component ids. A breaking version gets a new component id and document.
 - Component payloads are direct bytes for that component id. Do not add a generic Marmot envelope inside each component.
 - Keep transport data in transport components. Nostr routing belongs in `marmot.transport.nostr.routing.v1`.
-- Treat Nostr relays in the Nostr routing component as canonical signed routing state for Nostr-routed groups.
-- Keep app components in `app-components/`. Feature docs may require and reference them.
+- Treat Nostr relays in the Nostr routing component as canonical signed group state for Nostr-routed groups.
+- Keep app components in `app-components/`. Feature docs MAY require and reference them.
 - Transport docs own outer envelopes, delivery addressing, publish targets, fetch rules, and transport validation.
 - Protocol-core docs own required group flows and group-state transitions.
 - Feature docs own optional or user-visible flows and cross-reference the surfaces that implement them.
-- AppDataUpdate proposals may be inline or standalone. Inline is the default when the committer is authorized;
-  standalone MLS proposals are not the default non-admin request path for admin-gated component changes.
+- AppDataUpdate proposal forms and their default request path are defined in
+  [`app-components/README.md`](app-components/README.md) ("GroupContext Update Processing").
 
 ## Verification
 
@@ -58,15 +58,16 @@ After editing spec text, review matches from these commands from the repository 
 
 ```sh
 rg -n \
-  "the spec should|spec MUST|Spec-Defined|GroupEvent|\\bengine\\b|darkmatter" \
+  "Rust crate|database table|queue shape|retry worker|local API|test harness|\\bengine\\b|darkmatter" \
   .
 rg -n \
-  "PendingStateRef|drain_auto_publish|confirm_published|publish_failed" \
+  "CgkaEngine|PendingStateRef|drain_auto_publish|drain_auto_proposals|confirm_published|publish_failed" \
   .
 rg -n \
-  "relay hints|internal version|public registry" \
-  .
+  "Nostr kind|event id|relay URL|gift wrap|h tags?" \
+  protocol-core
 ```
 
-Matches in `implementation-model.md` may be intentional. Matches in principles, component dictionaries, or lifecycle
-docs usually need review.
+Matches in `AGENTS.md`, `layout.md`, `principles.md`, `implementation-model.md`, and explicit surface-boundary
+disclaimers may be intentional. Review every match; do not treat the exemption list as an instruction to ignore it.
+Matches in normative foundation, component, or lifecycle rules usually need closer review.

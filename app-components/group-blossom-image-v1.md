@@ -44,6 +44,11 @@ When an image is present:
 The component stores the cryptographic metadata clients need for a Blossom-backed image. It does not define the Blossom
 upload or download request flow, server selection, relay behavior, or CDN behavior.
 
+Server selection is intentionally an application-profile concern rather than component state. Two applications need a
+shared out-of-band Blossom service/discovery profile to exchange this image; Marmot v1 does not make independently
+chosen servers interoperable. A client with no configured way to locate `image_hash` treats the image as unavailable,
+without invalidating the component or its carrying commit.
+
 ## Image bytes
 
 The image is encrypted, content-addressed, and stored as one opaque blob. The component fields bind to that blob as
@@ -58,9 +63,10 @@ encrypted_blob = ChaCha20-Poly1305.encrypt(image_key, image_nonce, plaintext_ima
 
 The AAD bytes are exactly the concatenation shown: the ASCII version label `marmot-group-image-v1`, one `0x00`
 separator byte, and the canonical media type bytes, with no length prefixes. `media_type` is canonicalized with the
-algorithm in [encrypted-media.md](../features/encrypted-media.md) ("Media Type Canonicalization"); the producer stores
-the canonical form, and the AAD input on both ends is the canonical media type derived from the stored `media_type`
-field. The encrypted blob is the AEAD output, including the 16-byte authentication tag.
+frozen algorithm in [../features/encrypted-media-v1.md](../features/encrypted-media-v1.md) ("Media Type
+Canonicalization"); the producer stores the canonical form, and the AAD input on both ends is the canonical media type
+derived from the stored `media_type` field. The encrypted blob is the AEAD output, including the 16-byte authentication
+tag.
 
 A producer MUST generate a fresh random `image_key` and `image_nonce` for every new image and MUST NOT reuse a
 key-nonce pair.
@@ -77,6 +83,14 @@ the producer signs the Blossom upload authorization event with this key, so the 
 server-side write credential. Because the secret travels inside the MLS-protected component, any current member can
 sign later authorization events for the same blob. A producer MUST generate a fresh keypair for every new image and
 MUST NOT use an account identity key, so the blob store cannot link the blob to a Marmot account.
+
+This shared credential is an accepted v1 availability limitation. Any current member, and any former member that
+retained the secret, can issue whatever write or delete authorization the chosen Blossom server accepts for that key.
+The component's admin gate protects only updates to canonical group state; it cannot revoke an already-disclosed
+server-side capability. Deletion makes the referenced image unavailable but does not change or invalidate group state.
+An admin can restore availability only by uploading an image under a fresh `image_upload_key` and committing the full
+replacement component state. Servers with narrower or expiring authorization policies may reduce this risk, but those
+policies are outside Marmot v1.
 
 Blob upload and download are outside MLS group state. A fetch, hash-mismatch, or decryption failure is an
 application-level fetch failure: the image is unavailable, and the failure MUST NOT invalidate the component state or
@@ -97,6 +111,8 @@ Updating the image replaces every field. Clearing the image sends the empty stat
 ## Validation
 
 A non-empty image state is valid only if all cryptographic fields have their exact required lengths.
+Its `media_type` MUST be non-empty valid UTF-8, at most 128 bytes, and byte-equal to the canonical media type produced
+by the algorithm referenced under "Image bytes."
 
 Mixed partial states are invalid. For example, a state with `image_hash` set and `image_key` empty is invalid.
 
@@ -106,7 +122,12 @@ Only an active admin MAY send a standalone image update proposal.
 
 Only an active admin MAY commit an image update.
 
+Commit authorization, including removal authorization, follows the shared candidate-parent rule in
+[README.md](./README.md) ("Authorization Evaluation").
+
 ## Removal
+
+Only an active admin MAY commit removal of this component.
 
 Removal is equivalent to the empty image state for application rendering.
 

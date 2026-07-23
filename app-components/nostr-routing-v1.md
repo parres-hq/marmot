@@ -54,8 +54,10 @@ is never published only at the new address.
 After applying the commit, members use the new routing state for subsequent traffic.
 
 Members MUST continue to accept and fetch traffic at a prior routing address while any epoch that used it remains
-inside the retained app-payload window ([../protocol-core/retained-history.md](../protocol-core/retained-history.md)),
-and MUST be able to map more than one routing id to the same group during that window.
+inside either retained-history window: at or after the retained anchor for commits and proposals, or inside the retained
+app-payload window for application messages
+([../protocol-core/retained-history.md](../protocol-core/retained-history.md)). Members MUST be able to map more than one
+routing id to the same group until no epoch using the prior address remains in either retained-history window.
 
 A member catching up across a rotation uses its recorded routing-state history to fetch older epochs at their
 then-active addresses. A new joiner receives the current routing state in its Welcome and needs older addresses only
@@ -64,12 +66,32 @@ within the retained-history rules.
 A group MAY be reachable at more than one Nostr routing address over its lifetime. v1 state carries exactly one current
 `nostr_group_id`; a future component version MAY carry multiple concurrent routing ids.
 
+Routing rotation after a member removal is optional. The removed member already knows the routing id and relay list
+that were active before removal, so it can continue observing ciphertext metadata published at that address.
+
+When a group chooses to hide its replacement routing id from that member, it uses two accepted commits:
+
+1. a membership commit removes the member without changing `nostr_group_id` for this privacy purpose;
+2. after that removal is canonical, a later commit rotates `nostr_group_id` from the post-removal epoch.
+
+Changing membership and `nostr_group_id` in the same commit does not provide this property: the removed member can
+decrypt the removal commit under the source epoch and read its routing update. The later rotation commit is still
+published to the prior routing address under the publish rule above, but its Nostr group envelope uses the
+post-removal epoch key, so the removed member learns only that ciphertext was published at the address it already knew.
+This sequence does not require automatic rotation after every removal.
+
 ## Validation
+
+A one-relay list is valid. Producers SHOULD propose at least two independently operated relays when the deployment
+permits it, but relay diversity is an availability policy rather than a group-state validity condition. If every relay
+in the signed routing state is unavailable or censors a routing-change commit, this component provides no out-of-band
+recovery path; members have to regain delivery through that routing state or create another group.
 
 A Nostr routing state is valid if:
 
 - `nostr_group_id` is exactly 32 bytes
 - the relay list is not empty
+- the relay list contains at most 16 entries
 - every relay URL satisfies the Nostr relay URL profile in [../transports/nostr.md](../transports/nostr.md)
 - relay URLs are sorted lexicographically over the URL content bytes, per the default sort order in
   [../foundation/canonical-encoding.md](../foundation/canonical-encoding.md) ("Sorting and duplicates")
@@ -85,7 +107,12 @@ Only an active admin MAY send a standalone routing update proposal.
 Only an active admin MAY commit a routing update. This includes routing rotations: a `nostr_group_id` change is
 admin-gated like every other routing update.
 
+Commit authorization, including removal authorization, follows the shared candidate-parent rule in
+[README.md](./README.md) ("Authorization Evaluation").
+
 ## Removal
+
+Only an active admin MAY commit removal of this component.
 
 This component MUST NOT be removed while the group is Nostr-routed and lists it as required in GroupContext
 `app_components`. It MAY be removed only from a group that no longer routes over Nostr. If it is removed from a group

@@ -4,7 +4,7 @@ Status: adopted.
 
 This file maps the deprecated Marmot MIPs to this spec. It is a review aid, not a normative surface.
 
-The merged canonical MIP set currently lives on the old Marmot repo's `origin/master`. MIP-06 exists as branch draft
+The merged canonical MIP set currently lives on the old Marmot repo's `origin/master`. MIP-06 remains branch-draft
 work and is tracked here because it affects this spec's design.
 
 ## Deprecated MIPs
@@ -12,7 +12,9 @@ work and is tracked here because it affects this spec's design.
 - MIP-00, Credentials & Key Packages: Review and required.
   - Foundation: [foundation/identity.md](./foundation/identity.md) and
     [foundation/key-packages.md](./foundation/key-packages.md);
-    [foundation/account-identity-proof-v1.md](./foundation/account-identity-proof-v1.md) is new in this spec and breaking
+    [app-components/account-identity-proof-v2.md](./app-components/account-identity-proof-v2.md) is new in this spec and
+    breaking; [foundation/account-identity-proof-v1.md](./foundation/account-identity-proof-v1.md) records its
+    superseded predecessor
   - Transport binding: [transports/nostr.md](./transports/nostr.md)
   - Protocol flow: [protocol-core/joining.md](./protocol-core/joining.md)
 - MIP-01, Group Construction & Marmot Group Data Extension: Review and required.
@@ -27,15 +29,20 @@ work and is tracked here because it affects this spec's design.
   - Member departure: [protocol-core/member-departure.md](./protocol-core/member-departure.md)
   - Transport binding: [transports/nostr.md](./transports/nostr.md)
   - App payloads: [foundation/application-messages.md](./foundation/application-messages.md)
-- Encrypted Media V1: Review and required for new app groups.
+- MIP-04, Encrypted Media: Review and required for new app groups.
   - Feature flow: [features/encrypted-media.md](./features/encrypted-media.md)
-  - App component: [app-components/group-encrypted-media-v1.md](./app-components/group-encrypted-media-v1.md)
+  - Current app component: [app-components/group-encrypted-media-v2.md](./app-components/group-encrypted-media-v2.md)
+  - Frozen v1 behavior: [features/encrypted-media-v1.md](./features/encrypted-media-v1.md) and
+    [app-components/group-encrypted-media-v1.md](./app-components/group-encrypted-media-v1.md)
 - MIP-05, Push Notifications: Draft and optional.
   - Feature flow: [features/push-notifications.md](./features/push-notifications.md)
-- MIP-06, Multi-Device Support: branch draft and optional.
+- MIP-06, Multi-Device Support: Branch-draft and optional.
   - Feature flow: [features/multi-device.md](./features/multi-device.md)
+  - Commit authorization boundary: [protocol-core/group-messaging.md](./protocol-core/group-messaging.md)
+  - Join authorization component:
+    [app-components/multi-device-join-authorization-v1.md](./app-components/multi-device-join-authorization-v1.md)
   - Foundation: [foundation/identity.md](./foundation/identity.md)
-  - Protocol flow: [protocol-core/group-messaging.md](./protocol-core/group-messaging.md)
+  - Convergence: [protocol-core/convergence.md](./protocol-core/convergence.md)
 
 ## MIP-01 field split
 

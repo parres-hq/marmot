@@ -28,26 +28,20 @@ which peeled MLS bytes become canonical group state.
 
 Marmot app payloads use an unsigned Nostr event shape inside MLS.
 
-Common app payload kinds include:
-
-- kind `9` for chat text;
-- kind `7` for reactions;
-- kind `1200` for agent text stream starts;
-- kind `1201` for agent activity rows;
-- kind `1202` for agent operation rows;
-- kind `1210` for group system rows;
-- feature-specific app events such as push-notification token events.
+Marmot-defined app-payload kinds and their owning documents are listed in
+[../foundation/registries.md](../foundation/registries.md) ("Nostr event kinds used by Marmot").
 
 The inner app event has an `id` but no `sig`. The active transport binding owns the outer envelope and builds its routing tags — the tags that address, route, or expire it — from canonical group state, never from the inner app event (the Nostr binding's routing tags are defined in [../transports/nostr.md](../transports/nostr.md)). An inner tag therefore carries application content only: it never affects addressing, routing, expiry, or branch selection. The inner event's structural rules are in [../foundation/application-messages.md](../foundation/application-messages.md), "Encoding".
 
-Receivers validate that the inner app event `pubkey` matches the Marmot account identity authenticated by MLS.
+Receiver authentication follows [../foundation/application-messages.md](../foundation/application-messages.md)
+("Receiver authentication").
 Unsupported app-event kinds do not change group state unless the owning feature says otherwise.
 
 ## Commit authorization
 
-Admins can commit ordinary group-state changes.
+An active admin MAY commit a group-state change when its owning rule authorizes that admin.
 
-Non-admin members can commit only the narrow flows that the spec explicitly allows:
+Non-admin members MUST NOT commit anything except the narrow flows the spec explicitly allows:
 
 - a self-update Commit that updates only the sender's own LeafNode;
 - a dedicated SelfRemove-only Commit that processes valid pending SelfRemove proposals by reference.
@@ -56,7 +50,11 @@ Those two non-admin commit shapes MUST NOT be combined with each other or with o
 
 All other Commits from non-admins are invalid.
 
-Non-admin members can send standalone MLS proposals only where the spec explicitly allows them. In v1 protocol core,
+In particular, adopted v1 defines no non-admin `new_member_commit` External Commit path. The draft
+[multi-device feature](../features/multi-device.md) does not relax this rule. Its proposed External Commit flow remains
+non-normative unless a future adopted protocol-core revision explicitly authorizes that commit shape.
+
+Non-admin members MAY send standalone MLS proposals only where the spec explicitly allows them. In v1 protocol core,
 that proposal flow is SelfRemove. A request for an admin-gated group-state change is an application payload or
 feature-owned request flow, not a standalone MLS proposal.
 
@@ -78,7 +76,7 @@ evidence MUST NOT choose the winning branch, and digest ordering is only the fin
 
 When message retention is enabled, the active transport binding applies its own retention hint if it has one.
 
-When retention is disabled, callers cannot force retention data onto the group message envelope. The sender removes or
+When retention is disabled, a sender cannot force retention data onto the group message envelope. The sender removes or
 replaces retention data so the on-wire behavior is determined by group state.
 
 ## Migration notes
