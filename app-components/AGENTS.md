@@ -7,8 +7,8 @@ Agent operating rules for the app-component surface. Read [`README.md`](README.m
 ## Scope
 
 App components own the versioned MLS `app_data_dictionary` component bytes at GroupContext, LeafNode, KeyPackage, and
-GroupInfo locations. One component id per file. The rules here are mechanical and easy to get wrong, so treat this file
-as the checklist and the README as the model.
+GroupInfo locations, plus component-owned `AppEphemeral` and SafeAAD bytes. One component id per file. The rules here
+are mechanical and easy to get wrong, so treat this file as the checklist and the README as the model.
 
 ## Read order
 
@@ -32,6 +32,8 @@ as the checklist and the README as the model.
 - GroupContext components additionally define state bytes, AppDataUpdate bytes, proposal authorization, commit
   authorization, and removal. LeafNode, KeyPackage, and GroupInfo components change with their containing MLS object
   and MUST NOT define AppDataUpdate as their mutation mechanism.
+- Commit-scoped component data uses AppEphemeral. SafeAAD is reserved for component contributions to MLS
+  `authenticated_data`; do not enable it merely to attach data to one Commit.
 - Group-level component proposals and commits are admin-gated by default. A component MAY loosen this, but it MUST say
   so explicitly, against the admin set in `marmot.group.admin-policy.v1`.
 - Unknown non-required component entries MUST be preserved byte-for-byte; never parse, sort inside, partially copy, or

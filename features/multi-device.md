@@ -14,11 +14,11 @@ Marmot account identity is still the Nostr public key. Devices are separate MLS 
 This feature is still a draft. Its wire bytes are not yet normative and are subject to change before they become part
 of the interop surface.
 
-This draft does not create an exception to adopted v1 membership authorization. Under adopted v1, an External Commit
-shaped as below has no authorization exception and is invalid. Before this feature can become normative, it must define
-how an active admin in the candidate parent state authorizes the new device leaf; matching an existing account identity
-and possessing the draft Join PSK are not sufficient admin authorization. Requirement keywords in the remaining draft
-constrain the proposed design only.
+This draft does not yet create an adopted exception to v1 membership authorization. The proposed flow below carries an
+active-admin authorization proof as component-owned data in an `AppEphemeral` proposal. Until that component id, proof
+event kind, and exact proof bytes are defined and the flow becomes normative, an External Commit shaped this way
+remains invalid under adopted v1. Matching an existing account identity and possessing the draft Join PSK are not
+sufficient admin authorization. Requirement keywords in the remaining draft constrain the proposed design only.
 
 ## Surfaces
 
@@ -26,7 +26,9 @@ constrain the proposed design only.
 - MLS External Commit.
 - MLS extension `marmot.multi-device.v1` (`0xf2f0`) as the group-level signaling gate.
 - Optional LeafNode extension `marmot.encrypted-device-name.v1` (`0xf2ef`).
-- MLS authenticated data for the Nostr identity proof.
+- The required account identity proof on the joining LeafNode.
+- MLS `AppEphemeral` proposal type `0x0009` for the active-admin join authorization proof, under a future
+  multi-device authorization ComponentID.
 - Exporter: `MLS-Exporter("marmot", join_psk_id, KDF.Nh)`.
 - Future custom proposal candidate: `IdentityRemove`.
 
@@ -42,33 +44,51 @@ History synchronization is out of scope. A newly added device cannot decrypt epo
 External Commit behavior for multi-device support is active only when all signaling requirements are met:
 
 - `GroupContext.extensions` contains a valid `marmot.multi-device.v1` extension (`0xf2f0`);
-- `GroupContext.required_capabilities` requires `0xf2f0`;
-- every current non-blank leaf advertises `0xf2f0` in `LeafNode.capabilities.extensions`.
+- `GroupContext.required_capabilities` requires extension type `0xf2f0` and proposal type `app_ephemeral` (`0x0009`);
+- the GroupContext `app_components` list requires the future multi-device authorization ComponentID;
+- every current non-blank leaf advertises `0xf2f0` in `LeafNode.capabilities.extensions` and `0x0009` in
+  `LeafNode.capabilities.proposals`, and advertises the future authorization ComponentID in its `app_components`
+  entry.
 
 In the proposed flow, failure of any signaling check makes a `new_member_commit` External Commit invalid before any
 future admin-authorization check.
 
 ## External Commit authorization
 
-Subject to the missing admin authorization above, the proposed multi-device External Commit is valid only when:
+The proposed multi-device External Commit is valid only when:
 
 - the signaling gate is active;
+- the joining LeafNode carries the required valid Marmot account identity proof;
 - the joining LeafNode credential identity matches at least one existing group member's credential identity;
 - the Commit contains the required `ExternalInit` proposal;
 - the Commit contains exactly one MLS PreSharedKey proposal carrying the Marmot multi-device External PSK id;
-- the Commit contains no unrelated proposals;
-- `FramedContent.authenticated_data` contains a valid Nostr identity proof;
+- the Commit contains exactly one `AppEphemeral` proposal for the future multi-device authorization ComponentID;
+- the Commit contains no proposal other than that `ExternalInit`, PreSharedKey, and `AppEphemeral` proposal;
+- the `AppEphemeral` data contains a valid active-admin join authorization proof;
+- this flow contributes no data to `FramedContent.authenticated_data`, which follows any other independently
+  negotiated Marmot feature's rules and is zero-length when no such feature applies;
 - ordinary MLS External Commit validation succeeds.
 
-The Nostr identity proof is a signature over a canonical local-only Nostr event of kind `450`. The proof event is not
-published to relays. The challenge binds the account credential identity, the new MLS signature key, and the current
-GroupContext.
+These checks establish three different facts:
 
-Placeholder: the exact kind `450` challenge bytes — field layout, tag contents, and signing input — are not yet
-finalized and not yet normative.
+- the joining LeafNode account identity proof establishes which account owns the new MLS leaf signature key;
+- the `AppEphemeral` authorization proof establishes that an active admin authorized adding that exact leaf to this
+  group from the candidate parent state;
+- the Join PSK establishes that the new device received current, group-specific pairing material.
 
-For all Commits outside this multi-device join flow, `FramedContent.authenticated_data` stays empty unless another
-Marmot feature defines a non-empty value.
+The join authorization proof is a signature over a canonical local-only Nostr event. The proof event is not published
+to relays. Its signer MUST be an active admin in the candidate parent state, and its signed inputs MUST bind at least
+the candidate parent GroupContext, joining account identity, and new MLS leaf signature key. A same-account device that
+is not an active admin cannot authorize the membership change.
+
+The join authorization proof is a different authority class from the joining LeafNode's account identity proof and
+MUST NOT reuse that proof event kind or signing template. Placeholder: the exact authorization event kind, ComponentID,
+field layout, tag contents, freshness rule, and signing input are not yet assigned or finalized.
+
+This flow does not enable the GroupContext `safe_aad` component merely to carry its authorization proof.
+`AppEphemeral` gives the proof the required one-Commit lifetime without changing the framing of
+`FramedContent.authenticated_data`. If another feature independently enables SafeAAD, that feature still frames the
+entire field as SafeAAD; the multi-device flow contributes no SafeAAD item.
 
 ## Join PSK
 
@@ -151,15 +171,22 @@ needs identity-scoped behavior.
 A multi-device join is invalid if:
 
 - the group has not negotiated support for the multi-device gate;
-- the identity proof is missing or invalid;
-- the proof does not bind to the joining account identity;
+- the joining LeafNode account identity proof is missing or invalid;
 - the joining LeafNode credential identity does not match any existing group member's credential identity;
+- the multi-device authorization `AppEphemeral` proposal is missing, duplicated, uses the wrong ComponentID, or has
+  invalid data;
+- the authorization proof signer is not an active admin in the candidate parent state;
+- the authorization proof does not bind the candidate parent GroupContext, joining account identity, and new MLS leaf
+  signature key;
 - the external PSK id or PSK value is wrong for the current group context;
-- the Commit includes any proposal beyond the required ExternalInit and Marmot multi-device External PSK;
+- the Commit includes any proposal beyond the required ExternalInit, Marmot multi-device External PSK, and
+  multi-device authorization `AppEphemeral`;
+- `FramedContent.authenticated_data` contains a multi-device authorization proof or violates the rules of another
+  independently negotiated feature;
 - the External Commit fails normal MLS validation.
 
 ## Remaining work
 
-Before this feature becomes normative it needs exact identity-proof bytes, PSK derivation bytes, pairing payload bytes,
-the pairing-key lifetime decision above, parent-state admin authorization for adding the device leaf, capability rules,
-and legacy extension migration rules to replace the placeholders called out above.
+Before this feature becomes normative it needs an assigned multi-device authorization ComponentID and event kind, exact
+admin-authorization proof bytes, PSK derivation bytes, pairing payload bytes, the pairing-key lifetime decision above,
+capability rules, and legacy extension migration rules to replace the placeholders called out above.

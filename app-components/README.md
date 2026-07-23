@@ -90,9 +90,15 @@ Location also determines how the bytes change:
 - GroupContext component entries change through `AppDataUpdate`.
 - LeafNode component entries change only when a new or replacement LeafNode is created.
 - KeyPackage and GroupInfo component entries are set when their containing object is created.
+- Commit-scoped component data is carried by `AppEphemeral` and does not become persistent component state.
+- A component that contributes MLS additional authenticated data uses `SafeAAD` when the group has negotiated it.
 
 An `AppDataUpdate` targets only the GroupContext dictionary. It MUST NOT be used or reinterpreted as an update mechanism
 for a LeafNode, KeyPackage, or GroupInfo component.
+
+`AppEphemeral` and SafeAAD are not interchangeable. A value whose lifetime is exactly one Commit SHOULD use
+`AppEphemeral`. SafeAAD is for component-separated contributions to the MLS `authenticated_data` field and changes the
+framing of that entire field when enabled in the GroupContext.
 
 ## Negotiation
 
@@ -120,6 +126,7 @@ Each component document MUST define:
 - bytes and validation at each location
 - negotiation and presence requirements
 - the location-appropriate creation or update lifecycle
+- any `AppEphemeral` or SafeAAD bytes and processing rules owned by the component
 - authorization rules for every mutation the component permits
 - removal or replacement rules
 - migration rule

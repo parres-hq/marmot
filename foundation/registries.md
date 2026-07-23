@@ -33,12 +33,17 @@ these assignments, Marmot needs an explicit compatibility plan before changing w
 | ComponentID    | `0x0004` | `last_resort_key_package` | MLS extensions draft `ComponentID`  |
 | Extension type | `0x0006` | `app_data_dictionary`     | MLS extensions draft extension type |
 | Proposal type  | `0x0008` | `app_data_update`         | MLS extensions draft proposal type  |
+| Proposal type  | `0x0009` | `app_ephemeral`           | MLS extensions draft proposal type  |
 | Proposal type  | `0x000a` | `self_remove`             | MLS extensions draft proposal type  |
 
 These values match draft-ietf-mls-extensions-10. In that draft, an implementation that supports
 `app_data_dictionary` must understand and advertise `app_components` and must understand `safe_aad`. Last-resort
 KeyPackage marking is the empty-data `last_resort_key_package` application component in the KeyPackage
 `app_data_dictionary`, not an MLS extension type.
+
+`app_ephemeral` associates component-owned data with one Commit without changing persistent GroupContext state.
+`safe_aad` instead negotiates component-separated framing for the MLS `authenticated_data` field. They are distinct
+carriers and MUST NOT be treated as interchangeable merely because both use a `ComponentID`.
 
 ## Marmot custom MLS extension types
 
@@ -95,7 +100,7 @@ seal), kind `10002` (NIP-65 relay list), and kind `10050` (NIP-17 DM inbox relay
 | `447`   | Push token request                  | Marmot app payload                  | [push-notifications.md](../features/push-notifications.md) |
 | `448`   | Push token list response            | Marmot app payload                  | [push-notifications.md](../features/push-notifications.md) |
 | `449`   | Push token removal                  | Marmot app payload                  | [push-notifications.md](../features/push-notifications.md) |
-| `450`   | Multi-device identity proof event   | Local signing template, not relayed | [multi-device.md](../features/multi-device.md)          |
+| `450`   | Reserved account identity proof event | Local signing template, not relayed | [account-identity-proof-v1.md](account-identity-proof-v1.md) |
 | `1009`  | Message edit                        | Marmot app payload                  | [application-messages.md](application-messages.md)      |
 | `1200`  | Agent text stream start             | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
 | `1201`  | Agent activity                      | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
@@ -106,6 +111,11 @@ seal), kind `10002` (NIP-65 relay list), and kind `10050` (NIP-17 DM inbox relay
 The experimental agent text stream QUIC feature claims kind `1200` for durable stream start app events, kind `1201` for
 agent activity rows, and kind `1202` for agent operation rows. Live stream chunks are transient QUIC records. Future durable
 abort, media-final, or fallback preview app-event kinds MUST be added to this registry before use.
+
+Kind `450` is reserved for the event-signed successor to `marmot.account-identity-proof.v1`. The adopted v1 proof does
+not use a Nostr event, and no kind `450` tag or content shape is normative yet. Clients MUST NOT emit kind `450` until
+the successor component document defines it. A multi-device admin join authorization is a different authority class
+and MUST claim a different event kind.
 
 Kind `1210` is reserved for durable group system rows, such as membership, name, avatar, or other group-lifecycle
 notices that clients render separately from human chat.

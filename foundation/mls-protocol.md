@@ -66,10 +66,21 @@ appropriate only when the feature needs proposal semantics that a component upda
 `marmot.account-identity-proof.v1` is the required custom LeafNode extension used to authenticate Marmot account
 ownership of MLS leaf signature keys. New custom extensions MUST be registered in [registries.md](./registries.md).
 
-## Authenticated data and exporters
+## Commit-attached data, authenticated data, and exporters
+
+Application data or an authorization proof whose lifetime is exactly one Commit SHOULD use an `AppEphemeral` proposal
+rather than MLS `authenticated_data`. The owning component document MUST define the ComponentID, exact bytes,
+validation, and authorization rules. A group that permits such proposals MUST negotiate support for the registered
+`app_ephemeral` proposal type.
+
+`AppEphemeral` data is included in the Commit transcript but does not change persistent GroupContext state. It is not an
+`AppDataUpdate`, and it MUST NOT be retained as component state merely because a Commit carried it.
 
 Marmot documents that write MLS `authenticated_data` MUST own their byte contribution and define how it composes with
 other contributors.
+
+SafeAAD is appropriate when a feature genuinely needs to contribute to the MLS `authenticated_data` field. It SHOULD
+NOT be enabled solely to attach component-owned data to a Commit when `AppEphemeral` provides the required lifecycle.
 
 If the GroupContext dictionary contains the upstream `safe_aad` component, the entire `authenticated_data` field MUST
 be the draft-10 `SafeAAD` structure. No unframed prefix or suffix is permitted. A feature that enables `safe_aad` MUST
