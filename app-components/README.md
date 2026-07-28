@@ -117,6 +117,11 @@ new Marmot group MUST list it among the group's required proposal capabilities. 
 mutable GroupContext component state, including the required admin-policy component, so this requirement is not
 conditional on enabling a particular optional component.
 
+New groups also require `marmot.group.lifecycle.v1` (`0x800c`) with `active`
+state. Existing groups that predate that component remain valid without it and
+use the explicit enablement flow in
+[group-lifecycle-v1.md](./group-lifecycle-v1.md).
+
 ## Common Rules
 
 All state and update payloads use the Marmot binary profile unless a component says otherwise.

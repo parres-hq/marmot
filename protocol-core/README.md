@@ -66,6 +66,8 @@ find compatible KeyPackage
 - [group-messaging.md](./group-messaging.md) - proposals, commits, and MLS application messages.
 - [member-departure.md](./member-departure.md) - SelfRemove and member departure rules.
 - [group-state.md](./group-state.md) - the per-group lifecycle states and legal transitions.
+- [../app-components/group-lifecycle-v1.md](../app-components/group-lifecycle-v1.md) - authenticated terminal group
+  disbanding and legacy-group enablement.
 - [publish-lifecycle.md](./publish-lifecycle.md) - publish-before-apply for local group-state changes.
 - [inbound-processing.md](./inbound-processing.md) - how incoming bytes are stored, classified, and retried.
 - [convergence.md](./convergence.md) - how candidate branches are built, scored, selected, and applied.

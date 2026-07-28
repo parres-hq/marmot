@@ -134,6 +134,11 @@ match is not an authorization failure and cannot reject the Commit. The Commit c
 parent when all checks succeed. A candidate edge whose resulting state fails Marmot component invariants MUST NOT be
 created, so convergence can never select that invalid transition.
 
+A valid Commit that changes `marmot.group.lifecycle.v1` to `disbanded` is
+always admitted through a bounded convergence pass, even when it would
+otherwise be a linear edge. This mandatory pass is a terminalization boundary,
+not a new branch-scoring rule.
+
 If no retained state passes the Commit's parent-dependent MLS authentication, the Commit remains deferred while its
 authenticated source epoch is inside or ahead of the rollback horizon. Once authentication identifies its candidate
 parent, a failed authorization check is terminal `authorization_failed`. An implementation MUST NOT infer terminal
@@ -329,6 +334,12 @@ The client then assigns dispositions (the disposition vocabulary is pinned in
 Applying the selected branch also produces application-visible state notifications for changes the application MAY need
 to render or act on. Examples include epoch advancement, member additions, member removals, app component changes,
 branch recovery, and app payload invalidation.
+
+When the selected branch ends in `disbanded`, the client emits exactly one
+actor-attributed `group_disbanded` notification and suppresses presentation
+notifications for the member/admin removals carried by that same Commit. The
+client then releases live MLS and convergence state. Later branches cannot
+supersede a terminalized disband copy.
 
 State notifications are derived only from accepted commits on the selected branch and the canonical resulting state
 they produce. A state notification derived from a commit is attributed to that commit's `commit_digest` (the same

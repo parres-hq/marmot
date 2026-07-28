@@ -129,7 +129,8 @@ when the target arrives, or drop it. Either choice is acceptable.
 ## Group system events (kind 1210)
 
 Kind `1210` is a durable group system row: a record of an authenticated change to group state — a member added,
-removed, or left; an admin granted or revoked; the group renamed; the group avatar changed. These rows are not chat.
+removed, or left; an admin granted or revoked; the group renamed; the group avatar changed; or the group disbanded.
+These rows are not chat.
 A client MUST render them separately from kind `9` chat bubbles and MUST NOT treat their `content` as a chat body.
 
 A kind `1210` row is **synthesized locally** from canonical group state, not sent as a message. When a client applies a
@@ -154,12 +155,17 @@ The `content` is JSON:
 
 - `v` is the schema version (`1`).
 - `system_type` names the change. Defined values: `member_added`, `member_removed`, `member_left`, `admin_added`,
-  `admin_removed`, `group_renamed`, `group_avatar_changed`.
+  `admin_removed`, `group_renamed`, `group_avatar_changed`, `group_disbanded`.
 - `text` is a human-readable fallback only. Clients SHOULD render from `system_type` plus `data` so the row can be
   localized and re-resolved as display names change.
 - `data` carries structured fields: `actor` (hex pubkey of the committing member, when attributable), `subject` (hex
   pubkey of the member the change concerns, for the member/admin types), and `name` (the new group name, for
   `group_renamed`).
+
+`group_disbanded` carries the authenticated committer in `actor` and no
+`subject`. It is the only presentation row synthesized for the terminal
+Commit; the Commit's coupled member/admin removals do not produce additional
+kind `1210` rows.
 
 The event SHOULD carry a `["system", system_type]` tag. A row is anchored to the epoch the change reached, so it sorts
 into history at the point the change took effect.
