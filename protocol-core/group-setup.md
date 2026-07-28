@@ -34,6 +34,11 @@ selected by the feature set. The GroupContext `app_components` list MUST require
 selected feature set, including any required component whose data appears only in member LeafNodes rather than in the
 GroupContext dictionary.
 
+Newly created groups MUST also require component id `0x800c` and contain
+`marmot.group.lifecycle.v1 = active`. Groups created before adoption of that
+component remain valid without it and cannot disband until an active admin
+completes its explicit negotiated enablement.
+
 The account-proof and admin-policy requirements are lifetime invariants, not creation defaults. Every resulting epoch
 MUST require component ids `0x8009` and `0x8003` in the GroupContext `app_components` list, every member leaf MUST
 advertise and carry a valid `0x8009` proof, and the GroupContext MUST retain the `marmot.group.admin-policy.v1` entry.

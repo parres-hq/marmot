@@ -128,6 +128,13 @@ Marmot group. An AppDataUpdate `remove` operation targeting this component is in
 active admin, is authorized to commit one. Deleting or abandoning a local group is not a component removal and does not
 require a group-state commit.
 
+The terminal disband Commit defined by
+[group-lifecycle-v1.md](./group-lifecycle-v1.md) is the only coupled operation
+that may remove every other admin/member at once. Its resulting admin list MUST
+contain exactly the authenticated committer's account so the final mechanical
+MLS state still satisfies the nonempty-admin and admin/leaf invariants before
+live MLS state is deleted.
+
 If every active admin loses access to all of its signing devices or keys, v1 has no in-band succession, override, or
 automatic-promotion mechanism. The group remains cryptographically valid, and ordinary application messages and
 non-admin SelfRemove may continue, but admin-gated membership and settings changes are permanently frozen. Members must

@@ -106,6 +106,7 @@ State notifications include events such as:
 - member added or removed, including the local member's own removal (see
   [member-departure.md](./member-departure.md), "Realizing removal");
 - component state changed;
+- group disbanded by an authenticated admin;
 - branch recovered;
 - app payload invalidated because its MLS application message belonged only to a losing branch;
 - group-state change invalidated because the commit it was derived from was superseded by branch selection.
@@ -120,6 +121,9 @@ State notifications track the selected canonical branch. When convergence supers
 applied, the client MUST emit a group-state-change invalidation naming the superseded commit, and state notifications
 attributed to that commit are withdrawn from application output (see [convergence.md](./convergence.md), "Applying the
 selected branch"), so the application never keeps rendering a group-state change that the canonical state contradicts.
+
+The selected disband notification is terminal and is not withdrawn: after
+terminalization the local copy no longer participates in convergence.
 
 ## Delivered app payloads
 

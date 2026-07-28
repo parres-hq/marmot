@@ -117,6 +117,11 @@ new Marmot group MUST list it among the group's required proposal capabilities. 
 mutable GroupContext component state, including the required admin-policy component, so this requirement is not
 conditional on enabling a particular optional component.
 
+New groups also require `marmot.group.lifecycle.v1` (`0x800c`) with `active`
+state. Existing groups that predate that component remain valid without it and
+use the explicit enablement flow in
+[group-lifecycle-v1.md](./group-lifecycle-v1.md).
+
 ## Common Rules
 
 All state and update payloads use the Marmot binary profile unless a component says otherwise.
@@ -247,6 +252,7 @@ The currently adopted persistent GroupContext components are:
 - [marmot.group.message-retention.v1](./message-retention-v1.md)
 - [marmot.group.avatar-url.v1](./group-avatar-url-v1.md)
 - [marmot.group.encrypted-media.v2](./group-encrypted-media-v2.md)
+- [marmot.group.lifecycle.v1](./group-lifecycle-v1.md)
 
 The following persistent GroupContext component is experimental and is not required for baseline Marmot conformance:
 
