@@ -252,6 +252,7 @@ The currently adopted persistent GroupContext components are:
 - [marmot.group.message-retention.v1](./message-retention-v1.md)
 - [marmot.group.avatar-url.v1](./group-avatar-url-v1.md)
 - [marmot.group.encrypted-media.v2](./group-encrypted-media-v2.md)
+- [marmot.group.lifecycle.v1](./group-lifecycle-v1.md)
 
 The following persistent GroupContext component is experimental and is not required for baseline Marmot conformance:
 

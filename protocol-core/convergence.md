@@ -67,6 +67,11 @@ divergent edge becomes available before that cutoff, the same pass changes the g
 `Recovering`. It MUST NOT restart either timer, resnapshot `pass_base_epoch`, or briefly apply the formerly linear edge
 as canonical state.
 
+A valid candidate edge that changes `marmot.group.lifecycle.v1` to `disbanded` also changes the lifecycle from `Stable`
+to `Recovering` when it is admitted, even when it is a linear edge and no divergent edge exists. This forced transition
+does not assert that the candidate set is forked, restart either timer, resnapshot `pass_base_epoch`, or give the
+disband candidate special branch-scoring priority.
+
 The absolute pass deadline starts when the pass starts and MUST NOT restart. A client closes the pass at the earlier of:
 
 1. `settlement_quiescence_ms` elapsing without selection-relevant input; or
@@ -108,10 +113,13 @@ divergent edge then provide at least two candidate branches from a shared `fork_
 `Recovering` and open a bounded convergence pass before convergence selects and applies a branch.
 
 A valid Commit that advances the current canonical tip, with no divergent eligible edge, is linear advancement and does
-not by itself enter `Recovering`; it still follows the bounded-pass apply timing above. A Commit with an unavailable
-parent remains deferred and does not trigger recovery until replay against retained state produces a valid divergent
-edge. Invalid, stale, duplicate, or outside-horizon input does not trigger recovery. Fork detection derives parentage
-from validated MLS bytes and retained states, never from transport metadata.
+not by itself enter `Recovering`; it still follows the bounded-pass apply timing above. The exception is a valid
+Commit that changes `marmot.group.lifecycle.v1` to `disbanded`: admission of that candidate forces
+`Stable -> Recovering` so terminalization can occur only after selection, whether or not a divergent edge exists. A
+Commit with an unavailable parent remains deferred and does not trigger recovery until replay against retained state
+produces a valid divergent edge or validates it as the disband exception. Invalid, stale, duplicate, or outside-horizon
+input does not trigger recovery. Fork detection derives parentage from validated MLS bytes and retained states, never
+from transport metadata.
 
 ## Candidate branches
 
@@ -338,8 +346,10 @@ branch recovery, and app payload invalidation.
 When the selected branch ends in `disbanded`, the client emits exactly one
 actor-attributed `group_disbanded` notification and suppresses presentation
 notifications for the member/admin removals carried by that same Commit. The
-client then releases live MLS and convergence state. Later branches cannot
-supersede a terminalized disband copy.
+leaf-scoped removal outcome and self-removal realization still apply for each
+local leaf removed by the Commit, but they do not produce another presentation
+row. The client then releases live MLS and convergence state. Later branches
+cannot supersede a terminalized disband copy.
 
 State notifications are derived only from accepted commits on the selected branch and the canonical resulting state
 they produce. A state notification derived from a commit is attributed to that commit's `commit_digest` (the same

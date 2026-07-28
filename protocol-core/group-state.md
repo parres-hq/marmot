@@ -13,7 +13,8 @@ The group lifecycle has six states:
 - `PendingPublish`: the client has prepared a local group-state commit, but has not confirmed that the required bytes
   were published.
 - `Merging`: publication was confirmed, and the client is applying the staged commit to its local canonical state.
-- `Recovering`: the client detected a fork-shaped conflict and is trying to select a safe branch from retained state.
+- `Recovering`: the client is selecting a safe branch from retained state after detecting a fork-shaped conflict or
+  admitting a valid disband candidate that requires terminal convergence.
 - `Unrecoverable`: the client cannot safely select a branch from its retained local material.
 - `Disbanded`: an authenticated disband Commit was selected by a bounded convergence pass. The group is terminal,
   read-only, and cannot resume or rejoin under the same group id.
@@ -61,7 +62,7 @@ PendingPublish
 Merging
   -> Stable              staged commit applied
 Stable
-  -> Recovering          fork detected and retained recovery is required
+  -> Recovering          fork detected, or valid disband candidate admitted
 Stable
   -> Unrecoverable       required retained state is permanently missing or corrupt
 Recovering
@@ -77,12 +78,17 @@ Disbanded
 ```
 
 Fork detection runs only from `Stable`, against settled canonical state, using the operational rule in
-[convergence.md](./convergence.md) ("Fork detection"). Linear advancement does not enter `Recovering`. There is no
-`Merging -> Recovering` edge: a competing branch observed while the client is applying its own confirmed commit is
-retained, the merge completes to `Stable`, and fork detection then runs from `Stable`. `Recovering` re-entry is implicit:
+[convergence.md](./convergence.md) ("Fork detection"). Ordinary linear advancement does not enter `Recovering`. A valid
+Commit that changes `marmot.group.lifecycle.v1` to `disbanded` is the exception: admitting that candidate into its
+mandatory bounded pass changes `Stable -> Recovering` even when no divergent edge exists. This exception does not
+classify the candidate set as forked or change branch scoring.
+
+There is no `Merging -> Recovering` edge: a competing branch or locally published disband Commit observed while the
+client is applying its own confirmed commit is retained, the merge completes to `Stable`, and admission into the
+bounded pass then triggers the applicable `Stable -> Recovering` rule. `Recovering` re-entry is implicit:
 convergence-relevant input that arrives while the group is already in `Recovering` and before the bounded pass cutoff is
 folded into that recovery pass. Input retained after the cutoff belongs to a later pass. The group stays in `Recovering`
-until a branch is selected and applied (`-> Stable`) or no safe branch exists (`-> Unrecoverable`).
+until a branch is selected and applied (`-> Stable` or `-> Disbanded`) or no safe branch exists (`-> Unrecoverable`).
 
 The direct `Stable -> Unrecoverable` transition applies when normal linear processing discovers that required retained
 history or authenticated state inside the rollback horizon is permanently unavailable or corrupt and no defined
@@ -155,11 +161,12 @@ is the `Unrecoverable` condition: when recovery has no safe branch and no repair
 `Unrecoverable`. `PendingPublish` and `Merging` are local-publish states, not convergence passes, so convergence status
 is not meaningful while the group is in them.
 
-A disband Commit is the exception to ordinary linear advancement: even without
-a detected fork it opens a bounded convergence pass before the application
-observes `Disbanded`. Publication may pass internally through `Merging` and
-`Stable`, but terminal application occurs only through
-`Recovering -> Disbanded`.
+A disband Commit is the exception to ordinary linear advancement. When a valid
+disband candidate is admitted from `Stable`, the client enters `Recovering`
+even without a detected fork and runs the mandatory bounded convergence pass.
+Publication may pass internally through `Merging` and `Stable`, but terminal
+application occurs only through `Recovering -> Disbanded`. Selection of an
+active branch instead returns the lifecycle to `Stable`.
 
 ## Local actions during convergence
 

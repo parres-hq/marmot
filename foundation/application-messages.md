@@ -167,6 +167,26 @@ The `content` is JSON:
 Commit; the Commit's coupled member/admin removals do not produce additional
 kind `1210` rows.
 
+A complete unsigned kind `1210` Marmot app event for `group_disbanded` is:
+
+```json
+{
+  "id": "126e47076e4d0a75ed260b279c33ed433acd764fc80e2de2e0315a64116d1f52",
+  "pubkey": "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+  "created_at": 1700000000,
+  "kind": 1210,
+  "tags": [["system", "group_disbanded"]],
+  "content": "{\"v\":1,\"system_type\":\"group_disbanded\",\"text\":\"Group disbanded\",\"data\":{\"actor\":\"79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798\"}}"
+}
+```
+
+The `id` above is the lowercase-hex SHA-256 of these exact canonical
+Nostr-event preimage bytes:
+
+```text
+[0,"79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",1700000000,1210,[["system","group_disbanded"]],"{\"v\":1,\"system_type\":\"group_disbanded\",\"text\":\"Group disbanded\",\"data\":{\"actor\":\"79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798\"}}"]
+```
+
 The event SHOULD carry a `["system", system_type]` tag. A row is anchored to the epoch the change reached, so it sorts
 into history at the point the change took effect.
 

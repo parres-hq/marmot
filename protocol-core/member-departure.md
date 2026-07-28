@@ -131,10 +131,14 @@ A removed group copy is retained inactive, not deleted. The removed member:
 - MAY retain previously delivered content and group history for local display;
 - MAY discard the local group copy at any time.
 
-When the removing Commit is a selected disband Commit, the group-level
-`Disbanded` state takes presentation precedence over leaf departure. The client
-records its leaf-scoped membership outcome but emits the single
-`group_disbanded` row instead of a separate member-removal row.
+When a selected disband Commit removes the local leaf, the client MUST still
+complete the leaf-scoped realization above: it records the membership outcome,
+retains its authenticated evidence, and emits the `self-removed` state
+notification. The group-level `Disbanded` state takes presentation precedence,
+so that notification MUST NOT synthesize a separate member-removal row. The
+single `group_disbanded` row is the only presentation row for the Commit.
+Suppressing the duplicate row MUST NOT discard the local membership outcome or
+its evidence.
 
 The removed condition is terminal for that local leaf. The client does not retain old epoch secrets or run convergence
 in order to resurrect it if continuing members later select another branch. Rejoining requires explicitly discarding

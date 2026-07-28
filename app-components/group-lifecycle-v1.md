@@ -75,10 +75,13 @@ Commit with no Remove proposals.
 
 ## Convergence and realization
 
-A valid disband Commit is never terminalized by the direct linear-apply seam.
-After publication, or after inbound validation, the client retains it as
-candidate material and opens a bounded convergence pass. Normal branch
-selection applies; disband receives no special ordering priority.
+A valid disband Commit is never terminalized through ordinary linear
+advancement. After publication, or after inbound validation, the client retains
+it as candidate material and opens a bounded convergence pass. Admission of the
+valid disband candidate changes the lifecycle from `Stable` to `Recovering`
+even when no divergent edge exists. This forced transition does not assert that
+a fork exists and does not change normal branch selection; disband receives no
+special ordering priority.
 
 While a local irreversible disband request is unresolved, the client holds a
 durable `Disbanding` gate. `Disbanding` is not a canonical lifecycle state. It
