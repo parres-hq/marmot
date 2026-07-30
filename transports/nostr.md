@@ -156,8 +156,20 @@ with the rule in [../protocol-core/group-state.md](../protocol-core/group-state.
 `PendingPublish` or `Merging`: trial decryption only recovers bytes for convergence to judge, and the inbound message is
 not applied while the group is in those states.
 
-If no retained candidate key authenticates the content, the event is undecryptable transport input and is retained or
-dropped under the inbound-processing rules, not applied to group state.
+If no retained candidate key authenticates the content, the event is undecryptable transport input and is not applied
+to group state. A retained event has the `transport_deferred` availability category. The client MUST retry it after a
+canonical epoch change, retained-candidate change, staged-state change, or verified repair changes the candidate key
+set; it MAY suppress repeated attempts while that set is unchanged.
+
+If a local resource limit prevents retention or retires the event after a bounded number of attempts, the event has
+the `resource_refused` availability category. The client MUST NOT record that event id as terminally seen or
+permanently unreadable, and the same event id remains eligible when later delivered or fetched.
+
+A subscription or backfill range containing a resource-refused event is not synchronized merely because the relay
+reported end-of-stored-events or the client advanced a local cursor. After capacity becomes available, the client MUST
+give the refused event another delivery opportunity by refetching an overlapping range or by an equivalent
+transport-specific recovery mechanism. Deferred or refused events MUST NOT block unrelated valid input from being
+processed and MUST NOT choose canonical group state.
 
 The public routing id and required fresh ephemeral event key do not provide a member-authenticated prefilter for kind
 `445`; a non-member can submit envelopes that reach trial decryption. Relay admission controls and client-side input,

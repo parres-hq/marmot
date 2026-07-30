@@ -7,6 +7,31 @@ Convergence chooses one canonical branch from unordered group input.
 Commits are the consensus log. MLS application messages can witness that members used a branch, but they do not create
 epochs and they do not replace MLS commit validation.
 
+## Guarantees and assumptions
+
+Convergence has separate safety and liveness guarantees.
+
+For safety, clients that start from the same retained anchor, use the same convergence policy, and resolve the same
+frozen authenticated input batch with the same retained dependencies MUST select the same canonical branch and assign
+the same convergence dispositions. Transport arrival order, local scheduling, and device speed do not weaken this
+requirement.
+
+For liveness across more than one pass, the relevant input must eventually close. Relevant input is closed for a group
+when there is a finite set of valid selection-relevant input and authenticated dependencies, no later valid input can
+extend or change that set, and every compared client has acquired the same set while it remains inside the applicable
+retention and rollback horizons. Given that closure, clients using the same convergence policy that continue executing,
+retain the required state, revisit deferred work, and have sufficient local resources MUST eventually reach equivalent
+canonical protocol state as defined in
+[../foundation/conformance.md](../foundation/conformance.md).
+
+This liveness guarantee does not apply during permanent delivery suppression, an unbounded stream of valid
+selection-relevant input, loss beyond the retained-history limits, incompatible convergence policies, or local resource
+exhaustion. A client affected by one of those conditions still follows the fail-closed safety rules below.
+
+`Settled` is a local fixed point over the protocol input currently retained and admitted by that client. It is not
+global finality, proof that every transport has finished synchronization, or a promise that later valid input cannot
+open another pass.
+
 ## Convergence policy
 
 The convergence policy tells clients how to run convergence. The v1 convergence policy is a set of protocol constants:
@@ -94,6 +119,11 @@ as required below. Input retained after the cutoff is not discarded; it belongs 
 controls scheduling and batch membership only. Input arrival time, cutoff time, and pass membership MUST NOT enter
 candidate validity or the branch score.
 
+After relevant input closes under the assumptions above, dividing that same retained input across different bounded
+passes MUST NOT change the eventual canonical result. Input excluded by one cutoff remains eligible for a later pass
+until the protocol assigns it a terminal disposition. Implementations MUST NOT use timer tuning or pass partitioning to
+resolve a difference that the deterministic selection rules leave open.
+
 After a bounded pass settles in `Stable`, the client MUST give one already-queued, admin-authorized local group-state
 intent one preparation attempt against the selected canonical state before it begins another convergence pass solely
 because more inbound input is queued. Inbound input remains durably retained during that attempt. If the attempt cannot
@@ -101,9 +131,15 @@ proceed with currently available authorization, prerequisites, or signing capabi
 than waiting indefinitely. A prepared Commit then follows the normal publication and convergence rules; this scheduling
 guarantee does not make it valid, accepted, or canonical.
 
+The preparation opportunity is bounded anti-starvation behavior, not an unconditional administrative-progress
+guarantee. Marmot does not guarantee that a privileged transition becomes canonical while valid selection-relevant
+input, including ordinary self-updates, continues without bound.
+
 Convergence parameters are deliberately not group-tunable: a bad policy choice can fork a group. A future protocol
 version that changes convergence behavior MUST ship the new policy as a new app component behind a required capability.
-Until such a component exists, there is no mechanism to change the active policy.
+This includes changes to eligibility, retention horizons, comparison order, witness scoring, admissible input, or any
+other rule that can change the selected branch. Clients MUST NOT infer the active policy from software version. Until
+such a component exists, there is no mechanism to change the active policy.
 
 ## Fork detection
 

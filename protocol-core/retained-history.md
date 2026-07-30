@@ -77,6 +77,11 @@ An MLS application message outside the retained app-payload window MUST expire (
 An MLS application message for a future candidate epoch MAY remain deferred until convergence selects a branch that can
 decrypt its Marmot app payload or until the message expires.
 
+The retained app-payload window is not a complete offline-message-history guarantee. A client that returns after more
+than `app_payload_past_epoch_limit` canonical epoch advances can conformantly lose application payloads from older
+epochs even when their transport objects remain available. Applications that require complete long-term history need a
+separate protocol mechanism; transport retention alone does not extend the MLS decryption window.
+
 ## Pruning
 
 After convergence reaches a settled selected branch, a client SHOULD prune retained states older than the group's

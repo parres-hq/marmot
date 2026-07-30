@@ -166,12 +166,13 @@ is the `context`, and the third is the output length in bytes.
 The `label` and `context` pair is the top-level domain separator. Owning documents define any additional key context
 used below the exporter output.
 
-| Label      | Context                    | Length   | Consumer                              |
-| ---------- | -------------------------- | -------- | ------------------------------------- |
-| `"marmot"` | `"group-event"`            | `32`     | kind `445` outer encryption key       |
-| `"marmot"` | `"encrypted-media"`        | `32`     | encrypted-media per-file key schedule |
-| `"marmot"` | `"agent-text-stream-quic"` | `32`     | agent text stream QUIC record crypto  |
-| `"marmot"` | `join_psk_id`              | `KDF.Nh` | multi-device external PSK material    |
+| Label      | Context                        | Length   | Consumer                               |
+| ---------- | ------------------------------ | -------- | -------------------------------------- |
+| `"marmot"` | `"group-event"`                | `32`     | kind `445` outer encryption key        |
+| `"marmot"` | `"encrypted-media"`            | `32`     | encrypted-media per-file key schedule  |
+| `"marmot"` | `"agent-text-stream-quic"`     | `32`     | agent text stream QUIC record crypto   |
+| `"marmot"` | `"convergence-conformance-v1"` | `32`     | synthetic conformance state commitment |
+| `"marmot"` | `join_psk_id`                  | `KDF.Nh` | multi-device external PSK material     |
 
 Fixed `32`-byte outputs are used where the owning document feeds a 32-byte AEAD key or feature key schedule.
 `KDF.Nh` is used for the multi-device join PSK because that output is external PSK material for the MLS ciphersuite KDF.
