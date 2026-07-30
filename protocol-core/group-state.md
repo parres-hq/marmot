@@ -141,25 +141,30 @@ Convergence has a separate derived status:
   retained in that batch. It does not wait for fetches or admit later input; unresolved children remain deferred to a
   later pass.
 - `Settled`: candidate processing reached a fixed point and the selected branch, if any, has been applied.
-- `Blocked`: candidate processing cannot safely continue without a repair path or missing retained material.
+- `Blocked`: candidate processing cannot safely continue without a repair path, missing retained material, or sufficient
+  local resources to finish the immutable admitted batch.
 
 Convergence status is derived from stored input and policy. It is not a claim made by the transport.
+`Settled` is therefore local to the input retained and admitted by the client. Transport synchronization is a separate
+availability condition and MUST NOT be inferred from `Settled`.
 
 The lifecycle state is authoritative; convergence status is a derived view of how convergence is progressing within it.
 The legal combinations are:
 
-| Convergence status | Lifecycle states it can appear in | Notes                                                                 |
-| ------------------ | --------------------------------- | --------------------------------------------------------------------- |
-| `Syncing`          | `Stable`, `Recovering`            | bounded pass still collecting selection-relevant input                |
-| `Resolving`        | `Stable`, `Recovering`            | frozen-batch fixed-point work; no waiting or new input                |
-| `Settled`          | `Stable`, `Disbanded`             | fixed point reached and any selected branch applied                   |
-| `Blocked`          | `Recovering`, `Unrecoverable`     | needs a repair path or missing retained material                      |
+| Convergence status | Lifecycle states it can appear in       | Notes                                                          |
+| ------------------ | --------------------------------------- | -------------------------------------------------------------- |
+| `Syncing`          | `Stable`, `Recovering`                  | bounded pass still collecting selection-relevant input         |
+| `Resolving`        | `Stable`, `Recovering`                  | frozen-batch fixed-point work; no waiting or new input         |
+| `Settled`          | `Stable`, `Disbanded`                   | fixed point reached and any selected branch applied            |
+| `Blocked`          | `Stable`, `Recovering`, `Unrecoverable` | needs retained material, a repair path, or local resources     |
 
 Two couplings follow from this table. A group leaves `Recovering` for `Stable` only after convergence reaches
-`Settled` (a selected branch was applied). A `Blocked` convergence status that cannot be cleared by retained material
-is the `Unrecoverable` condition: when recovery has no safe branch and no repair path, the lifecycle moves to
-`Unrecoverable`. `PendingPublish` and `Merging` are local-publish states, not convergence passes, so convergence status
-is not meaningful while the group is in them.
+`Settled` (a selected branch was applied). A resource-caused `Blocked` status does not by itself change the lifecycle:
+the immutable admitted batch remains unapplied and processing resumes when sufficient resources become available. Only
+a `Blocked` status caused by required retained state that is permanently missing or corrupt is the `Unrecoverable`
+condition: when recovery has no safe branch and no repair path, the lifecycle moves to `Unrecoverable`.
+`PendingPublish` and `Merging` are local-publish states, not convergence passes, so convergence status is not meaningful
+while the group is in them.
 
 A disband Commit is the exception to ordinary linear advancement. When a valid
 disband candidate is admitted from `Stable`, the client enters `Recovering`

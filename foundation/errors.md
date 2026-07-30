@@ -20,6 +20,10 @@ An input that does not produce application content SHOULD map to one of these ca
 - `unsupported_required_feature`: the group requires a feature the client does not understand.
 - `authorization_failed`: the sender or committer is not allowed to make the change.
 - `missing_history`: the client would need retained state it no longer has.
+- `transport_deferred`: the transport object cannot currently be decoded or decrypted, but a later transport
+  decryption context could make it recoverable.
+- `resource_refused`: a local resource bound prevented the client from retaining or processing an otherwise
+  unclassified transport object.
 - `transport_rejected`: an outbound publication or delivery attempt failed at the transport layer. This category does
   not describe inbound bytes that were never received.
 
@@ -62,9 +66,15 @@ branch-independent gate. A retained state that does not authenticate the Commit 
 If no retained state passes parent-dependent MLS authentication, the Commit remains deferred while its source epoch is
 inside or ahead of the rollback horizon. Once authentication identifies the candidate parent, failed authorization is
 terminal `authorization_failed` and receives no convergence disposition.
-`transport_rejected` is an outbound transport outcome, not an inbound or convergence disposition. Every received
-inbound input therefore has exactly one current outcome: a convergence disposition when convergence classifies it,
-otherwise an inbound rejection category. A convergence disposition is a live classification, not an immutable
+`transport_deferred` and `resource_refused` are pre-convergence availability categories, not convergence dispositions.
+They describe a transport object whose inner Marmot protocol input has not yet been recovered or admitted. A client
+MUST NOT label such an object `stale`, `invalid_encoding`, or a terminal `duplicate` merely because its current
+decryption context or local resource budget was insufficient.
+
+`transport_rejected` is an outbound transport outcome, not an inbound or convergence disposition. Every recovered
+inbound protocol input therefore has exactly one current outcome: a convergence disposition when convergence
+classifies it, otherwise an inbound rejection category. A transport object that has not yielded protocol input has one
+current availability category instead. A convergence disposition is a live classification, not an immutable
 processing-history label. It MAY change when missing state arrives or a later pass selects a different canonical
 branch; at every point the input still has only one current disposition.
 
@@ -74,6 +84,10 @@ document said an input was dropped, this vocabulary says `stale`.
 
 A disposition says what happened to an input. The categories above say why. A `stale` or `deferred` input SHOULD carry
 a category, such as `duplicate` or `stale_epoch`.
+
+`resource_refused` is also the stable category when a client abandons retained transport work after reaching a local
+retry or storage threshold. The same transport object remains eligible if it is delivered or fetched again; the
+threshold does not prove that the object is permanently unreadable.
 
 ## Named convergence outcomes
 

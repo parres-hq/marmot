@@ -18,6 +18,7 @@ Foundation docs SHOULD change slowly. A change here usually means the whole prot
 - [application-messages.md](./application-messages.md) - the unsigned Nostr-shaped payload inside MLS messages.
 - [wire-envelopes.md](./wire-envelopes.md) - the split between application payloads, MLS bytes, and transport envelopes.
 - [mls-protocol.md](./mls-protocol.md) - the MLS protocol pieces Marmot builds on.
+- [conformance.md](./conformance.md) - canonical protocol-state equivalence for deterministic testing.
 - [errors.md](./errors.md) - shared result and rejection vocabulary.
 - [registries.md](./registries.md) - Marmot-owned ids and namespaces.
 

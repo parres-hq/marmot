@@ -25,6 +25,7 @@ foundation/
   application-messages.md
   wire-envelopes.md
   mls-protocol.md
+  conformance.md
   errors.md
   registries.md
 protocol-core/
@@ -80,6 +81,7 @@ Foundation documents define shared surfaces:
 - app payload shape
 - wire envelopes
 - MLS protocol choices
+- canonical protocol-state equivalence for conformance testing
 - error and stale-result taxonomy
 - registries for component ids, proposal ids, and extension ids
 

@@ -61,10 +61,26 @@ terminal-rejection rules are defined in [convergence.md](./convergence.md), "Can
 Input naming a group for which the client has no processable group state receives the `unknown_group` category before
 convergence and no convergence disposition. The client cannot authenticate or classify a branch without that state.
 
+## Transport-deferred input
+
+A received transport object is not yet Marmot protocol input when the client cannot recover its inner MLS bytes with
+the currently available transport decryption keys. When a later canonical epoch, retained candidate state, staged
+state, or verified repair could make the object decryptable, the current category is `transport_deferred`, not
+`stale_epoch` or `invalid_encoding`, and the object receives no convergence disposition.
+
+The active transport binding defines how a client retains, retries, refetches, or backfills such an object. A retained
+object MUST be retried whenever the transport decryption context changes in a way that could change the result.
+Implementations MAY suppress retries while that context is unchanged.
+
+A client MAY refuse to retain an unclassified transport object under a local resource bound. That outcome is
+`resource_refused`: it makes no claim that the object is invalid or permanently unreadable. A refused object MUST NOT
+be recorded as a terminal duplicate, and the client MUST NOT claim that the affected transport history is synchronized
+until the binding's recovery rule has given the object another delivery opportunity.
+
 ## Deferred input
 
-A client MAY defer an input when it cannot yet be processed but could become processable after more protocol bytes
-arrive.
+A client MAY defer recovered Marmot protocol input when it cannot yet be processed but could become processable after
+more protocol bytes arrive.
 
 Common deferred cases:
 
