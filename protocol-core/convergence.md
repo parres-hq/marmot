@@ -122,13 +122,15 @@ batch MAY instead be abandoned, after which every still-eligible input and authe
 admitted to a later pass. This exception MUST NOT discard an input, resolve an accidental subset, or apply any result
 from the abandoned batch.
 
-A recovering client returns to `Stable` only after successfully selecting and applying the canonical branch. A linear
-pass that began in `Stable` remains `Stable` after applying its selected advancement. If required retained state,
-including the retained anchor, is permanently missing or corrupt and no verified repair path is available, the client
-does not mutate canonical group state and enters `Unrecoverable` as required below. Temporary unavailability instead
-leaves the immutable work unapplied and `Blocked`. Input retained after the cutoff is not discarded; it belongs to a
-later pass. The local cutoff controls scheduling and batch membership only. Input arrival time, cutoff time, and pass
-membership MUST NOT enter candidate validity or the branch score.
+A recovering client returns to `Stable` only after successfully selecting and applying a non-terminal canonical
+branch. If the selected branch ends in `disbanded`, recovery instead enters the terminal `Disbanded` state, releases
+live MLS and convergence state, and does not allow a later branch to supersede it, as defined in "Applying the selected
+branch." A linear pass that began in `Stable` remains `Stable` after applying its selected advancement. If required
+retained state, including the retained anchor, is permanently missing or corrupt and no verified repair path is
+available, the client does not mutate canonical group state and enters `Unrecoverable` as required below. Temporary
+unavailability instead leaves the immutable work unapplied and `Blocked`. Input retained after the cutoff is not
+discarded; it belongs to a later pass. The local cutoff controls scheduling and batch membership only. Input arrival
+time, cutoff time, and pass membership MUST NOT enter candidate validity or the branch score.
 
 After relevant input closes under the assumptions above, dividing that same retained input across different bounded
 passes MUST NOT change the eventual canonical result. Input excluded by one cutoff remains eligible for a later pass
