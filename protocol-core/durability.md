@@ -81,9 +81,10 @@ Before any publish attempt can make bytes externally observable, the exact oblig
 needed by cases 2 and 3 MUST be recoverable. Byte-identical republication is a retry of one obligation, not a new
 group-state change; duplicate handling still applies.
 
-If possible external acceptance cannot be excluded and the exact obligation or state needed to resolve it is
-permanently missing or corrupt, the client enters `Unrecoverable`. It MUST NOT discard the uncertainty, prepare another
-group-state change, or select the only locally complete branch merely because the possibly published branch is absent.
+If possible external acceptance cannot be excluded, the exact obligation or state needed to resolve it is permanently
+missing or corrupt, and no verified repair path is available, the client enters `Unrecoverable`. It MUST NOT discard
+the uncertainty, prepare another group-state change, or select the only locally complete branch merely because the
+possibly published branch is absent.
 
 ## Convergence interruption boundaries
 
@@ -93,7 +94,8 @@ A crash during convergence does not make admitted input invalid, stale, or unadm
   new bounded pass over the still-eligible retained input. It MAY restart local collection timers. It MUST NOT omit an
   admitted input merely because volatile pass membership or elapsed monotonic time was lost.
 - **Frozen-batch resolution.** The client MAY resume deterministic resolution of the exact frozen batch, or abandon the
-  wholly unapplied pass and admit all of its still-eligible inputs to a later pass. It MUST NOT resolve or apply an
+  wholly unapplied pass and admit all of its still-eligible inputs and authenticated dependencies to a later pass under
+  the restart exception in [convergence.md](./convergence.md) ("Convergence policy"). It MUST NOT resolve or apply an
   accidental subset of the frozen batch. Later-retained input remains outside that batch unless a new pass is started.
 - **Selected-branch application.** The client MUST recover either the complete observer projection from before the
   application or the complete projection after it, then finish or replay deterministic work from that boundary. It
@@ -136,8 +138,9 @@ follows these outcomes:
 - If material is outside its owning retention horizon and no unresolved work depends on it, ordinary pruning and stale
   rules apply; its absence is not `Unrecoverable`.
 - If canonical state, a possibly published transition, or selection-relevant material inside the rollback horizon is
-  permanently missing or corrupt, the group enters `Unrecoverable`. Associated admitted input remains deferred with
-  `missing_history` as specified in [../foundation/errors.md](../foundation/errors.md).
+  permanently missing or corrupt and no verified repair path is available, the group enters `Unrecoverable`.
+  Associated admitted input remains deferred with `missing_history` as specified in
+  [../foundation/errors.md](../foundation/errors.md).
 
 Partial recovery is not evidence for branch selection. A client in the last case MUST NOT select the only locally
 available branch, shorten the rollback horizon, discard an uncertain published branch, or convert affected input to a
@@ -161,8 +164,30 @@ Application callbacks and acknowledgement APIs are implementation-defined. Their
 - `group_disbanded` remains one effective presentation effect, while the leaf-scoped removal outcome remains
   reconstructible under the suppression rule in [member-departure.md](./member-departure.md).
 
-After restart, a client MUST re-emit an effect whose observation was not established, or provide an equivalent
-reconstructible current projection. Re-emission uses the same stable input identity or `commit_digest` so repeated
-delivery can be deduplicated. A crash between canonical application and application observation does not cancel the
-effect, and a crash between prior observation and a later branch change does not cancel the required withdrawal or
-invalidation.
+Each effect has a stable effect identity. For a delivered or invalidated app payload, it is the effect kind plus the
+stable protocol message identity. For a state notification derived from a Commit, it is the effect kind plus that
+Commit's `commit_digest` and, when the Commit produces more than one effect of that kind, the canonical protocol
+identity of the affected leaf, component, or other subject. A state-change withdrawal uses the effect kind plus the
+identity of the notification it withdraws. A group-state invalidation uses the effect kind plus the superseded Commit's
+`commit_digest`. Distinct effect kinds remain distinct when they refer to the same input or Commit. A branch-recovery
+notification that is not attributed to one Commit uses the effect kind plus the optional superseded canonical tip
+Commit digest and the selected tip Commit digest; absence of a superseded tip digest is part of the identity. Any
+future effect not covered here MUST define an equivalent deterministic identity from the accepted protocol inputs and
+selected state that produce it; it MUST NOT use local receipt order, scheduling order, or a local storage identifier.
+
+An effect's observation boundary is established only when the client can recover its stable effect identity together
+with either:
+
+- an application acknowledgement for that identity; or
+- an equivalent recoverable selected-branch projection through which the application reconstructs the current
+  effective outputs.
+
+The acknowledgement shape and projection-access mechanism are implementation-defined. A client that relies on the
+second option MUST re-expose the recovered projection after restart before suppressing re-emission. Merely invoking a
+callback, attempting delivery, or recording the effect without one of these two conditions does not establish
+observation.
+
+After restart, a client MUST re-emit an effect whose observation boundary was not established, or re-expose the
+equivalent reconstructible current projection. Re-emission uses the same stable effect identity so repeated delivery
+can be deduplicated. A crash between canonical application and application observation does not cancel the effect, and
+a crash between prior observation and a later branch change does not cancel the required withdrawal or invalidation.
