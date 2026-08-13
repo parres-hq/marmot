@@ -15,7 +15,8 @@ The group lifecycle has six states:
 - `Merging`: publication was confirmed, and the client is applying the staged commit to its local canonical state.
 - `Recovering`: the client is selecting a safe branch from retained state after detecting a fork-shaped conflict or
   admitting a valid disband candidate that requires terminal convergence.
-- `Unrecoverable`: the client cannot safely select a branch from its retained local material.
+- `Unrecoverable`: the client cannot safely establish canonical state or resolve an in-flight transition from its
+  retained local material.
 - `Disbanded`: an authenticated disband Commit was selected by a bounded convergence pass. The group is terminal,
   read-only, and cannot resume or rejoin under the same group id.
 
@@ -59,8 +60,12 @@ PendingPublish
   -> Merging             publish obligation confirmed
 PendingPublish
   -> Stable              publish obligation failed or was abandoned
+PendingPublish
+  -> Unrecoverable       possibly published transition cannot be safely reconstructed
 Merging
   -> Stable              staged commit applied
+Merging
+  -> Unrecoverable       confirmed transition cannot be safely completed or rolled back
 Stable
   -> Recovering          fork detected, or valid disband candidate admitted
 Stable
@@ -116,17 +121,23 @@ the selected branch has been applied and the lifecycle returns to `Stable`.
 
 ## Unrecoverable cases
 
-A client enters `Unrecoverable` when it cannot determine the canonical branch without violating the group's retention or
-validation rules.
+A client enters `Unrecoverable` when it cannot safely establish canonical protocol state or complete an unresolved
+state transition without violating the group's retention or validation rules.
 
 Examples include:
 
 - the client needs a retained state inside the rollback horizon, but that state is missing;
 - the client cannot validate any candidate branch from the retained anchor;
-- local group state is corrupted and cannot validate the retained commit path.
+- local group state is corrupted and cannot validate the retained commit path;
+- a possibly published local transition cannot be reconstructed; or
+- an interrupted selected-branch application cannot be completed or restored to its prior complete projection.
 
 A client in `Unrecoverable` MUST NOT choose the current local state merely because it is the only state available. It
 MUST stop applying group-state changes until it has a verified repair path.
+
+The same fail-closed rule applies after restart when a possibly published local transition, frozen convergence input,
+or selected-branch application cannot be reconstructed. The complete restart classification is in
+[durability.md](./durability.md) ("Missing or corrupt material").
 
 A repair path MAY restore retained state, rejoin through MLS, or use another recovery method defined by a future
 protocol-core document.

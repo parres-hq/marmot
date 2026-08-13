@@ -32,6 +32,10 @@ exhaustion. A client affected by one of those conditions still follows the fail-
 global finality, proof that every transport has finished synchronization, or a promise that later valid input cannot
 open another pass.
 
+Process interruption does not weaken these guarantees. The recoverable-input, pass-restart, and observer-atomic apply
+rules are defined in [durability.md](./durability.md) ("Restart equivalence" and "Convergence interruption
+boundaries").
+
 ## Convergence policy
 
 The convergence policy tells clients how to run convergence. The v1 convergence policy is a set of protocol constants:
@@ -358,6 +362,10 @@ key.
 
 After selecting a branch, a client applies the selected branch by replaying the selected commit path from the retained
 parent state.
+
+Canonical state, dispositions, gates, and application effects produced by this application MUST form one complete
+observer projection. Interrupted application follows [durability.md](./durability.md) ("Observer-atomic transitions")
+and MUST NOT expose a partially applied branch.
 
 The client then assigns dispositions (the disposition vocabulary is pinned in
 [../foundation/errors.md](../foundation/errors.md)):
