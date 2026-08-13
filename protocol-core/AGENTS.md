@@ -7,13 +7,13 @@ cross-surface map is in [`../AGENTS.md`](../AGENTS.md).
 
 Protocol-core owns the required group flows and group-state transitions every transport and feature relies on: group
 setup, joining, messaging, member departure, the group-state lifecycle, publish-before-apply, inbound processing,
-convergence, and retained history. It says *when* MLS-valid bytes become canonical group state.
+convergence, retained history, and restart behavior. It says *when* MLS-valid bytes become canonical group state.
 
 ## Read order
 
 1. [`README.md`](README.md) (big picture + main flows), then [`group-state.md`](group-state.md).
 2. The convergence spine: [`convergence.md`](convergence.md), [`publish-lifecycle.md`](publish-lifecycle.md),
-   [`retained-history.md`](retained-history.md).
+   [`retained-history.md`](retained-history.md), [`durability.md`](durability.md).
 3. The specific flow doc you are editing.
 
 ## Rules

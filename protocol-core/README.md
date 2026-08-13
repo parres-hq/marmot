@@ -72,6 +72,7 @@ find compatible KeyPackage
 - [inbound-processing.md](./inbound-processing.md) - how incoming bytes are stored, classified, and retried.
 - [convergence.md](./convergence.md) - how candidate branches are built, scored, selected, and applied.
 - [retained-history.md](./retained-history.md) - retained state, rollback horizon, and late input rules.
+- [durability.md](./durability.md) - recoverable protocol facts, crash boundaries, and restart equivalence.
 
 ## Core rule
 

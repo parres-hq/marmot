@@ -48,6 +48,21 @@ means storing raw MLS message bytes, welcome bytes, prior state snapshots, and l
 
 The protocol defines what must be reproducible. It does not define table names, cache keys, or snapshot formats.
 
+## Durability Boundary
+
+The normative restart contract is [protocol-core/durability.md](./protocol-core/durability.md). An implementation may
+satisfy it with transactions, journals, snapshots, replay, derived indexes, or another strategy. It need not keep one
+physical snapshot per epoch, and protocol-state atomicity does not require one physical write.
+
+The useful design boundary is logical: before outbound bytes can escape, their exact publish obligation and recovery
+states are reproducible; before a selected branch is exposed, canonical state, dispositions, gates, and application
+effects form one complete observer projection. Restart recovery can resume work or replay deterministic work from a
+verified boundary. It cannot invent a success, silently omit admitted input, or expose a mixed projection.
+
+Local application delivery APIs may use acknowledgements, cursors, an effective-state query, or idempotent callbacks.
+Those shapes are implementation-defined. They need to preserve the protocol requirement that restart neither loses a
+required effect nor creates a second effective delivery.
+
 ## Convergence Policy Overrides
 
 The normative pinned-policy rule lives in [protocol-core/convergence.md](./protocol-core/convergence.md) ("Convergence

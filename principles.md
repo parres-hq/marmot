@@ -82,6 +82,11 @@ helpers, or logging implementations. Those belong in `implementation-model.md`, 
 It is fine for a protocol doc to say that a client MUST retain enough material to reproduce a decision. It SHOULD NOT
 say which table stores that material.
 
+Process restart does not make a state transition local-only when peers or the application can observe its effects.
+Protocol text SHOULD name the facts and outcomes that MUST remain reproducible, the safe retry boundary, and which
+multi-part changes MUST NOT be exposed partially. It SHOULD use capability language such as "retain or be able to
+reconstruct" and leave physical persistence, transaction, and snapshot strategies implementation-defined.
+
 ## Keep identity, delivery addressing, and transport separate
 
 Identity says who an account or member is.

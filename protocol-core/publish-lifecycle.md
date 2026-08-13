@@ -98,3 +98,11 @@ eligible remaining member, as long as the proposal has not been consumed by an a
 retained history.
 
 If another member publishes an equivalent or conflicting commit first, ordinary convergence decides the result.
+
+## Restart
+
+A process interruption does not resolve a publish obligation. Recovery of prepared, acknowledgement-uncertain,
+confirmed-but-unapplied, and applied-but-underived transitions follows
+[durability.md](./durability.md) ("Publish interruption boundaries"). In particular, possible external acceptance
+without a recoverable acknowledgement is still `PendingPublish`, and safe retry republishes the byte-identical
+obligation rather than generating a replacement Commit.

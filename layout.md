@@ -39,6 +39,7 @@ protocol-core/
   inbound-processing.md
   convergence.md
   retained-history.md
+  durability.md
 app-components/
   README.md
   group-profile-v1.md
@@ -81,7 +82,7 @@ Foundation documents define shared surfaces:
 - app payload shape
 - wire envelopes
 - MLS protocol choices
-- canonical protocol-state equivalence for conformance testing
+- canonical protocol-state equivalence, including crash/restart conformance testing
 - error and stale-result taxonomy
 - registries for component ids, proposal ids, and extension ids
 

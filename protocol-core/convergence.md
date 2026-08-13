@@ -32,6 +32,12 @@ exhaustion. A client affected by one of those conditions still follows the fail-
 global finality, proof that every transport has finished synchronization, or a promise that later valid input cannot
 open another pass.
 
+Process interruption does not weaken the safety guarantee. After interruption, liveness applies only after the client
+has recovered the required authenticated inputs and dependencies and resumed execution, with the same input-closure,
+retention, convergence-policy, and resource conditions above. The recoverable-input, pass-restart, and observer-atomic
+apply rules are defined in [durability.md](./durability.md) ("Restart equivalence" and "Convergence interruption
+boundaries").
+
 ## Convergence policy
 
 The convergence policy tells clients how to run convergence. The v1 convergence policy is a set of protocol constants:
@@ -110,14 +116,21 @@ parent does not keep this pass open.
 
 Fixed-point resolution is not subject to a protocol wall-clock deadline: device speed MUST NOT make clients resolve the
 same frozen batch differently. An implementation MAY yield and resume the work locally, but it MUST complete
-deterministic resolution of that immutable batch before starting another pass.
+deterministic resolution of that immutable batch before starting another pass. The only exception is process
+interruption under [durability.md](./durability.md) ("Convergence interruption boundaries"): a wholly unapplied frozen
+batch MAY instead be abandoned, after which every still-eligible input and authenticated dependency from that batch is
+admitted to a later pass. This exception MUST NOT discard an input, resolve an accidental subset, or apply any result
+from the abandoned batch.
 
-A recovering client returns to `Stable` only after successfully selecting and applying the canonical branch. A linear
-pass that began in `Stable` remains `Stable` after applying its selected advancement. If required retained state,
-including the retained anchor, is missing, the client does not mutate canonical group state and enters `Unrecoverable`
-as required below. Input retained after the cutoff is not discarded; it belongs to a later pass. The local cutoff
-controls scheduling and batch membership only. Input arrival time, cutoff time, and pass membership MUST NOT enter
-candidate validity or the branch score.
+A recovering client returns to `Stable` only after successfully selecting and applying a non-terminal canonical
+branch. If the selected branch ends in `disbanded`, recovery instead enters the terminal `Disbanded` state, releases
+live MLS and convergence state, and does not allow a later branch to supersede it, as defined in "Applying the selected
+branch." A linear pass that began in `Stable` remains `Stable` after applying its selected advancement. If required
+retained state, including the retained anchor, is permanently missing or corrupt and no verified repair path is
+available, the client does not mutate canonical group state and enters `Unrecoverable` as required below. Temporary
+unavailability instead leaves the immutable work unapplied and `Blocked`. Input retained after the cutoff is not
+discarded; it belongs to a later pass. The local cutoff controls scheduling and batch membership only. Input arrival
+time, cutoff time, and pass membership MUST NOT enter candidate validity or the branch score.
 
 After relevant input closes under the assumptions above, dividing that same retained input across different bounded
 passes MUST NOT change the eventual canonical result. Input excluded by one cutoff remains eligible for a later pass
@@ -356,10 +369,13 @@ key.
 
 ## Applying the selected branch
 
-After selecting a branch, a client applies the selected branch by replaying the selected commit path from the retained
-parent state.
+After selecting a branch, a client tentatively replays the selected commit path from the retained parent state to
+compute the resulting canonical state. Before exposing any result of that replay, it MUST compute the selected
+branch's canonical state, dispositions, protocol gates or terminal conditions, and application effects. The client
+then exposes those fields as one complete observer projection. Interrupted application follows
+[durability.md](./durability.md) ("Observer-atomic transitions") and MUST NOT expose a partially applied branch.
 
-The client then assigns dispositions (the disposition vocabulary is pinned in
+As part of computing that projection, the client assigns dispositions (the disposition vocabulary is pinned in
 [../foundation/errors.md](../foundation/errors.md)):
 
 - commits on the selected path are accepted;
@@ -401,9 +417,10 @@ requirement is the resulting view. Once convergence is settled, the state notifi
 those derivable from the accepted commits on the selected branch, and a group-state change that lost branch selection
 MUST NOT remain visible to the application as a completed change.
 
-If the required retained state is missing, the client MUST report the missing retained anchor and MUST NOT mutate
-canonical group state. If the missing state is inside the rollback horizon, the client enters `Unrecoverable` until it
-has a verified repair path.
+If required retained state is unavailable, the client MUST report the missing retained anchor and MUST NOT mutate
+canonical group state. Temporary unavailability leaves convergence `Blocked`. If the state is inside the rollback
+horizon, is permanently missing or corrupt, and no verified repair path is available, the client enters
+`Unrecoverable`.
 
 After applying the selected branch, retained-state release follows
 [retained-history.md](./retained-history.md) ("Pruning"); that document owns the pruning obligation and its exceptions.

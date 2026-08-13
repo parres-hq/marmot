@@ -151,3 +151,6 @@ the retained app-payload window.
 
 A Marmot app payload whose MLS application message decrypts only on a losing branch MUST be reported as invalidated, not
 delivered as accepted application output.
+
+Restart does not cancel a delivery, notification, withdrawal, or invalidation effect. Re-emission, deduplication, and
+reconstruction follow [durability.md](./durability.md) ("Application effects after restart").

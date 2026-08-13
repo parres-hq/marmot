@@ -21,6 +21,10 @@ At minimum, a client needs retained state for:
 - any staged local commit waiting for publish confirmation;
 - any candidate parent state still needed by deferred input inside the rollback horizon.
 
+These candidate-replay requirements are part of the broader restart contract in
+[durability.md](./durability.md). That document also owns recoverability of admitted input, unresolved publication,
+local protocol gates, and application effects; it does not extend the cryptographic release conditions below.
+
 ## Retained cryptographic material
 
 Retained group state is functional state, not an instruction to snapshot every secret an MLS implementation exposes.

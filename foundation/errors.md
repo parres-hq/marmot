@@ -113,6 +113,12 @@ Protocol rejections are part of interop. Local failures are not.
 For example, `invalid_encoding` is a protocol rejection. A database write failure is a local implementation failure. A
 transport publish failure matters to publish-before-apply, but the exact retry queue or error object is local.
 
+Loss or corruption of required retained material is also a local cause with a protocol-visible fail-closed result. It
+does not permit a client to guess a branch or terminally reclassify affected input. The restart contract in
+[../protocol-core/durability.md](../protocol-core/durability.md) defines when the group becomes `Unrecoverable`; an
+associated admitted input remains `deferred` with `missing_history` until a verified repair or ordinary retention rule
+permits another outcome.
+
 ## Privacy
 
 Diagnostics for these outcomes MUST avoid account ids, group ids, message ids, relay URLs, pubkeys, payloads,
