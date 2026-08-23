@@ -210,10 +210,10 @@ Carried from the design review; these must be settled before any component or ca
 ## Migration from the withdrawn draft
 
 The withdrawn branch-draft used an External Commit with `ExternalInit`, a group-derived join PSK, externally supplied
-GroupInfo, an administrator-signed join-authorization proof (component id `0x800a`, kind `452`), and the
-`marmot.multi-device.v1` (`0xf2f0`) signaling gate. None of that was ever normative. Those ids are retired in
-[../foundation/registries.md](../foundation/registries.md) and MUST NOT be reused. Implementations of the old draft
-MUST reject it and MUST NOT emit it.
+GroupInfo, an administrator-signed join-authorization proof, and a group-level signaling gate. None of that was ever
+normative or shipped, and its ids have been released back to the registries in
+[../foundation/registries.md](../foundation/registries.md). Implementations of the old draft MUST reject it and
+MUST NOT emit it.
 
 The pairing payload of the withdrawn draft also transferred the Nostr outer-encryption group event key; the baseline
 here transfers no live group keys of any kind.
