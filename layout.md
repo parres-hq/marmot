@@ -53,7 +53,6 @@ app-components/
   group-encrypted-media-v2.md
   group-lifecycle-v1.md
   account-identity-proof-v2.md
-  multi-device-join-authorization-v1.md
 transports/
   README.md
   nostr.md
@@ -65,6 +64,7 @@ features/
   agent-text-streams-quic.md
   push-notifications.md
   multi-device.md
+  account-sync.md
 implementation-model.md
 ```
 

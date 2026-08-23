@@ -1,197 +1,219 @@
 # Multi-device
 
-Status: branch draft.
+Status: experimental draft. Non-normative.
 
-Except for the assigned join-authorization component referenced below, byte-level definitions in this document are
-placeholders and not yet finalized. They MUST NOT be implemented for interop yet. Marmot-owned hashes in this document
-use SHA-256, and named Marmot-owned key derivations use HKDF-SHA256. MLS-Exporter invocations are the exception: MLS
-computes them with the active ciphersuite's KDF and hash, and each invocation below states its
-ciphersuite-dependent or fixed output length.
+Requirement keywords in this document constrain the proposed design only. Nothing here is adopted, and no wire bytes,
+component ids, extension types, event kinds, or capability identifiers in this document are assigned. The document
+records the agreed working baseline from the MDK multi-device exploration so the team can review it in this spec's
+format. Component documents will be added under [../app-components/](../app-components/) once the baseline settles.
 
-Multi-device support lets one Marmot account participate in a group from more than one MLS leaf.
+This document replaces a withdrawn branch-draft that joined a device through an External Commit, an administrator
+join-authorization proof, and a group-derived join PSK. That design is obsolete; see
+[Migration from the withdrawn draft](#migration-from-the-withdrawn-draft).
 
-Marmot account identity is still the Nostr public key. Devices are separate MLS clients bound to that account identity.
+Multi-device support lets one Marmot account participate in a group from more than one MLS leaf. Marmot account
+identity remains the Nostr public key. Each physical device is an independent MLS client bound to that account
+identity, with its own leaf, leaf secret, and local state in every enrolled group.
 
-This feature is still a draft. Its wire bytes are not yet normative and are subject to change before they become part
-of the interop surface.
+"Multi-device" is really several separate problems:
 
-This draft does not yet create an adopted exception to current membership authorization. The proposed flow below
-carries an active-admin authorization proof as component-owned data in an `AppEphemeral` proposal. The component id,
-event kind, and exact proof bytes are now assigned in
-[../app-components/multi-device-join-authorization-v1.md](../app-components/multi-device-join-authorization-v1.md),
-but an External Commit shaped this way remains invalid until this feature becomes normative. Matching an existing
-account identity and possessing the draft Join PSK are not sufficient admin authorization. Requirement keywords in the
-remaining draft constrain the proposed design only.
+1. authorizing a new device and adding it to existing MLS groups;
+2. deciding which device KeyPackage another account uses when first inviting the account;
+3. synchronizing accepted message history and private application state;
+4. removing or recovering devices and the authority they held.
+
+These problems can share one user-facing workflow without sharing one protocol mechanism. Problem 3 is separated into
+the exploratory [account-sync](./account-sync.md) document and is not required for multi-device v1 interoperability.
 
 ## Surfaces
 
-- Foundation identity and credentials.
-- MLS External Commit.
-- MLS extension `marmot.multi-device.v1` (`0xf2f0`) as the group-level signaling gate.
-- Optional LeafNode extension `marmot.encrypted-device-name.v1` (`0xf2ef`).
-- The required `marmot.member.account-identity-proof.v2` component on the joining LeafNode.
-- MLS `AppEphemeral` proposal type `0x0009` for the active-admin join authorization proof, using
-  `marmot.authorization.multi-device-join.v1` ComponentID `0x800a`.
-- Exporter: `MLS-Exporter("marmot", join_psk_id, KDF.Nh)`.
-- Future custom proposal candidate: `IdentityRemove`.
+- Foundation identity and credentials; the required
+  [`marmot.member.account-identity-proof.v2`](../app-components/account-identity-proof-v2.md) LeafNode component.
+- Protocol-core commit authorization ([../protocol-core/group-messaging.md](../protocol-core/group-messaging.md)) and
+  convergence ([../protocol-core/convergence.md](../protocol-core/convergence.md)). This feature proposes a new
+  authorized Commit shape for existing members and does not change convergence itself.
+- New group-level capabilities for same-account admission and removal (names and negotiation mechanics below; ids and
+  bytes unassigned).
+- A short-lived pairing session between two devices of one account, carried over an authenticated encrypted channel.
+  The pairing channel is application-scoped and assigns no transport event kinds.
+- Content synchronization: out of scope here; see [account-sync](./account-sync.md).
 
-## Behavior
+## Same-account admission
 
-A new device joins an existing account's group as a new MLS leaf. It uses the same Nostr credential identity as the
-account's existing leaves, but it has fresh MLS key material and independent local MLS state.
+A new device joins a group through an ordinary inline-`Add` Commit authored by an existing leaf of the same account.
+No External Commit, join PSK, externally provisioned GroupInfo, or administrator signature is involved.
 
-History synchronization is out of scope. A newly added device cannot decrypt epochs before it joined.
+The proposed authorization rule:
 
-## Signaling gate
+> A current member who is not an administrator MAY commit an Add-only membership change when the negotiated
+> same-account capability is enabled and required in the GroupContext, every added KeyPackage carries a valid
+> `marmot.member.account-identity-proof.v2`, every added credential identity exactly equals the committer's
+> MLS-authenticated account identity, and all limits below pass.
 
-External Commit behavior for multi-device support is active only when all signaling requirements are met:
+Proposed constraints:
 
-- `GroupContext.extensions` contains a valid `marmot.multi-device.v1` extension (`0xf2f0`);
-- `GroupContext.required_capabilities` requires extension type `0xf2f0` and proposal type `app_ephemeral` (`0x0009`);
-- the GroupContext `app_components` list requires `marmot.authorization.multi-device-join.v1` (`0x800a`);
-- every current non-blank leaf advertises `0xf2f0` in `LeafNode.capabilities.extensions` and `0x0009` in
-  `LeafNode.capabilities.proposals`, and advertises component id `0x800a` in its `app_components` entry.
+- A separately assigned and negotiated capability gates the behavior. Every current member advertises support, and the
+  GroupContext explicitly enables and requires it. Creating a group may enable it only when all initial members
+  support it; enabling it in an existing group uses the ordinary administrator-authorized capability-upgrade flow.
+- The Commit contains one to four inline `Add` proposals and nothing else: no referenced proposals and no other
+  proposal types. Its normal MLS UpdatePath is required and permitted. Standalone `Add` proposals remain
+  administrator-only.
+- The resulting group MAY contain at most five current leaves for one account, including the sponsoring leaf. The
+  limit is evaluated against canonical resulting state, so concurrent sibling Adds that individually fit but jointly
+  exceed it resolve through ordinary convergence: the winning epoch stands and the losing joiner rejects at Welcome
+  validation.
+- The KeyPackages and leaf signature keys added by one Commit MUST be distinct and MUST NOT duplicate a current leaf.
+- A valid same-account Add has ordinary rather than administrator-privileged convergence priority.
 
-In the proposed flow, failure of any signaling check makes a `new_member_commit` External Commit invalid before any
-future admin-authorization check.
+The one-to-four bound keeps a single same-account Commit small and bounds how many leaves one compromised device can
+mint per Commit; four additions plus the sponsoring leaf exactly fill the five-leaf per-account limit. An
+account-identity proof establishes account-key authorization of a leaf signature key, not a human identity. The
+authorization chain is: a current member's MLS-authenticated control of its leaf, plus the new leaf's account-key
+proof, plus exact equality of their account identities, plus the committer's signature over the Commit.
 
-## External Commit authorization
+Security consequences: possession of the Nostr account key alone is not sufficient to add a device; the sponsor must
+also control a current MLS leaf. Conversely, compromise of a current device allows minting persistent same-account
+leaves, which is why removal authority (below) is part of the same baseline.
 
-The proposed multi-device External Commit is valid only when:
+## Welcome validation
 
-- the signaling gate is active;
-- the joining LeafNode carries the required valid Marmot account identity proof;
-- the joining LeafNode credential identity matches at least one existing group member's credential identity;
-- the Commit contains the required `ExternalInit` proposal;
-- the Commit contains exactly one MLS PreSharedKey proposal carrying the Marmot multi-device External PSK id;
-- the Commit contains exactly one `AppEphemeral` proposal for component id `0x800a`;
-- the Commit contains no proposals other than those `ExternalInit`, PreSharedKey, and `AppEphemeral` proposals;
-- the `AppEphemeral` data contains a valid active-admin join authorization proof;
-- this flow contributes no data to `FramedContent.authenticated_data`, which follows any other independently
-  negotiated Marmot feature's rules and is zero-length when no such feature applies;
-- ordinary MLS External Commit validation succeeds.
+The joining device recognizes two distinct authorization paths: the existing administrator invitation path and the
+negotiated same-account path. For the same-account path it requires:
 
-These checks establish three different facts:
+- the exact KeyPackage created for the active pairing session;
+- the expected MLS group id and sponsor account from the authenticated pairing manifest;
+- the same-account capability enabled and required in the joined GroupContext;
+- a current, non-blank GroupInfo signer whose validated account identity equals the joining leaf's identity;
+- valid account-identity proofs on the sponsor and joining leaves; and
+- no more than five resulting leaves for that account.
 
-- the joining LeafNode account identity proof establishes which account owns the new MLS leaf signature key;
-- the `AppEphemeral` authorization proof establishes that an active admin authorized adding that exact leaf to this
-  group from the candidate parent state;
-- the Join PSK establishes that the new device received current, group-specific pairing material.
+The receiver records which authorization path succeeded and does not silently fall back from a failed same-account
+check unless the GroupInfo signer independently qualifies as an active administrator. A Welcome receiver cannot
+reconstruct the candidate parent and revalidate the inline-Add-only Commit shape; existing members validate that
+candidate-parent rule, while the joining device validates the authenticated pairing intent and resulting group state.
 
-The join authorization proof is a signature over a canonical local-only kind `452` Nostr event. Its signer MUST be an
-active admin in the candidate parent state. The exact event, component data, signed GroupContext and LeafNode bindings,
-freshness and replay scope, and validation rules are defined in
-[../app-components/multi-device-join-authorization-v1.md](../app-components/multi-device-join-authorization-v1.md).
-The event is not published to relays.
+## Pairing and enrollment
 
-The join authorization proof is a different authority class from the joining LeafNode's kind `450` account identity
-proof and MUST NOT reuse that event kind or signing template. A same-account device that is not an active admin cannot
-authorize the membership change.
+Adding a leaf remains a per-group MLS operation; there is no protocol shortcut that places a device in every group at
+once. A short-lived pairing session coordinates the work so it feels like one bounded operation.
 
-This flow does not enable the GroupContext `safe_aad` component merely to carry its authorization proof.
-`AppEphemeral` gives the proof the required one-Commit lifetime without changing the framing of
-`FramedContent.authenticated_data`. If another feature independently enables SafeAAD, that feature still frames the
-entire field as SafeAAD; the multi-device flow contributes no SafeAAD item.
+### Pairing session
 
-## Join PSK
+1. The user signs in to the same Nostr account on the new device.
+2. The new device starts a short-lived, single-use pairing session and displays a QR descriptor containing a version,
+   random session id, ephemeral X25519 public key, account public key, expiry, rendezvous hints, and an account
+   signature. It contains no group graph, KeyPackages, or MLS secrets.
+3. The QR lifetime defaults to two minutes and MUST NOT exceed five minutes. An expired descriptor is replaced rather
+   than extended.
+4. The scanning device verifies the descriptor against its own account, asks for explicit approval, contributes a
+   signed ephemeral key, and derives a transcript-bound encrypted channel. A separate visual short-authentication
+   string is not required for the first version.
+5. The existing device sends an encrypted eligibility catalog; the user selects active, non-archived groups by default,
+   all groups, or a custom subset.
+6. The new device creates one fresh, group-bound KeyPackage per selected group.
+7. The existing device creates and publishes the per-group inline-`Add` Commits and delivers each `Welcome`
+   redundantly over the shared transport.
+8. The new device processes only Welcomes expected by the pairing manifest.
+9. Optional content bootstrap may follow per group; see [account-sync](./account-sync.md).
 
-The External Commit includes an External PSK bound to the current GroupContext.
+Pairing channel keys MAY remain memory-only. Durable progress survives restart, but continuing unfinished work
+requires a newly authenticated pairing session that first reconciles already-completed membership.
 
-```text
-struct {
-  opaque label<V>;
-  opaque group_context_hash[32];
-} MarmotMultiDeviceJoinPskId;
+### Enrollment lifecycle
 
-label              = ASCII("marmot.multi-device.join-psk.v1")
-group_context_hash = SHA-256(TLS-serialize(GroupContext))
+Enrollment is durable per-group work, not one cross-group transaction. For each selected group the enroller records
+intent, stages and publishes the Commit under publish-before-apply, delivers the Welcome, validates the join, and
+records an authenticated acknowledgement.
 
-join_psk_id = MarmotMultiDeviceJoinPskId serialized in the Marmot binary profile
-join_psk    = MLS-Exporter("marmot", join_psk_id, KDF.Nh)
-```
+Progress distinguishes pending, Commit published, Welcome delivered, joined, retryable failure, terminal failure, and
+skipped. The authenticated acknowledgement is signed by the joining device's post-join leaf signing key — the only key
+that proves both identity and completed MLS admission — and binds the joined group id, epoch, staged KeyPackage
+reference, and pairing session id. It travels over the shared transport rather than the pairing channel.
 
-`MarmotMultiDeviceJoinPskId` uses the Marmot binary profile
-([../foundation/canonical-encoding.md](../foundation/canonical-encoding.md)): `label` carries a QUIC variable-length
-integer length prefix, and `group_context_hash` is a fixed 32-byte array with no length prefix. The label is 31 bytes,
-so its length prefix is the single byte `0x1f`. `GroupContext` is TLS-serialized as defined by MLS. This is the
-proposed encoding and is not yet finalized.
+Retry rules:
 
-Existing members recompute the same PSK from current group state before processing the External Commit. If the new
-device used stale state, confirmation-tag validation fails.
+- A lost acknowledgement retries the same Welcome rather than issuing another Add. Retrying the same Welcome remains
+  valid only while the joining device still holds the staged KeyPackage secret; if that staging is lost, the item
+  terminates as a terminal failure reconciled by a fresh pairing session.
+- A Commit that loses convergence restarts from canonical state with a fresh KeyPackage.
+- A failed attempt consumes or retires that group's KeyPackage; paired enrollment never falls back to public relay
+  discovery.
 
-The exporter context is the serialized `MarmotMultiDeviceJoinPskId`; its label field is the purpose and version for this
-PSK. `KDF.Nh` is the output size of the MLS ciphersuite KDF's `Extract` function in bytes. Clients MUST NOT reuse this
-exporter output for any other PSK, app component, media, or transport key.
+Automatic Welcome acceptance is restricted to the active pairing manifest: expected group, expected KeyPackage
+reference, expected same-account sponsor, unexpired session, compatible feature set.
 
-## Pairing payload
+## Same-account removal
 
-An existing device transfers current-epoch join material to the new device over an authenticated out-of-band pairing
-channel.
+- A separately negotiated same-account-remove capability permits a non-administrator to commit one to four inline
+  `Remove` proposals targeting current sibling leaves whose credential identity equals the committer's account
+  identity.
+- The committer cannot target its own leaf; SelfRemove remains the self-departure path. The Commit carries no other
+  proposal types and the normal UpdatePath, and has ordinary convergence priority.
+- Every current leaf has reciprocal authority to remove its own siblings. This deliberately accepts that compromise of
+  one current device can cause denial of service by removing other devices.
+- The operation is scoped to one group. There is no first-version cross-group tombstone, atomic remove-everywhere
+  operation, or claim of global completion. Any bulk-removal UX is a best-effort orchestrator over independently
+  evidenced per-group results.
+- Pairing MAY maintain a private device identifier and per-group leaf mapping for local presentation. That mapping is
+  not protocol authority and never appears in public KeyPackages or MLS credentials.
 
-The draft pairing payload carries, per group:
+## Initial invitation
 
-- `group_event_key`: the exact 32-byte current-epoch key used for Nostr kind `445` outer encryption. Its derivation is
-  owned by [../transports/nostr.md](../transports/nostr.md) (`MLS-Exporter("marmot", "group-event", 32)`); the pairing
-  payload transfers the already-derived key rather than redefining it;
-- `join_psk`: the current-epoch multi-device join PSK;
-- `group_info`: TLS-serialized MLS GroupInfo with `external_pub`, `ratchet_tree`, `app_data_dictionary`, and any
-  multi-device signaling required by the active profile.
+When an account is not yet represented in a group, an administrator admits exactly one initial leaf:
 
-The payload is encrypted with X25519, HKDF-SHA256, and ChaCha20-Poly1305. Pairing uses fresh ephemeral X25519 keys and
-rejects all-zero shared secrets.
+- select exactly one valid, compatible KeyPackage using the existing deterministic candidate-ranking rules;
+- after admission, that account uses the same-account Add path to enroll siblings.
 
-Placeholder: the exact pairing payload construction — ephemeral key encoding, HKDF salt and info bytes, nonce rule, and
-ciphertext layout — is not yet finalized and not yet normative.
+Public KeyPackage publication-slot tags remain opaque and are not physical device identifiers; discovery never fans
+out across every apparently valid KeyPackage. Inviting every discovered slot can duplicate leaves for one device,
+admit lost devices, inflate group size, and produce inconsistent results from incomplete relay views.
 
-Transferring `group_event_key` gives the pairing recipient the ability to remove the Nostr kind `445` outer encryption
-layer for every recorded envelope from that source epoch. It does not by itself reveal MLS application plaintext, but
-it does expose the inner MLS message type, bytes, and traffic grouping that the outer layer hides. This is a property of
-the draft pairing design, not a requirement on the base Marmot group protocol.
+Ambiguous Welcome delivery retries the same Welcome; it does not trigger an automatic Add for another KeyPackage.
+Replacing an unreachable initial leaf requires an explicit administrator removal followed by a fresh invitation.
 
-Before this feature becomes normative, the pairing design must either remove the `group_event_key` transfer or define a
-single-use pairing payload with a bounded validity period and deletion after successful use or expiry. Those bounds
-belong to this pairing flow and MUST NOT extend the base retained-history window.
+## Optional history bootstrap
 
-Group entries are epoch-specific. A failed stale-epoch join MUST be retried with fresh current-epoch material.
+Content bootstrap is optional and separate from enrollment. If implemented, it transfers accepted, locally retained
+application history directly over the authenticated pairing channel, beginning only after that group's join has
+validated. Boundaries, record format direction, and trust limitations are owned by
+[account-sync](./account-sync.md). Implementations MAY omit it without blocking enrollment or future messaging.
 
-## Device labels
+## Out of scope
 
-`marmot.encrypted-device-name.v1` is an optional LeafNode extension for an encrypted device label. It is display
-metadata. It MUST NOT be used as identity or authorization input.
+- Continuous background synchronization, journals, checkpoints, and CRDT-style merges (see
+  [account-sync](./account-sync.md)).
+- Copying any local database, MLS-library state, epoch secrets, sender ratchets, KeyPackage private keys, or pending
+  operations between devices.
+- Cross-group atomic device removal or identity tombstones.
+- Deriving device identity from public KeyPackage publication-slot tags.
+- MLS Virtual Clients (one virtual leaf per account emulated by device peers): tracked as an alternative model, not a
+  baseline. It hides device count from groups but shares one virtual secret across emulators and expects stronger
+  delivery-service serialization than Marmot transports provide.
 
-The current branch draft encrypts the device name with NIP-44 to the user's own Nostr identity. Under that construction,
-another group member cannot decrypt the label unless it also possesses that account's private key.
+## Open questions
 
-## Removing an account identity
+Carried from the design review; these must be settled before any component or capability document is written:
 
-Removing one device leaf is ordinary member removal. Removing a whole account identity across all of its device leaves
-needs identity-scoped behavior.
+- Should the add and remove capabilities be negotiated as a pair — or collapsed into one capability — so no group can
+  enable same-account admission without reciprocal sibling removal?
+- Exact mechanics of enabling a required capability in an existing group: must every current member consent through
+  its own Update, or are non-supporting members removed? The upgrade flow must not silently change membership.
+- Handling of orphaned same-account leaves when no surviving sibling shares their group; whether administrator-side
+  discovery suffices or some private device-directory visibility is needed in v1.
+- Recovery when lost or unreachable devices exhaust the per-account leaf budget; whether documented administrator
+  cleanup is acceptable for v1.
+- Exact signed inputs of the account-identity proof binding (does it commit to the KeyPackage hash?) and validation
+  behavior across account-key rotation.
+- Pairing-batch size bound and maximum concurrently in-flight group Commits per session.
+- What the pairing approval dialog must display to avoid confused-deputy approval of an entire batch.
 
-`IdentityRemove` is the likely Marmot custom proposal for that behavior. It has not been assigned in this draft.
+## Migration from the withdrawn draft
 
-## Validation
+The withdrawn branch-draft used an External Commit with `ExternalInit`, a group-derived join PSK, externally supplied
+GroupInfo, an administrator-signed join-authorization proof (component id `0x800a`, kind `452`), and the
+`marmot.multi-device.v1` (`0xf2f0`) signaling gate. None of that was ever normative. Those ids are retired in
+[../foundation/registries.md](../foundation/registries.md) and MUST NOT be reused. Implementations of the old draft
+MUST reject it and MUST NOT emit it.
 
-A multi-device join is invalid if:
-
-- the group has not negotiated support for the multi-device gate;
-- the joining LeafNode account identity proof is missing or invalid;
-- the joining LeafNode credential identity does not match any existing group member's credential identity;
-- the multi-device authorization `AppEphemeral` proposal is missing, duplicated, uses the wrong ComponentID, or has
-  invalid data;
-- the authorization proof signer is not an active admin in the candidate parent state;
-- the authorization proof does not bind the candidate parent GroupContext, joining account identity, and new MLS leaf
-  signature key;
-- the external PSK id or PSK value is wrong for the current group context;
-- the Commit includes any proposal beyond the required ExternalInit, Marmot multi-device External PSK, and
-  multi-device authorization `AppEphemeral`;
-- `FramedContent.authenticated_data` contains a multi-device authorization proof or violates the rules of another
-  independently negotiated feature;
-- the External Commit fails normal MLS validation.
-
-## Remaining work
-
-Before this feature becomes normative it still needs finalized PSK derivation bytes, pairing payload bytes, the
-pairing-key lifetime decision above, capability review across the complete feature, and legacy extension migration
-rules. The join-authorization ComponentID, event kind, exact proof bytes, carrier, and component-specific capability
-rules are assigned in
-[../app-components/multi-device-join-authorization-v1.md](../app-components/multi-device-join-authorization-v1.md).
+The pairing payload of the withdrawn draft also transferred the Nostr outer-encryption group event key; the baseline
+here transfers no live group keys of any kind.
