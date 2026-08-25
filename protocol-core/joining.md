@@ -50,9 +50,10 @@ After unwrapping a Welcome, the receiver:
 5. validates every resulting member identity and account identity proof;
 6. identifies the Welcome author from the MLS GroupInfo signer leaf and validates that author's Marmot account identity;
 7. validates the resulting Marmot group state and required components;
-8. authorizes the Welcome through exactly one path: the ordinary active-admin check in
-   [admin-policy-v1.md](../app-components/admin-policy-v1.md), or the same-account receipt check in
-   [multi-device.md](../features/multi-device.md) when experimental component `0x800d` is required;
+8. authorizes the Welcome through exactly one path: when its KeyPackageRef matches an active approved same-account
+   intent, the pairing-intent and exact-sponsor-leaf checks in [multi-device.md](../features/multi-device.md) are
+   mandatory even if the sponsor is an active admin; otherwise the ordinary active-admin check in
+   [admin-policy-v1.md](../app-components/admin-policy-v1.md) applies;
 9. checks whether the client already retains the resulting MLS group id; outside a separately verified repair or rejoin
    path, it rejects a match without modifying the existing state or the referenced KeyPackage material;
 10. stores the group state and routing information;
@@ -103,9 +104,10 @@ The first-contact trust root is therefore the Welcome author. A joiner MUST auth
 identity — this is step 6 of the receiving flow — and a client SHOULD present that identity to the joining user
 before or at join, so accepting an invite is an explicit decision about who the inviter is.
 
-For same-account enrollment, the pairing sponsor and its receipt are the trust root. The GroupInfo signature and
-confirmed transcript hash bind its attestation to an exact KeyPackage, claimed parent, branch, and Commit result, but
-do not independently prove that parent or global finality. A compromised sponsor can lie.
+For same-account enrollment, the interactively paired sponsor is the trust root. The approved intent binds its exact
+MLS leaf signature key, group id, and fresh KeyPackageRef; the sponsor-signed GroupInfo authenticates the resulting
+branch. It does not independently prove the candidate parent, Add-only Commit shape, or global finality. Existing
+members validate the Commit, and a compromised sponsor can lie about the branch it delivers.
 
 A client MAY treat a newly joined group as unverified until an MLS application message from an account other than the
 Welcome author authenticates on the group's branch. That message proves only that the other account participated on

@@ -123,8 +123,8 @@ use the explicit enablement flow in
 [group-lifecycle-v1.md](./group-lifecycle-v1.md).
 
 Groups MAY require the experimental `marmot.same-account-membership.v1` (`0x800d`) when every current leaf advertises
-support. That component has no persistent state bytes; its id in the required `app_components` list enables its bounded
-Commit authorization rules, and its only component data is a same-account enrollment receipt in GroupInfo.
+support. That component carries no component data; its id in the required `app_components` list enables its bounded
+Commit authorization rules.
 
 ## Common Rules
 
@@ -269,8 +269,8 @@ Every Marmot leaf uses the adopted
 [marmot.member.account-identity-proof.v2](./account-identity-proof-v2.md) LeafNode component.
 
 The experimental [marmot.same-account-membership.v1](./same-account-membership-v1.md) component enables bounded
-same-account Add and Remove Commit shapes and carries the sponsor-attested GroupInfo enrollment receipt. It is not
-required for baseline conformance. The earlier External-Commit draft was withdrawn and its ids remain unused.
+same-account Add and Remove Commit shapes. It is a data-less negotiated behavior and is not required for baseline
+conformance. The earlier External-Commit draft was withdrawn and its ids remain unused.
 
 ## Resolved Direction
 

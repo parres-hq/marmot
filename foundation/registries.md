@@ -25,6 +25,9 @@ Marmot app components use MLS private-use component ids.
 | `0x800c`     | `marmot.group.lifecycle.v1`                     | [doc](../app-components/group-lifecycle-v1.md)                      |
 | `0x800d`     | `marmot.same-account-membership.v1`             | [doc](../app-components/same-account-membership-v1.md)              |
 
+Component id `0x800a` was released by the withdrawn multi-device draft and is currently unassigned. It has no Marmot
+meaning and MUST NOT be emitted or interpreted unless a future document claims it in this table.
+
 ## Upstream MLS extension draft ids
 
 These values are pinned for the MLS extensions draft profile currently used by Marmot. If the upstream draft changes
@@ -60,6 +63,9 @@ carriers and MUST NOT be treated as interchangeable merely because both use a `C
 
 `0xf2d3` is intentionally unassigned and has no reserved meaning. A future use MUST claim it in this registry before
 emitting it.
+
+Extension types `0xf2ef` and `0xf2f0` were released by the withdrawn multi-device draft and are currently unassigned.
+They have no Marmot meaning and MUST NOT be emitted or interpreted unless a future document claims them in this table.
 
 `0xf2d1`, `0xf2d2`, and `0xf2d4` are the agent-text-stream-QUIC member role capabilities. A member advertises a role by
 listing the matching extension type in its LeafNode capabilities; the `required_member_roles` mask in

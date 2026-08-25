@@ -13,21 +13,14 @@ one account.
 
 ## Core boundary
 
-Content sync replicates logical, accepted application data. The independent MLS-client and KeyPackage lifecycle rules
-are defined in [identity.md](../foundation/identity.md), [key-packages.md](../foundation/key-packages.md), and
-[mls-protocol.md](../foundation/mls-protocol.md). A future sync protocol MUST NOT clone:
+Content sync replicates logical, accepted application data. It does not transfer live cryptographic state, local MLS
+group state, KeyPackage private material, or unpublished local input. The canonical identity, MLS-state, and key
+lifecycle rules are defined in [identity.md](../foundation/identity.md), [key-packages.md](../foundation/key-packages.md),
+and [mls-protocol.md](../foundation/mls-protocol.md).
 
-- any local database file or MLS-library group state;
-- current or historical epoch secrets;
-- sender ratchets;
-- KeyPackage private keys;
-- unpublished or unaccepted local input; or
-- anything that would collapse the security and lifecycle boundary between two devices.
-
-Copying live cryptographic state would make concurrent use unsafe and would let one compromised device compromise all
-others retroactively. A newly admitted device generally
-cannot independently revalidate old application messages through MLS after the relevant epoch secrets are deleted;
-any transferred history is an authorized account archive, not fresh MLS verification, and must be presented as such.
+A newly admitted device generally cannot independently revalidate old application messages after the relevant MLS
+secrets are deleted. Transferred history is therefore an authorized account archive, not fresh MLS verification, and
+must be presented as such.
 
 ## Data classes
 
