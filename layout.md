@@ -53,6 +53,7 @@ app-components/
   group-encrypted-media-v2.md
   group-lifecycle-v1.md
   account-identity-proof-v2.md
+  same-account-membership-v1.md
 transports/
   README.md
   nostr.md

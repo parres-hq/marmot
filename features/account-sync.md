@@ -13,7 +13,9 @@ one account.
 
 ## Core boundary
 
-Content sync replicates logical, accepted application data. It MUST NOT clone:
+Content sync replicates logical, accepted application data. The independent MLS-client and KeyPackage lifecycle rules
+are defined in [identity.md](../foundation/identity.md), [key-packages.md](../foundation/key-packages.md), and
+[mls-protocol.md](../foundation/mls-protocol.md). A future sync protocol MUST NOT clone:
 
 - any local database file or MLS-library group state;
 - current or historical epoch secrets;
@@ -22,8 +24,8 @@ Content sync replicates logical, accepted application data. It MUST NOT clone:
 - unpublished or unaccepted local input; or
 - anything that would collapse the security and lifecycle boundary between two devices.
 
-Each device is an independent MLS client. Copying live cryptographic state between devices would make concurrent use
-unsafe and would let one compromised device compromise all others retroactively. A newly admitted device generally
+Copying live cryptographic state would make concurrent use unsafe and would let one compromised device compromise all
+others retroactively. A newly admitted device generally
 cannot independently revalidate old application messages through MLS after the relevant epoch secrets are deleted;
 any transferred history is an authorized account archive, not fresh MLS verification, and must be presented as such.
 
@@ -47,7 +49,9 @@ only. The default scope is an open question.
 
 ## Layered design direction
 
-The proposed layering keeps the logical data model independent of any carrier:
+The proposed layering keeps the logical data model independent of any carrier. This document owns only the exploration;
+before interoperability, the first four layers require a versioned account-sync feature document with exact bytes and
+merge rules, while each selected delivery binding belongs in `transports/` or a separately registered feature carrier:
 
 1. a canonical, typed account-sync record format;
 2. narrow deterministic merge rules per record type;
@@ -75,14 +79,16 @@ arrival. "Last writer" cannot mean an untrusted wall-clock timestamp alone.
 
 ### Sync keys and device authority
 
-Content SHOULD be encrypted under random, versioned account-sync keys rather than directly under the long-term Nostr
-account key. Each device also has a synchronization signing identity authorized by the account-device control plane.
+Any adopted design SHOULD encrypt content under random, versioned account-sync keys rather than directly under the
+long-term Nostr account key. Each device would also need a synchronization signing identity authorized by an explicitly
+specified account-device control plane. No current Marmot document assigns that record format, key schedule, signing
+proof, or control plane; implementations MUST NOT treat this exploration as an interoperable wire protocol.
 Removing a device can rotate keys for future records and checkpoints but cannot revoke content already downloaded;
 adding a device needs an explicit policy for which historical key versions it receives.
 
 ## Carrier options
 
-**Direct pairing transfer** — encrypted snapshot plus journal tail over the pairing channel from
+**Direct pairing transfer** — encrypted snapshot plus journal tail over the carrier-independent pairing channel from
 [multi-device.md](./multi-device.md). Best first milestone: private, fast, simple. Requires both devices online
 together and provides no ongoing sync.
 

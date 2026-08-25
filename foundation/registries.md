@@ -23,6 +23,7 @@ Marmot app components use MLS private-use component ids.
 | `0x8009`     | `marmot.member.account-identity-proof.v2`       | [doc](../app-components/account-identity-proof-v2.md)               |
 | `0x800b`     | `marmot.group.encrypted-media.v2`               | [doc](../app-components/group-encrypted-media-v2.md)                |
 | `0x800c`     | `marmot.group.lifecycle.v1`                     | [doc](../app-components/group-lifecycle-v1.md)                      |
+| `0x800d`     | `marmot.same-account-membership.v1`             | [doc](../app-components/same-account-membership-v1.md)              |
 
 ## Upstream MLS extension draft ids
 
@@ -71,8 +72,8 @@ These three extension types are capability markers only: v1 defines no extension
 `LeafNode.capabilities.extensions` to advertise role support and are never emitted as LeafNode or GroupContext
 extension bodies.
 
-The current experimental multi-device direction is described in
-[../features/multi-device.md](../features/multi-device.md) and assigns no extension types.
+The experimental multi-device feature uses component negotiation rather than a custom extension type; see
+[`marmot.same-account-membership.v1`](../app-components/same-account-membership-v1.md).
 
 `0xf2f1` is the superseded v1 account-identity-proof extension. It is not required or emitted by the current profile;
 component id `0x8009` replaces it. It remains registered so the legacy wire value is never reassigned.
@@ -104,6 +105,8 @@ seal), kind `10002` (NIP-65 relay list), and kind `10050` (NIP-17 DM inbox relay
 | `449`   | Push token removal                  | Marmot app payload                  | [push-notifications.md](../features/push-notifications.md) |
 | `450`   | Account identity proof v2 event     | Local signing template, not relayed | [account-identity-proof-v2.md](../app-components/account-identity-proof-v2.md) |
 | `451`   | Push owner proof event              | Local signing template, not relayed | [push-notifications.md](../features/push-notifications.md) |
+| `452`   | Same-account enrollment ack         | Marmot app payload                  | [multi-device.md](../features/multi-device.md)             |
+| `453`   | Same-account pairing proof          | Local signing template, not relayed | [multi-device.md](../features/multi-device.md)             |
 | `1009`  | Message edit                        | Marmot app payload                  | [application-messages.md](application-messages.md)      |
 | `1200`  | Agent text stream start             | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
 | `1210`  | Group system event                  | Marmot app payload                  | [application-messages.md](application-messages.md)      |
@@ -126,7 +129,7 @@ Kind `451` is the local signing event for current push token-record and removal 
 distinct `d` tags and are defined by [push-notifications.md](../features/push-notifications.md). Its signature-only
 carrier is feature-specific and does not use `MarmotAuthorizationProof`.
 
-Kinds `450` and `451` are local signing templates, not transport objects. Clients MUST NOT publish them to relays.
+Kinds `450`, `451`, and `453` are local signing templates, not transport objects. Clients MUST NOT publish them to relays.
 Legacy-group verification of push signatures created with kind `450` does not change the current allocation: clients
 MUST NOT produce a new push owner proof with kind `450`.
 
