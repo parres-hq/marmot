@@ -92,8 +92,11 @@ Conformance suites for [`marmot.group.history-purge.v1`](../app-components/histo
 2. each missing, duplicate, extra, out-of-order, malformed, wrong-request, wrong-group, wrong-parent, and No approval,
    verifying that no retention update or deletion effect is accepted;
 3. one explicit No and one silent member, verifying that neither produces a partial or group-wide completion state;
-   then a No-then-Yes sequence from one member, including restart after the No, verifying that the later Yes is invalid,
-   the request remains rejected, and no retention, suppression, or deletion effect starts;
+   then deliver one member's valid No response to client A but not client B, restart that member's signer, and request a
+   distinct Yes proof for the same request. The conforming signer MUST refuse to produce the Yes proof. Given the same
+   candidate parent and incomplete or No-bearing authorization Commit bytes, clients A and B MUST reach identical
+   rejection and effect projections despite their asymmetric response delivery: no retention, suppression, or deletion
+   effect starts;
 4. a membership, identity, capability, admin-policy, retention, or unrelated canonical child Commit before
    finalization, verifying that the old request expires and cannot authorize a later Commit;
 5. a leaf without `app_ephemeral` or component `0x800d` support, verifying that request creation and finalization are

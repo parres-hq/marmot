@@ -80,12 +80,15 @@ content    = "Approve deletion of pre-activation application plaintext"
 
 The producer MUST set `proof.created_at` to its local current Unix time when requesting the signature. Receivers do not compare it with their local wall clock. The proof signer MUST be one of `request.members`.
 
-A conforming account MUST produce at most one decision for a `request_id`. On accepting a member's first valid decision,
-a client records that decision durably for the request. An exact duplicate proof is idempotent. Every later distinct proof
-from that member for the same `request_id` is invalid, including a Yes proof after a No proof. A recorded No
-irrevocably rejects the request on that client: it MUST reject an authorizing Commit even if the Commit carries a
-different, correctly signed Yes proof from that member. Restart MUST preserve this terminal decision. A No therefore
-makes a unanimous authorization impossible. Silence, dismissal, timeout, and an invalid proof are not Yes.
+A conforming account MUST produce at most one decision for a `request_id`. Before returning its first proof, the signer
+MUST record that decision durably. An exact retry returns the same proof; every request for a distinct proof for that
+`request_id` MUST be refused, including a request for Yes after No. Restart MUST preserve this signer state. A
+conforming signer that has produced No therefore cannot supply the Yes proof required for authorization. Silence,
+dismissal, timeout, and an invalid proof are not Yes.
+
+Receivers validate each proof only from the candidate parent, the request, and the proof bytes. Commit validation MUST
+NOT depend on whether a receiver previously observed or stored a response application message. Consequently, every
+conforming validator reaches the same result for the same candidate parent and authorizing Commit bytes.
 
 ## Purge control app events
 
@@ -127,7 +130,7 @@ struct {
 } MarmotHistoryPurgeAuthorizationV1;
 ```
 
-`approvals` contains exactly one 104-byte Yes proof for every identity in `request.members`, sorted by `proof.signer_pubkey` bytes. Missing, duplicate, extra, out-of-order, invalid, or No proofs invalidate the authorization. A Yes proof is invalid for this purpose when that client has already recorded a distinct decision from the signer for the request.
+`approvals` contains exactly one 104-byte Yes proof for every identity in `request.members`, sorted by `proof.signer_pubkey` bytes. Missing, duplicate, extra, out-of-order, invalid, or No proofs invalidate the authorization. Validation uses only the candidate parent, request, and authorization bytes; a receiver's locally observed response history cannot change the result.
 
 ## Negotiation
 
