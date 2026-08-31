@@ -2,22 +2,30 @@
 
 Status: adopted.
 
-`marmot.group.history-purge.v1` carries one unanimous, commit-scoped authorization to remove application plaintext from before a new retention policy takes effect. It does not create persistent group state.
+`marmot.group.history-purge.v1` carries one bounded consensual request from an application event into temporary canonical
+GroupContext state, records each member's single decision, and carries the terminal authorization in `AppEphemeral`. The
+accepted terminal transition may authorize removal of application plaintext from before a new retention policy takes
+effect. It does not authorize deleting protocol recovery material or copies outside a conforming member's controlled
+stores.
 
-## Registry
+## Registry and locations
 
 - Component id: `0x800d`
 - Name: `marmot.group.history-purge.v1`
 - Purge control app-event kind: `453`
 - Member decision proof kind: `454`
-- Valid carrier: one inline MLS `AppEphemeral` proposal in the authorizing Commit
+- Request proof kind: `455`
+- Cancellation proof kind: `456`
+- Terminal proof kind: `457`
+- Valid locations: a temporary GroupContext entry while one request is open, and one terminal `AppEphemeral` value in
+  the Commit that removes that entry
 - Default requirement: optional
 
-The component is invalid as component data in a GroupContext, LeafNode, KeyPackage, or GroupInfo and is invalid as a SafeAAD item.
+A group supports this feature only when every nonblank leaf advertises `app_ephemeral`, `app_data_update`, and component
+`0x800d`. An open request requires `0x800d` in the GroupContext required-component list. A terminal Commit atomically
+removes both the entry and that temporary requirement.
 
 ## Request bytes
-
-The request binds the complete candidate parent state, the replacement retention duration, and the active account identities that must decide:
 
 ```text
 struct {
@@ -25,23 +33,62 @@ struct {
 } MarmotHistoryPurgeMemberV1;
 
 struct {
+  uint32 leaf_index;
+  opaque account_pubkey[32];
+  uint8 app_ephemeral_supported;
+  uint8 history_purge_supported;
+} MarmotHistoryPurgeCapabilityLeafV1;
+
+struct {
+  MarmotHistoryPurgeCapabilityLeafV1 leaves<38..38912>;
+} MarmotHistoryPurgeCapabilityStateV1;
+
+struct {
   opaque group_id<1..255>;
   uint64 parent_epoch;
   opaque parent_group_context_hash[32];
+  opaque proposer_pubkey[32];
+  uint64 created_at;
+  uint64 expires_at;
+  uint8 prior_retention_present;
+  uint64 prior_retention_secs;
   uint64 target_retention_secs;
   MarmotHistoryPurgeMemberV1 members<32..32768>;
+  opaque capability_state_hash[32];
+} MarmotHistoryPurgeRequestCoreV1;
+
+struct {
+  MarmotHistoryPurgeRequestCoreV1 core;
+  MarmotAuthorizationProof proposer_proof;
 } MarmotHistoryPurgeRequestV1;
 ```
 
-These structures use the Marmot binary profile in [../foundation/canonical-encoding.md](../foundation/canonical-encoding.md). `members` contains between one and 1024 entries, sorted by `account_pubkey` bytes with no duplicate. It MUST equal the sorted unique set of 32-byte Marmot account identities in all nonblank leaves of the candidate parent state.
+These structures use the Marmot binary profile in
+[../foundation/canonical-encoding.md](../foundation/canonical-encoding.md). `members` contains between one and 1024
+entries, sorted by `account_pubkey` bytes without duplicates. It MUST equal the sorted unique set of Marmot account
+identities in all nonblank leaves of the candidate parent state. `proposer_pubkey` MUST be in that set.
 
-`group_id`, `parent_epoch`, and `parent_group_context_hash` MUST equal the candidate parent's MLS GroupContext, where:
+`prior_retention_present` is `0` or `1`. When it is `0`, `prior_retention_secs` MUST be zero and the bound parent has no
+`marmot.group.message-retention.v1` entry. When it is `1`, `prior_retention_secs` MUST equal the exact effective value in
+that parent. `target_retention_secs` follows the value bounds in
+[message-retention-v1.md](./message-retention-v1.md).
+
+For every nonblank parent leaf, up to 1024 leaves, a validator constructs one
+`MarmotHistoryPurgeCapabilityLeafV1` in increasing `leaf_index` order. Both support bytes are `0` or `1` and are derived
+from that leaf's authenticated MLS capabilities and Marmot component support. The request is eligible only when both
+bytes are `1` for every entry. The bound digest is:
 
 ```text
-parent_group_context_hash = SHA-256(TLS-serialize(candidate_parent_group_context))
+capability_state_hash = SHA-256(
+  "marmot-history-purge-capabilities-v1" ||
+  0x00 ||
+  encode(MarmotHistoryPurgeCapabilityStateV1)
+)
 ```
 
-The TLS serialization is owned by MLS and is not re-encoded with the Marmot binary profile. Its tree hash and confirmed transcript hash bind the request to the exact parent state, including the active leaves and prior commits. `target_retention_secs` MUST differ from the retention value in that parent. An absent `marmot.group.message-retention.v1` component is read as zero for this comparison.
+The request interval is absolute Unix time in whole seconds. `created_at` MUST equal
+`proposer_proof.created_at`; `expires_at` MUST be greater than `created_at` and no more than `604800` seconds later.
+V1 has no caller-selected prompt text and permits at most one open request per group.
 
 The request identity is:
 
@@ -49,15 +96,67 @@ The request identity is:
 request_id = SHA-256(
   "marmot-history-purge-request-v1" ||
   0x00 ||
-  encode(MarmotHistoryPurgeRequestV1)
+  encode(MarmotHistoryPurgeRequestCoreV1)
 )
 ```
 
-The domain string is 31 ASCII bytes. The encoded request supplies an unambiguous boundary for every variable field.
+## Request proof and non-admin route
 
-## Member decision proof
+The proposer proof uses the common envelope in
+[../foundation/authorization-proofs.md](../foundation/authorization-proofs.md). A verifier reconstructs this local-only
+Nostr event:
 
-Each account in `request.members` makes exactly one explicit Yes or No decision by producing a `MarmotAuthorizationProof` from [../foundation/authorization-proofs.md](../foundation/authorization-proofs.md). Construct this exact local-only Nostr event:
+```text
+pubkey     = lowercase-hex(proposer_proof.signer_pubkey)
+created_at = proposer_proof.created_at
+kind       = 455
+tags       = [
+  ["d", "marmot-history-purge-request-v1"],
+  ["component", "0x800d"],
+  ["group_id", group_id_hex],
+  ["parent_epoch", parent_epoch_decimal],
+  ["request", request_id_hex]
+]
+content    = lowercase-hex(SHA-256(encode(MarmotHistoryPurgeRequestCoreV1)))
+```
+
+The proof signer MUST equal `proposer_pubkey` and be an active member in the bound parent. Kind `455` is a signing
+template and MUST NOT be published to relays.
+
+Any active member, including a non-admin, MAY create and send the request app event below. Any active member MAY relay a
+valid request into an `AppDataUpdate` that adds the temporary GroupContext entry; the proposer proof, not relay identity,
+authenticates creation. This explicit feature-owned app route does not loosen the active-admin requirement for the
+retention update or accepted finalization.
+
+## Open state and decision updates
+
+```text
+uint8 MarmotHistoryPurgeDecisionV1; // 1 = yes, 2 = no
+
+struct {
+  MarmotHistoryPurgeDecisionV1 decision;
+  MarmotAuthorizationProof proof;
+} MarmotHistoryPurgeDecisionRecordV1;
+
+struct {
+  MarmotHistoryPurgeRequestV1 request;
+  MarmotHistoryPurgeDecisionRecordV1 yes_decisions<0..107520>;
+} MarmotHistoryPurgeOpenStateV1;
+```
+
+The GroupContext component data is exactly one encoded `MarmotHistoryPurgeOpenStateV1`. `yes_decisions` contains at
+most one record per account, sorted by `proof.signer_pubkey`, and every record MUST have decision `1`. A state update is
+a full replacement. From an existing state it may add exactly one previously absent Yes record and may change no other
+byte. The proposal sender MUST equal that record's signer, and both sender and committer MUST be active members in the
+bound cohort. A member's own Yes is the only decision that may remain in open state.
+
+A No is not an advisory app event and is never stored as an open-state value. It is a terminal response carried in the
+rejected finalization Commit below. The No signer MAY commit that response directly. Consequently, after a valid No is
+on the selected canonical branch, the component entry is gone and no later Yes can replace it. Competing same-parent
+terminal Commits remain ordinary candidate branches; canonical convergence chooses one transition, and off-branch
+proof delivery cannot mutate the selected state.
+
+A decision proof reconstructs the kind `454` event:
 
 ```text
 pubkey     = lowercase-hex(proof.signer_pubkey)
@@ -71,31 +170,119 @@ tags       = [
   ["request", request_id_hex],
   ["decision", decision]
 ]
-content    = "Approve deletion of pre-activation application plaintext"
-             when decision is "yes", otherwise
-             "Reject deletion of pre-activation application plaintext"
+content    = ""
 ```
 
-`group_id_hex` and `request_id_hex` are lowercase hexadecimal with no prefix. `parent_epoch_decimal` is canonical unsigned decimal ASCII with no leading zero except that zero itself is `"0"`. `decision` is exactly `"yes"` or `"no"`. The tags appear exactly once and in the order shown, and the event has no other tags. This signing event is not a transport event and MUST NOT be published to relays.
+`decision` in the event is exactly `yes` or `no`. The signer MUST occur in `members`. The proof timestamp MUST be from
+`created_at` through `expires_at`, inclusive. These byte comparisons, rather than a verifier's wall clock, determine
+Commit validity. A conforming signer MUST durably remember the first decision it signed for a request through expiry
+and MUST refuse a second or conflicting decision. The response identity is:
 
-The producer MUST set `proof.created_at` to its local current Unix time when requesting the signature. Receivers do not compare it with their local wall clock. The proof signer MUST be one of `request.members`.
+```text
+response_id = SHA-256(
+  "marmot-history-purge-response-v1" ||
+  0x00 || request_id || decision || encode(proof)
+)
+```
 
-A conforming account MUST produce at most one decision for a `request_id`. Before returning its first proof, the signer
-MUST record that decision durably. An exact retry returns the same proof; every request for a distinct proof for that
-`request_id` MUST be refused, including a request for Yes after No. Restart and migration MUST preserve this local signer
-decision record until the implementation can prove that the request's bound parent can never again be a canonical
-candidate parent. A conforming signer that has produced No therefore cannot supply the Yes proof required for
-authorization. Silence, dismissal, timeout, and an invalid proof are not Yes.
+## Cancellation
 
-Receivers validate each proof only from the candidate parent, the request, and the proof bytes. Commit validation MUST
-NOT depend on whether a receiver previously observed or stored a response application message. Consequently, every
-conforming validator reaches the same result for the same candidate parent and authorizing Commit bytes.
+The proposer may cancel only while the request is open. The cancellation proof uses kind `456` with the exact tags
+below and empty content:
 
-## Purge control app events
+```text
+[
+  ["d", "marmot-history-purge-cancellation-v1"],
+  ["component", "0x800d"],
+  ["group_id", group_id_hex],
+  ["parent_epoch", parent_epoch_decimal],
+  ["request", request_id_hex]
+]
+```
 
-Requests and responses use kind `453` Marmot app events carried as ordinary MLS application messages. Their shared envelope follows [../foundation/application-messages.md](../foundation/application-messages.md).
+Its signer MUST equal `proposer_pubkey`, and its timestamp MUST be from `created_at` through `expires_at`, inclusive.
+The cancellation identity is:
 
-A request event has exactly these tags:
+```text
+cancellation_id = SHA-256(
+  "marmot-history-purge-cancellation-v1" ||
+  0x00 || request_id || encode(cancellation_proof)
+)
+```
+
+A cancellation app event may distribute this proof, but cancellation becomes authoritative only in the selected
+terminal Commit. A cancelled, rejected, expired, or superseded request cannot reopen and requires a new request id.
+
+## Terminal finalization bytes
+
+```text
+uint8 MarmotHistoryPurgeTerminalV1;
+// 1 = accepted, 2 = rejected, 3 = cancelled, 4 = expired, 5 = superseded
+
+struct {
+  opaque request_id[32];
+  MarmotHistoryPurgeTerminalV1 terminal;
+} MarmotHistoryPurgeFinalizationCoreV1;
+
+struct {
+  MarmotHistoryPurgeFinalizationCoreV1 core;
+  MarmotAuthorizationProof authorization;
+} MarmotHistoryPurgeFinalizationV1;
+```
+
+The finalization is the only component `0x800d` value in one inline `AppEphemeral` proposal in the terminal Commit. Its
+identity is:
+
+```text
+finalization_id = SHA-256(
+  "marmot-history-purge-finalization-v1" ||
+  0x00 || encode(MarmotHistoryPurgeFinalizationV1)
+)
+```
+
+The authorization envelope is interpreted by terminal value:
+
+- `accepted`: kind `457`, signed by the active-admin committer, with a timestamp no later than `expires_at`; the parent
+  open state contains exactly one valid Yes for every `members` account;
+- `rejected`: the kind `454` No decision proof; its signer is an active cohort member and MUST equal the Commit sender;
+- `cancelled`: the kind `456` cancellation proof; its signer is the proposer and MUST equal the Commit sender;
+- `expired`: kind `457`, signed by the active-admin committer, with a timestamp greater than `expires_at`;
+- `superseded`: kind `457`, signed by the committer of the canonical membership, identity, capability, admin-policy, or
+  retention change that invalidates a request binding.
+
+For kind `457`, the local signing event has exact tags:
+
+```text
+[
+  ["d", "marmot-history-purge-terminal-v1"],
+  ["component", "0x800d"],
+  ["group_id", group_id_hex],
+  ["parent_epoch", parent_epoch_decimal],
+  ["request", request_id_hex],
+  ["terminal", terminal]
+]
+```
+
+Its content is lowercase hex of `SHA-256(encode(MarmotHistoryPurgeFinalizationCoreV1))`. The `terminal` tag value is
+exactly `accepted`, `rejected`, `cancelled`, `expired`, or `superseded`, corresponding to terminal values 1 through 5.
+Kind `457` is local-only and MUST NOT be relayed.
+
+Every terminal Commit removes the GroupContext `0x800d` entry and its temporary required-component listing. An accepted
+Commit additionally contains exactly one full-replacement update for `marmot.group.message-retention.v1` with
+`target_retention_secs`. Other terminal Commits contain no retention update. Except for the exact canonical-state change
+that causes `superseded`, a terminal Commit contains no proposal beyond the history-purge removal, required-component
+removal, the terminal `AppEphemeral`, and the accepted retention update when applicable. Any missing, duplicate, or
+extra proposal makes the terminal transition invalid.
+
+The accepted Commit is the sole purge linearization point. Neither a request, a Yes, a No proof that has not reached a
+selected Commit, nor local expiry starts suppression or deletion. The first terminal transition on the selected
+canonical branch wins; later replayed finalizations are inert because no matching open component remains.
+
+## Request, cancellation, and receipt app events
+
+All control messages are MLS-protected Marmot app payloads of kind `453`; they are not relay-level Nostr events.
+
+A request event has exact tags:
 
 ```text
 [
@@ -105,81 +292,89 @@ A request event has exactly these tags:
 ]
 ```
 
-Its `content` is standard padded base64 of the exact `MarmotHistoryPurgeRequestV1` bytes. The MLS-authenticated sender MUST be an active administrator in the bound parent state. A recipient ignores the request unless the bytes decode exactly, reproduce the tagged `request_id`, match its current canonical state, and pass the negotiation rules below.
+Its content is standard padded base64 of the exact `MarmotHistoryPurgeRequestV1` bytes. The MLS-authenticated sender MUST
+equal `proposer_pubkey`.
 
-A response event has exactly these tags:
+A cancellation event has the same `v` and `request` tags, `type` equal to `cancellation`, and content equal to padded
+base64 of the exact cancellation proof. The authenticated sender MUST be the proposer.
+
+A receipt event has exact tags:
 
 ```text
 [
   ["v", "marmot-history-purge-v1"],
-  ["type", "response"],
-  ["request", request_id_hex],
-  ["decision", decision]
+  ["type", "receipt"],
+  ["finalization", finalization_id_hex],
+  ["outcome", outcome]
 ]
 ```
 
-Its `content` is standard padded base64 of exactly one 104-byte `MarmotAuthorizationProof`. The MLS-authenticated sender account MUST equal `proof.signer_pubkey`, the proof MUST reconstruct the tagged decision for the exact request, and the signer MUST occur in `request.members`. Invalid control events are ignored as feature data; they do not invalidate the carrying MLS application message or alter group state.
-
-## AppEphemeral authorization bytes
-
-The inline `AppEphemeral` proposal uses component id `0x800d` and this data:
+Its content is empty. `outcome` is exactly `applied` or `failed`. The authenticated sender MUST be one member account in
+the accepted request cohort. A sender emits at most one receipt for a finalization. `applied` may be emitted only after
+all of that account's controlled conforming stores complete the required idempotent cleanup; `failed` is a terminal
+coarse result when they cannot. The receipt identity is:
 
 ```text
-struct {
-  MarmotHistoryPurgeRequestV1 request;
-  MarmotAuthorizationProof approvals<104..106496>;
-} MarmotHistoryPurgeAuthorizationV1;
+receipt_id = SHA-256(
+  "marmot-history-purge-receipt-v1" ||
+  0x00 || finalization_id || sender_account_pubkey || outcome
+)
 ```
 
-`approvals` contains exactly one 104-byte Yes proof for every identity in `request.members`, sorted by `proof.signer_pubkey` bytes. Missing, duplicate, extra, out-of-order, invalid, or No proofs invalidate the authorization. Validation uses only the candidate parent, request, and authorization bytes; a receiver's locally observed response history cannot change the result.
+Receipts expose no message id, content hash, filename, per-message count, device inventory, failure reason, or cleanup
+timestamp. Although MLS authenticates each sender, the user-visible group projection MUST expose only the aggregate
+outcome, not a member-by-member or device-by-device table.
 
-## Negotiation
+## Expiry and restart
 
-Before emitting a request, every nonblank leaf in the bound parent state MUST advertise proposal type `app_ephemeral` (`0x0009`) and component id `0x800d`. The GroupContext MUST permit `app_ephemeral` under MLS RequiredCapabilities. A leaf that does not advertise both values blocks the feature; it is never treated as consenting.
+A client uses `expires_at` for its local open-request UI and MUST retain or reconstruct the request id, deadline, first
+signed decision, canonical open state, accepted suppression boundary, cleanup progress, and emitted receipt across
+restart. At or after its local `expires_at`, it stops offering Yes/No and treats timeout only as a provisional local
+`expired` projection. Expiry is never consent. Canonical expiry requires the terminal Commit above, so Commit validation
+never depends on receiver clock skew. A valid accepted finalization signed inside the response interval remains valid
+when delivered late unless another terminal transition already won canonically.
 
-The component id need not be in the GroupContext required-component list because the authorization is one-shot and commit-scoped. A client MUST NOT add a persistent `0x800d` dictionary entry.
+## Application and completion projections
 
-## Commit authorization and validation
+An accepted finalization produces these stable projections:
 
-Only an active administrator in the candidate parent state MAY commit the purge authorization. The authorizing Commit MUST:
+- `accepted`: the accepted finalization is canonical; cleanup has not yet finished locally;
+- `applying`: the target range is hidden locally and idempotent cleanup is in progress;
+- `local_applied`: local cleanup is durable and the account's `applied` receipt has been emitted;
+- `group_complete`: one valid `applied` receipt has been observed for every account in the request cohort;
+- `partially_completed`: at least one valid receipt has been observed, but the set is not all-`applied`, or any valid
+  `failed` receipt has been observed.
 
-- apply directly to the request's exact candidate parent;
-- have a complete proposal set consisting of exactly one inline `0x800d` `AppEphemeral` proposal carrying this
-  authorization and exactly one `marmot.group.message-retention.v1` full-replacement `AppDataUpdate` whose value equals
-  `request.target_retention_secs`;
-- reject every other proposal or component mutation, including a standalone or second `0x800d` proposal, an
-  `AppEphemeral` proposal for any other component id, any other `AppDataUpdate`, and any MLS proposal type other than
-  the two allowed proposals, whether inline or referenced; and
-- satisfy every request, negotiation, approval, ordinary MLS, and candidate-parent authorization rule above.
+`accepted` is wire-authoritative. The other four are local projections from durable cleanup state and the valid receipt
+set; different clients may learn receipts at different times. Missing, offline, unsupported, or failed application MUST
+NOT be presented as `group_complete`.
 
-The retention `AppDataUpdate` MAY be inline or a valid referenced proposal. Resolving that reference does not widen the
-allowed set. The Commit's required UpdatePath, confirmation tag, and other mandatory MLS framing are not proposals and
-remain governed by the ordinary MLS validation rule; they do not permit another proposal or app-component mutation.
+## Target boundary and deletion gate
 
-The Commit that satisfies these rules is the request's only valid finalization. Its resulting epoch is the activation epoch. Any other canonical child of the bound parent expires the request without purge, including a membership, capability, admin-policy, or retention change. Local wall clocks and transport arrival order do not decide validity.
+The target is application plaintext whose MLS source epoch is less than the accepted Commit's resulting epoch. It
+excludes MLS Commits and proposals, retained recovery anchors, candidate state, pending publication obligations,
+audit/security material required for protocol correctness, and messages already governed by another independent delete
+action.
 
-The authorization is invalid for any other group, parent state, epoch, member set, target retention value, or Commit shape. Replay of the same Commit follows ordinary Marmot duplicate handling and MUST NOT create a second deletion effect.
+A client MUST durably install one reversible suppression boundary before exposing the accepted effect. Target payloads,
+including late or replayed arrivals, are suppressed before timeline, search, notification, export, reply-preview, TTS,
+or media-cache presentation. Suppression follows the selected branch and is withdrawn if convergence supersedes the
+authorizing Commit while its parent remains inside the rollback horizon.
 
-## Effect boundary
+Best-effort destructive cleanup begins only after the authorization remains selected and its parent is outside the
+rollback horizon. Cleanup is idempotent by `(request_id, activation_epoch)`, checkpoints before exposing
+`local_applied`, resumes after restart, and never deletes required protocol recovery material. Logical removal is not a
+physical-overwrite guarantee. Former members, hostile or non-conforming clients, relays, exports, screenshots, backups,
+and external copies are outside enforceable scope.
 
-While the authorizing Commit is selected, each conforming client applies the reversible suppression effect defined by
-[../features/consensual-history-purge.md](../features/consensual-history-purge.md) and
-[../protocol-core/retained-history.md](../protocol-core/retained-history.md). The target is delivered application
-plaintext whose MLS source epoch is less than the activation epoch. If convergence supersedes the authorizing Commit
-while its parent remains inside the rollback horizon, the client withdraws that suppression with the Commit's other
-application effects and MUST NOT have destructively deleted the target.
+## Validation, removal, and migration
 
-Local best-effort deletion becomes eligible only after convergence is settled, the selected branch still contains the
-authorizing Commit, and the request's parent epoch is outside the current tip's rollback horizon. At that point no
-eligible branch can supersede the authorization. The authorization never deletes or shortens retention for protocol
-recovery material.
+A decoder rejects noncanonical bytes, unknown enum values, invalid keys or proofs, malformed bounds, duplicate members
+or decisions, a mismatched parent/request/capability/retention binding, and any update that is not one permitted
+transition above. A membership, identity, capability, admin-policy, or retention change while open MUST atomically
+supersede and remove the request; it cannot silently drop a voter or bind a newcomer.
 
-## Removal and migration
-
-This component creates no persistent group state to remove or replace. The local signer decision records required above
-are persistent local state, not component state. Migration or cleanup MUST retain each record unless it can prove that
-the request's bound parent can never again be a canonical candidate parent; removing a record earlier MUST NOT enable a
-second or changed proof for its `request_id`. V1 defines one-shot pre-activation application-plaintext deletion only. It
-does not authorize sender retraction, administrator moderation, local delete-for-me, custom prompts, arbitrary ranges,
-or secure erasure. An incompatible request, proof, carrier, or target rule requires a new component id and proof event
-kind.
+No valid persistent state may be removed without the matching terminal `AppEphemeral`. The component cannot be enabled
+for a group containing an unsupported leaf. Legacy groups continue without it. A future incompatible request, state,
+proof, finalization, receipt, or authorization rule requires a new component id and new proof kinds; V1 bytes MUST NOT
+be reinterpreted.

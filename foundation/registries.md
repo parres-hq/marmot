@@ -112,6 +112,9 @@ seal), kind `10002` (NIP-65 relay list), and kind `10050` (NIP-17 DM inbox relay
 | `452`   | Multi-device join authorization v1 | Local signing template, not relayed | [multi-device-join-authorization-v1.md](../app-components/multi-device-join-authorization-v1.md) |
 | `453`   | History-purge control event         | Marmot app payload                  | [history-purge-v1.md](../app-components/history-purge-v1.md) |
 | `454`   | History-purge member decision       | Local signing template, not relayed | [history-purge-v1.md](../app-components/history-purge-v1.md) |
+| `455`   | History-purge request proof         | Local signing template, not relayed | [history-purge-v1.md](../app-components/history-purge-v1.md) |
+| `456`   | History-purge cancellation proof    | Local signing template, not relayed | [history-purge-v1.md](../app-components/history-purge-v1.md) |
+| `457`   | History-purge terminal proof        | Local signing template, not relayed | [history-purge-v1.md](../app-components/history-purge-v1.md) |
 | `1009`  | Message edit                        | Marmot app payload                  | [application-messages.md](application-messages.md)      |
 | `1200`  | Agent text stream start             | Marmot app payload                  | [agent-text-streams-quic.md](../features/agent-text-streams-quic.md) |
 | `1210`  | Group system event                  | Marmot app payload                  | [application-messages.md](application-messages.md)      |
@@ -135,7 +138,7 @@ Kind `451` is the local signing event for current push token-record and removal 
 distinct `d` tags and are defined by [push-notifications.md](../features/push-notifications.md). Its signature-only
 carrier is feature-specific and does not use `MarmotAuthorizationProof`.
 
-Kinds `450`, `451`, `452`, and `454` are local signing templates, not transport objects. Clients MUST NOT publish them to
+Kinds `450`, `451`, `452`, `454`, `455`, `456`, and `457` are local signing templates, not transport objects. Clients MUST NOT publish them to
 relays. Legacy-group verification of push signatures created with kind `450` does not change the current allocation:
 clients MUST NOT produce a new push owner proof with kind `450`.
 

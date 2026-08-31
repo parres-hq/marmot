@@ -261,8 +261,8 @@ The following persistent GroupContext component is experimental and is not requi
 The frozen [marmot.group.encrypted-media.v1](./group-encrypted-media-v1.md) component remains documented for legacy
 bytes but is not part of the current profile.
 
-The adopted [marmot.group.history-purge.v1](./history-purge-v1.md) component is one-shot commit-scoped data in
-`AppEphemeral`; it never becomes a persistent GroupContext entry.
+The adopted [marmot.group.history-purge.v1](./history-purge-v1.md) component uses temporary GroupContext state while
+one bounded request is open and one terminal `AppEphemeral` value in the Commit that removes that state.
 
 Every Marmot leaf uses the adopted
 [marmot.member.account-identity-proof.v2](./account-identity-proof-v2.md) LeafNode component.
