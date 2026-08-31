@@ -82,9 +82,10 @@ The producer MUST set `proof.created_at` to its local current Unix time when req
 
 A conforming account MUST produce at most one decision for a `request_id`. Before returning its first proof, the signer
 MUST record that decision durably. An exact retry returns the same proof; every request for a distinct proof for that
-`request_id` MUST be refused, including a request for Yes after No. Restart MUST preserve this signer state. A
-conforming signer that has produced No therefore cannot supply the Yes proof required for authorization. Silence,
-dismissal, timeout, and an invalid proof are not Yes.
+`request_id` MUST be refused, including a request for Yes after No. Restart and migration MUST preserve this local signer
+decision record until the implementation can prove that the request's bound parent can never again be a canonical
+candidate parent. A conforming signer that has produced No therefore cannot supply the Yes proof required for
+authorization. Silence, dismissal, timeout, and an invalid proof are not Yes.
 
 Receivers validate each proof only from the candidate parent, the request, and the proof bytes. Commit validation MUST
 NOT depend on whether a receiver previously observed or stored a response application message. Consequently, every
@@ -175,4 +176,10 @@ recovery material.
 
 ## Removal and migration
 
-This component has no persistent state to remove or replace. V1 defines one-shot pre-activation application-plaintext deletion only. It does not authorize sender retraction, administrator moderation, local delete-for-me, custom prompts, arbitrary ranges, or secure erasure. An incompatible request, proof, carrier, or target rule requires a new component id and proof event kind.
+This component creates no persistent group state to remove or replace. The local signer decision records required above
+are persistent local state, not component state. Migration or cleanup MUST retain each record unless it can prove that
+the request's bound parent can never again be a canonical candidate parent; removing a record earlier MUST NOT enable a
+second or changed proof for its `request_id`. V1 defines one-shot pre-activation application-plaintext deletion only. It
+does not authorize sender retraction, administrator moderation, local delete-for-me, custom prompts, arbitrary ranges,
+or secure erasure. An incompatible request, proof, carrier, or target rule requires a new component id and proof event
+kind.
