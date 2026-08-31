@@ -36,11 +36,12 @@ struct {
   uint32 leaf_index;
   opaque account_pubkey[32];
   uint8 app_ephemeral_supported;
+  uint8 app_data_update_supported;
   uint8 history_purge_supported;
 } MarmotHistoryPurgeCapabilityLeafV1;
 
 struct {
-  MarmotHistoryPurgeCapabilityLeafV1 leaves<38..38912>;
+  MarmotHistoryPurgeCapabilityLeafV1 leaves<39..39936>;
 } MarmotHistoryPurgeCapabilityStateV1;
 
 struct {
@@ -74,9 +75,9 @@ that parent. `target_retention_secs` follows the value bounds in
 [message-retention-v1.md](./message-retention-v1.md).
 
 For every nonblank parent leaf, up to 1024 leaves, a validator constructs one
-`MarmotHistoryPurgeCapabilityLeafV1` in increasing `leaf_index` order. Both support bytes are `0` or `1` and are derived
-from that leaf's authenticated MLS capabilities and Marmot component support. The request is eligible only when both
-bytes are `1` for every entry. The bound digest is:
+`MarmotHistoryPurgeCapabilityLeafV1` in increasing `leaf_index` order. All three support bytes are `0` or `1` and are
+derived from that leaf's authenticated MLS capabilities and Marmot component support. The request is eligible only when
+all three bytes are `1` for every entry. The bound digest is:
 
 ```text
 capability_state_hash = SHA-256(
@@ -127,6 +128,12 @@ Any active member, including a non-admin, MAY create and send the request app ev
 valid request into an `AppDataUpdate` that adds the temporary GroupContext entry; the proposer proof, not relay identity,
 authenticates creation. This explicit feature-owned app route does not loosen the active-admin requirement for the
 retention update or accepted finalization.
+
+The member that relays a valid request is authorized to commit only the exact paired addition of the `0x800d`
+GroupContext entry and `0x800d` required-component listing. For every terminal transition, the actor authorized below is
+also authorized to commit only the exact paired removal of that entry and listing. These feature-owned exceptions to
+the default GroupContext authorization do not permit changing any other required component or unrelated GroupContext
+state.
 
 ## Open state and decision updates
 
@@ -242,9 +249,10 @@ finalization_id = SHA-256(
 
 The authorization envelope is interpreted by terminal value:
 
-- `accepted`: kind `457`, signed by the active-admin committer, with a timestamp no later than `expires_at`; the parent
-  open state contains exactly one valid Yes for every `members` account;
-- `rejected`: the kind `454` No decision proof; its signer is an active cohort member and MUST equal the Commit sender;
+- `accepted`: kind `457`, signed by the active-admin committer, with a timestamp from `created_at` through `expires_at`,
+  inclusive; the parent open state contains exactly one valid Yes for every `members` account;
+- `rejected`: the kind `454` No decision proof; its signer is an active cohort member, MUST equal the Commit sender, and
+  MUST NOT already occur in the parent open state's `yes_decisions`;
 - `cancelled`: the kind `456` cancellation proof; its signer is the proposer and MUST equal the Commit sender;
 - `expired`: kind `457`, signed by the active-admin committer, with a timestamp greater than `expires_at`;
 - `superseded`: kind `457`, signed by the committer of the canonical membership, identity, capability, admin-policy, or

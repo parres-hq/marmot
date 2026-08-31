@@ -88,7 +88,9 @@ snapshot encoding, process scheduler, or one snapshot per epoch. The owning norm
 Conformance suites for [`marmot.group.history-purge.v1`](../app-components/history-purge-v1.md) MUST cover:
 
 1. an active non-admin creates the feature-owned request, another active member relays it into temporary GroupContext
-   state, and no actor thereby gains authority to commit the retention update or accepted finalization;
+   state, and no actor thereby gains authority to commit the retention update or accepted finalization. The suite MUST
+   accept only the exact paired `0x800d` required-component-list addition and reject any unrelated required-component or
+   GroupContext mutation by that actor;
 2. a supported fixed member snapshot in which every account adds one canonical Yes and the active-admin terminal Commit
    atomically applies the requested retention value, removes the temporary state, and installs one reversible
    pre-activation plaintext suppression boundary;
@@ -98,7 +100,9 @@ Conformance suites for [`marmot.group.history-purge.v1`](../app-components/histo
    does not, and both then receive the exact rejected Commit bytes. Both clients MUST select the same rejected terminal
    identity. After restart, a later Yes state update or accepted finalization for that request MUST be invalid and no
    suppression or deletion begins. A signer asked for No then Yes before terminal selection MUST durably refuse the
-   second proof; a validator presented conflicting proofs MUST reject them;
+   second proof; a signer whose Yes is already in canonical open state MUST NOT produce No, and a rejected finalization
+   carrying that signer's No MUST be rejected before and after restart even when the No proof was delivered to only one
+   client. A validator presented conflicting proofs MUST reject them;
 5. proposer cancellation while open, cancellation by any other member, cancellation after a terminal transition, and
    replay of a valid cancellation, verifying that only the first case can become the canonical cancelled identity;
 6. request intervals at one second and exactly `604800` seconds, an interval of `604801`, Yes and accepted-proof
@@ -109,7 +113,8 @@ Conformance suites for [`marmot.group.history-purge.v1`](../app-components/histo
 8. a leaf without `app_ephemeral`, `app_data_update`, or component `0x800d` support, verifying that request creation and
    finalization are blocked rather than treating the leaf as consenting;
 9. every terminal proposal set with each required proposal missing or duplicated and with one unrelated proposal added,
-   verifying rejection with no retention, suppression, or deletion effect;
+   including an unrelated required-component-list mutation by a non-admin No signer or proposer, verifying rejection
+   with no retention, suppression, or deletion effect;
 10. competing same-parent accepted, rejected, cancelled, expired, and superseded terminal Commits delivered in
     different orders, verifying that canonical convergence alone selects one stable terminal identity and replays of
     losing transitions are inert;
