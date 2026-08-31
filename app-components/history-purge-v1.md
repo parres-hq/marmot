@@ -133,10 +133,17 @@ The component id need not be in the GroupContext required-component list because
 Only an active administrator in the candidate parent state MAY commit the purge authorization. The authorizing Commit MUST:
 
 - apply directly to the request's exact candidate parent;
-- contain exactly one inline `0x800d` `AppEphemeral` proposal and no standalone or second `0x800d` proposal;
-- contain exactly one `marmot.group.message-retention.v1` full-replacement update whose value equals `request.target_retention_secs`;
-- contain no membership proposal, admin-policy change, required-capability change, other app-component update, or app-component removal; and
+- have a complete proposal set consisting of exactly one inline `0x800d` `AppEphemeral` proposal carrying this
+  authorization and exactly one `marmot.group.message-retention.v1` full-replacement `AppDataUpdate` whose value equals
+  `request.target_retention_secs`;
+- reject every other proposal or component mutation, including a standalone or second `0x800d` proposal, an
+  `AppEphemeral` proposal for any other component id, any other `AppDataUpdate`, and any MLS proposal type other than
+  the two allowed proposals, whether inline or referenced; and
 - satisfy every request, negotiation, approval, ordinary MLS, and candidate-parent authorization rule above.
+
+The retention `AppDataUpdate` MAY be inline or a valid referenced proposal. Resolving that reference does not widen the
+allowed set. The Commit's required UpdatePath, confirmation tag, and other mandatory MLS framing are not proposals and
+remain governed by the ordinary MLS validation rule; they do not permit another proposal or app-component mutation.
 
 The Commit that satisfies these rules is the request's only valid finalization. Its resulting epoch is the activation epoch. Any other canonical child of the bound parent expires the request without purge, including a membership, capability, admin-policy, or retention change. Local wall clocks and transport arrival order do not decide validity.
 

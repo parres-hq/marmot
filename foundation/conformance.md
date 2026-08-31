@@ -96,14 +96,16 @@ Conformance suites for [`marmot.group.history-purge.v1`](../app-components/histo
    finalization, verifying that the old request expires and cannot authorize a later Commit;
 5. a leaf without `app_ephemeral` or component `0x800d` support, verifying that request creation and finalization are
    blocked rather than treating the leaf as consenting;
-6. a branch that supersedes the authorizing Commit while its parent remains inside the rollback horizon, verifying that
+6. an otherwise-valid authorization Commit carrying an unrelated `AppEphemeral` component id or any other extra
+   proposal, verifying rejection with no retention, suppression, or deletion effect;
+7. a branch that supersedes the authorizing Commit while its parent remains inside the rollback horizon, verifying that
    suppression is withdrawn and destructive deletion has not begun;
-7. advancement until the request parent is outside the rollback horizon, verifying that best-effort deletion begins
+8. advancement until the request parent is outside the rollback horizon, verifying that best-effort deletion begins
    only while the authorization remains on the settled selected branch;
-8. duplicate delivery and restart at the prepared, confirmed-not-applied, suppression-observed, deletion-eligible,
+9. duplicate delivery and restart at the prepared, confirmed-not-applied, suppression-observed, deletion-eligible,
    partially cleaned, and effect-observed boundaries, verifying one suppression boundary and no duplicate application
    effect; and
-9. late or replayed pre-activation app payloads after activation, verifying suppression before delivery while retained
+10. late or replayed pre-activation app payloads after activation, verifying suppression before delivery while retained
    anchors, candidate state, pending publication, and other protocol recovery material remain available.
 
 The suite MUST compare canonical state and stable effect identities. It MUST NOT claim physical overwrite, deletion of
