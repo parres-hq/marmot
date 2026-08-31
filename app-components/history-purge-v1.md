@@ -248,7 +248,7 @@ The authorization envelope is interpreted by terminal value:
 - `cancelled`: the kind `456` cancellation proof; its signer is the proposer and MUST equal the Commit sender;
 - `expired`: kind `457`, signed by the active-admin committer, with a timestamp greater than `expires_at`;
 - `superseded`: kind `457`, signed by the committer of the canonical membership, identity, capability, admin-policy, or
-  retention change that invalidates a request binding.
+  retention change that invalidates a request binding; the signer MUST equal the terminal Commit sender.
 
 For kind `457`, the local signing event has exact tags:
 
@@ -263,9 +263,10 @@ For kind `457`, the local signing event has exact tags:
 ]
 ```
 
-Its content is lowercase hex of `SHA-256(encode(MarmotHistoryPurgeFinalizationCoreV1))`. The `terminal` tag value is
-exactly `accepted`, `rejected`, `cancelled`, `expired`, or `superseded`, corresponding to terminal values 1 through 5.
-Kind `457` is local-only and MUST NOT be relayed.
+Its content is lowercase hex of `SHA-256(encode(MarmotHistoryPurgeFinalizationCoreV1))`. For kind `457`, `terminal` is
+exactly `accepted`, `expired`, or `superseded`, corresponding to terminal values 1, 4, and 5. Rejected and cancelled
+finalizations use kinds `454` and `456`, respectively; they do not use kind `457`. Kind `457` is local-only and MUST
+NOT be relayed.
 
 Every terminal Commit removes the GroupContext `0x800d` entry and its temporary required-component listing. An accepted
 Commit additionally contains exactly one full-replacement update for `marmot.group.message-retention.v1` with

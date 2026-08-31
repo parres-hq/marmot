@@ -111,7 +111,11 @@ def check_registry_and_components(paths: list[Path]) -> None:
     unique([m.group("name") for m in components], "component names")
     unique([m.group("doc") for m in components], "component documents")
 
-    kinds = [m.group("kind") for m in REGISTRY_KIND_RE.finditer(registry)]
+    kinds_heading = "## Nostr event kinds used by Marmot"
+    if kinds_heading not in registry:
+        fail("foundation/registries.md is missing the Nostr event-kinds section")
+    kinds_section = registry.split(kinds_heading, 1)[1].split("\n## ", 1)[0]
+    kinds = [match.group("kind") for match in REGISTRY_KIND_RE.finditer(kinds_section)]
     if not kinds:
         fail("foundation/registries.md has no parseable Nostr kind rows")
     unique(kinds, "Nostr event kinds")
