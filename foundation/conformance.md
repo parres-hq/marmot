@@ -83,6 +83,32 @@ These tests compare behavior and the projection above. They MUST NOT require a d
 snapshot encoding, process scheduler, or one snapshot per epoch. The owning normative rules are in
 [../protocol-core/durability.md](../protocol-core/durability.md).
 
+## Consensual history purge scenarios
+
+Conformance suites for [`marmot.group.history-purge.v1`](../app-components/history-purge-v1.md) MUST cover:
+
+1. a supported fixed member snapshot in which every account answers Yes and the direct child Commit atomically applies
+   the requested retention value and one reversible pre-activation plaintext suppression boundary;
+2. each missing, duplicate, extra, out-of-order, malformed, wrong-request, wrong-group, wrong-parent, and No approval,
+   verifying that no retention update or deletion effect is accepted;
+3. one explicit No and one silent member, verifying that neither produces a partial or group-wide completion state;
+4. a membership, identity, capability, admin-policy, retention, or unrelated canonical child Commit before
+   finalization, verifying that the old request expires and cannot authorize a later Commit;
+5. a leaf without `app_ephemeral` or component `0x800d` support, verifying that request creation and finalization are
+   blocked rather than treating the leaf as consenting;
+6. a branch that supersedes the authorizing Commit while its parent remains inside the rollback horizon, verifying that
+   suppression is withdrawn and destructive deletion has not begun;
+7. advancement until the request parent is outside the rollback horizon, verifying that best-effort deletion begins
+   only while the authorization remains on the settled selected branch;
+8. duplicate delivery and restart at the prepared, confirmed-not-applied, suppression-observed, deletion-eligible,
+   partially cleaned, and effect-observed boundaries, verifying one suppression boundary and no duplicate application
+   effect; and
+9. late or replayed pre-activation app payloads after activation, verifying suppression before delivery while retained
+   anchors, candidate state, pending publication, and other protocol recovery material remain available.
+
+The suite MUST compare canonical state and stable effect identities. It MUST NOT claim physical overwrite, deletion of
+external copies, or completion on another member's device.
+
 ## Exporter commitment
 
 The conformance exporter secret is:
