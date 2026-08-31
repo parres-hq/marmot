@@ -92,6 +92,8 @@ Conformance suites for [`marmot.group.history-purge.v1`](../app-components/histo
 2. each missing, duplicate, extra, out-of-order, malformed, wrong-request, wrong-group, wrong-parent, and No approval,
    verifying that no retention update or deletion effect is accepted;
 3. one explicit No and one silent member, verifying that neither produces a partial or group-wide completion state;
+   then a No-then-Yes sequence from one member, including restart after the No, verifying that the later Yes is invalid,
+   the request remains rejected, and no retention, suppression, or deletion effect starts;
 4. a membership, identity, capability, admin-policy, retention, or unrelated canonical child Commit before
    finalization, verifying that the old request expires and cannot authorize a later Commit;
 5. a leaf without `app_ephemeral` or component `0x800d` support, verifying that request creation and finalization are
@@ -103,8 +105,8 @@ Conformance suites for [`marmot.group.history-purge.v1`](../app-components/histo
 8. advancement until the request parent is outside the rollback horizon, verifying that best-effort deletion begins
    only while the authorization remains on the settled selected branch;
 9. duplicate delivery and restart at the prepared, confirmed-not-applied, suppression-observed, deletion-eligible,
-   partially cleaned, and effect-observed boundaries, verifying one suppression boundary and no duplicate application
-   effect; and
+   partially cleaned, and effect-observed boundaries, verifying one suppression boundary, completion of all remaining
+   eligible deletion work after restart, and one effective output per stable effect identity; and
 10. late or replayed pre-activation app payloads after activation, verifying suppression before delivery while retained
    anchors, candidate state, pending publication, and other protocol recovery material remain available.
 
