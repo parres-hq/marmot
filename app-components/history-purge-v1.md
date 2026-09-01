@@ -69,6 +69,9 @@ These structures use the Marmot binary profile in
 entries, sorted by `account_pubkey` bytes without duplicates. It MUST equal the sorted unique set of Marmot account
 identities in all nonblank leaves of the candidate parent state. `proposer_pubkey` MUST be in that set.
 
+`parent_group_context_hash` MUST equal `SHA-256(TLS-serialize(candidate_parent_group_context))`. The input is the MLS
+TLS serialization of the complete candidate parent GroupContext used directly, without Marmot-specific re-encoding.
+
 `prior_retention_present` is `0` or `1`. When it is `0`, `prior_retention_secs` MUST be zero and the bound parent has no
 `marmot.group.message-retention.v1` entry. When it is `1`, `prior_retention_secs` MUST equal the exact effective value in
 that parent. `target_retention_secs` follows the value bounds in
@@ -318,10 +321,12 @@ A receipt event has exact tags:
 ]
 ```
 
-Its content is empty. `outcome` is exactly `applied` or `failed`. The authenticated sender MUST be one member account in
-the accepted request cohort. A sender emits at most one receipt for a finalization. `applied` may be emitted only after
-all of that account's controlled conforming stores complete the required idempotent cleanup; `failed` is a terminal
-coarse result when they cannot. The receipt identity is:
+Its content is empty. `outcome` is exactly `applied` or `failed`. A receipt is valid only when `finalization_id` identifies
+the accepted finalization on the selected canonical branch. A receipt that identifies a rejected, cancelled, expired,
+superseded, or non-canonical finalization is invalid and MUST NOT contribute to a completion projection. The
+authenticated sender MUST be one member account in the accepted request cohort. A sender emits at most one receipt for
+a finalization. `applied` may be emitted only after all of that account's controlled conforming stores complete the
+required idempotent cleanup; `failed` is a terminal coarse result when they cannot. The receipt identity is:
 
 ```text
 receipt_id = SHA-256(

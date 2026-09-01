@@ -193,6 +193,8 @@ def check_history_purge_v1() -> None:
 
     component_fragments = [
         "at most one open request per group",
+        "parent_group_context_hash` MUST equal `SHA-256(TLS-serialize(candidate_parent_group_context))`",
+        "without Marmot-specific re-encoding",
         "contains at\nmost one record per account",
         "A No is not an advisory app event",
         "MUST refuse a second or conflicting decision",
@@ -204,6 +206,8 @@ def check_history_purge_v1() -> None:
         "Best-effort destructive cleanup begins only after the authorization remains selected",
         "resumes after restart",
         "external copies are outside enforceable scope",
+        "A receipt is valid only when `finalization_id` identifies the accepted finalization",
+        "non-canonical finalization is invalid and MUST NOT contribute to a completion projection",
     ]
     for fragment in component_fragments:
         require(component, fragment, component_name)
